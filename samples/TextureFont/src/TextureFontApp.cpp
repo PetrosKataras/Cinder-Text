@@ -41,8 +41,12 @@ void TextureFontApp::setup()
 	float mTracking = 0.f;
 	float mLineHeight = 1.2;
 	ivec2 layoutSize = ivec2( 1024 );
-	
-	auto font = std::make_shared<txt::Font>( "Arial", 15.0f * 8.0f );
+	float superSampling = 16.0f;
+	float fontSize = 16.0f * superSampling;
+
+	//auto font = std::make_shared<txt::Font>( "Arial", fontSize );
+	//auto font = std::make_shared<txt::Font>( ci::app::loadAsset( "fonts/SourceSansPro/SourceSansPro-Regular.otf" ), fontSize );
+	auto font = std::make_shared<txt::Font>( ci::app::loadAsset( "fonts/NotoSerif/NotoSerif-Medium.ttf" ), fontSize );
 	txt::gl::TextureRenderer::loadFont( *font );
 
 	mLayout.setFont( *font );

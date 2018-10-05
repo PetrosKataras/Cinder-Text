@@ -12,6 +12,7 @@ namespace txt
 void FontTexture::setLayout( const Layout& layout )
 {
 	mLayout = layout;
+	mLayout.setUseLigatures( true );
 }
 
 void FontTexture::drawGlyphs()
@@ -19,37 +20,127 @@ void FontTexture::drawGlyphs()
 	mTextures.clear();
 	std::string chars = std::string( mSupportedChars );
 	
+	/*
 	// calculate layout
 	mLayout.calculateLayout( chars );
-
 	mRenderer.setLayout( mLayout );
+
 	auto lines = mLayout.getLines();
 	float lineHeight = mLayout.getFont().getLineHeight();
-	float height = 0;
 	float highestPoint = 0;
-	for (auto iter = lines.begin(); iter != lines.end(); ++iter) {
+	int glyphIndex = 0;
+	for (auto iter = lines.begin(); iter != lines.end(); ++iter) 
+	{
 		auto line = *iter;
 		auto runs = line.runs;
-		auto glyphs = runs[0].glyphs;
-		auto bbox = glyphs[0].bbox;
-		auto extents = glyphs[0].extents;
-		//height = line.runs[0].glyphs[0].top + lineHeight;
-		//CI_LOG_V("height: " << height);
-		//height = extents.y2;
-		height = bbox.y2;
-		for (auto glyphIter = glyphs.begin(); glyphIter != glyphs.end(); ++glyphIter)
+		auto glyphCount = 0;
+		for( auto runIter = runs.begin(); runIter != runs.end(); ++runIter )
 		{
-			highestPoint = glm::max( (*glyphIter).bbox.y2, highestPoint );
+			auto run = *runIter;
+			auto glyphs = run.glyphs;
+
+			for( auto glyphIter = glyphs.begin(); glyphIter != glyphs.end(); ++glyphIter )
+			{
+				highestPoint = glm::max( (*glyphIter).bbox.y2, highestPoint );
+				glyphCount++;
+				
+			}
+		}
+		if( highestPoint < mFormat.getTextureHeight() ) {
+			glyphIndex += glyphCount;
 		}
 	}
 
+	if( mLayout.getMaxLinesReached() ) {
+		CI_LOG_I( "time for a new texture: " << glyphIndex );
+		auto newText = chars.substr(glyphIndex, chars.size() );
+		CI_LOG_I( "new text: " << newText );
+	}
+
 	if (highestPoint > mFormat.getTextureHeight()) {
-		CI_LOG_I( "time for a new texture" );
+		
 	}
 	mTextures.push_back( mRenderer.getTexture() );
+	*/
+	
 
 
 
+
+//	ci::gl::Texture::Format textureFormat = ci::gl::Texture::Format();
+//	textureFormat.enableMipmapping( mFormat.hasMipmapping() );
+	mRenderer.enableMipmapping( mFormat.hasMipmapping() );
+
+	bool finished = false;
+	while (!finished) {
+		
+		txt::gl::TextureRenderer renderer;
+
+		// calculate layout
+		mLayout.calculateLayout( chars );
+		renderer.setLayout( mLayout );
+		auto lines = mLayout.getLines();
+
+		int curTextureIndex = mTextures.size();
+		mTextures.push_back( renderer.getTexture() );
+		//ci::gl::Texture2d tex = ci::gl::Texture::create( renderer.getTexture() )
+
+
+		float lineHeight = mLayout.getFont().getLineHeight();
+		float highestPoint = 0;
+		int glyphIndex = 0;
+		int stopGlyphIndex = 0;
+		string stopGlyph;
+
+		//auto glyphs = mLayout.getGlyphBoxes();
+		auto glyphs = mLayout.getGlyphMap();
+		for( auto glyphIter = glyphs.begin(); glyphIter != glyphs.end(); ++glyphIter )
+		{
+			auto glyph = (*glyphIter);
+			highestPoint = glm::max( glyph.bbox.y2, highestPoint );
+
+			if( highestPoint > mFormat.getTextureHeight() && stopGlyphIndex == 0 ) {
+				stopGlyphIndex = glyphIndex - 1;
+				CI_LOG_V( glyph.value );
+				stopGlyph = glyph.value;
+			}
+			glyphIndex++;
+		}
+		
+		/*
+		for (auto iter = lines.begin(); iter != lines.end(); ++iter) 
+		{
+			auto line = *iter;
+			auto runs = line.runs;
+			auto glyphCount = 0;
+			for( auto runIter = runs.begin(); runIter != runs.end(); ++runIter )
+			{
+				auto run = *runIter;
+				auto glyphs = run.glyphs;
+
+				for( auto glyphIter = glyphs.begin(); glyphIter != glyphs.end(); ++glyphIter )
+				{
+					highestPoint = glm::max( (*glyphIter).bbox.y2, highestPoint );
+					glyphCount++;
+				
+				}
+			}
+			if( highestPoint < mFormat.getTextureHeight() ) {
+				glyphIndex += glyphCount;
+			}
+		}*/
+		
+		CI_LOG_V( "char size: " << glyphs.size() );
+		if( stopGlyphIndex <= 0 && glyphIndex >= glyphs.size() ) {
+			finished = true;
+		}
+		else {
+			size_t index = chars.find_first_of( stopGlyph );
+			chars.erase( 0, index );
+		}
+		
+		CI_LOG_V( "new text: " << chars );
+	}
 
 
 	//mLayout.getLines();

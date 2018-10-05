@@ -100,6 +100,8 @@ namespace txt
 				ci::gl::Texture::Format texFormat;
 				texFormat.setMagFilter( GL_NEAREST );
 				texFormat.setMinFilter( GL_LINEAR );
+				texFormat.enableMipmapping( mMipmapping );
+
 				//fboFormat.setColorTextureFormat( ci::gl::Texture2d::Format().internalFormat( GL_RGBA32F ) );
 				fboFormat.setColorTextureFormat( texFormat );
 

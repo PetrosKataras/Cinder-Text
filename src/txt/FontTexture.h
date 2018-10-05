@@ -63,7 +63,8 @@ class FontTexture
 
   private:
 	//static std::string		defaultChars() { return "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnooppqrstuvwxyz1234567890().?!,:;'\"&*=+-/\\@#_[]<>%^ftllflfiphrids\xC3\xA0\303\221\xEF\xAC\x81\xEF\xAC\x82"; }
-	  static std::string		defaultChars() { return "A B C D E F G H I J K L M N O P Q R S T U V W X Y Z a b c d e f g h i j k l m n o p q r s t u v w x y z 1 2 3 4 5 6 7 8 9 0 ( ) . ? ! , : ; ' \" & * = + - / \\ @ # _ [ ] < > % ^ ft ll fl fi ph ri ds \xC3\xA0\303\221\xEF\xAC\x81 \xEF\xAC\x82"; }
+	static std::string		defaultChars() { return "A B C D E F G H I J K L M N O P Q R S T U V W X Y Z a b c d e f g h i j k l m n o p q r s t u v w x y z 1 2 3 4 5 6 7 8 9 0 ( ) . ? ! , : ' \" & * = + - / \\ @ # _ [ ] < > % ^ ft ll fl fi ph ri ds \xC3\xA0 \303\221 ;"; }
+	
 	Layout mLayout;
 	std::vector<ci::gl::Texture2dRef>				mTextures;
 	//std::unordered_map<ci::Font::Glyph, GlyphInfo>	mGlyphMap;

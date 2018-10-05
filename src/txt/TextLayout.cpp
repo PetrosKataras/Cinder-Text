@@ -104,6 +104,7 @@ namespace txt
 	void Layout::resetLayout()
 	{
 		mGlyphBoxes.clear();
+		mGlyphMap.clear();
 		mLines.clear();
 		mCharPos = 0.f;
 		mLinePos = 0.f;
@@ -152,8 +153,8 @@ namespace txt
 			while( ( remainingSubstring.text.size() ) ) {
 				// Don't bother continuing if we aren't going to display any more lines
 				if( mMaxLinesReached ) {
-					applyAlignment();
-					return;
+					//applyAlignment();
+					//return;
 				}
 
 				// Process the remaining characters of the substring
@@ -231,7 +232,7 @@ namespace txt
 		// TODO: This needs to handle vertical layouts (clip width)
 		if( mSize.y != GROW && mLinePos + mCurLineHeight > mSize.y ) {
 			mMaxLinesReached = true;
-			return;
+			//return;
 		}
 
 		// Pad out the substring so we can ignore the last break
@@ -335,6 +336,7 @@ namespace txt
 			// Create a layout glyph and add to run
 			Layout::Glyph glyph = { shapedGlyphs[i].index, glyphBBox, glyphExtents, bitmapGlyph->top, shapedGlyphs[i].text };
 			run.glyphs.push_back( glyph );
+			mGlyphMap.push_back( glyph );
 
 			// Check for forced line breaks
 			for( auto& index : shapedGlyphs[i].textIndices ) {
