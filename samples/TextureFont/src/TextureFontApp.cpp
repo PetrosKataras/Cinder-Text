@@ -3,6 +3,7 @@
 #include "cinder/gl/gl.h"
 
 #include "txt/TextBox.h"
+#include "txt/TextLayout.h"
 #include "txt/FontTexture.h"
 
 using namespace ci;
@@ -23,6 +24,7 @@ class TextureFontApp : public App {
 
 	vector<gl::TextureRef>	mFontTextures;
 	gl::BatchRef			mRectBatch;
+	std::unordered_map<int16_t, txt::FontTexture::GlyphInfo>		mGlyphMap;
 	//std::unordered_map<ci::Font::Glyph, GlyphInfo>	mGlyphMap;
 };
 
@@ -65,6 +67,7 @@ void TextureFontApp::setup()
 
 
 	bool mipmap = true;
+	//std::string chars = "ABCabc";
 	auto fontTexture = txt::FontTexture::create( txt::FontTexture::Format().enableMipmapping( mipmap ).textureWidth( layoutSize.x ).textureHeight( layoutSize.y ) );
 	//fontTexture->setFont( *font );
 	//fontTexture->setTracking( mTracking );
@@ -73,10 +76,10 @@ void TextureFontApp::setup()
 	fontTexture->drawGlyphs();
 	
 	mFontTextures = fontTexture->getTextures();
+	mGlyphMap = fontTexture->getGlyphMap();
 
-
-	mRectBatch = gl::Batch::create( geom::Rect( Rectf( vec2(), vec2( layoutSize ) ) ).texCoords( vec2( 0, 0 ) , vec2( 1, 0), vec2( 1, 1), vec2( 0, 1) ) , gl::getStockShader( gl::ShaderDef().texture() ) );
-
+	//mRectBatch = gl::Batch::create( geom::Rect( Rectf( vec2(), vec2( layoutSize ) ) ).texCoords( vec2( 0, 0 ) , vec2( 1, 0), vec2( 1, 1), vec2( 0, 1) ) , gl::getStockShader( gl::ShaderDef().texture() ) );
+	mRectBatch = gl::Batch::create( geom::Rect( Rectf( vec2(), vec2( 1024.0f ) ) ).texCoords( vec2( 0, 1 ) , vec2( 1, 1), vec2( 1, 0), vec2( 0, 0) ) , gl::getStockShader( gl::ShaderDef().texture() ) );
 	//mFontTextures = fontTexture->getTextures();
 	//mGlyphMap = fontTexture->getGlyphMap();
 }
@@ -108,15 +111,80 @@ void TextureFontApp::draw()
 		gl::translate( drawingArea.getUL() );
 		gl::scale( vec2( float(drawingArea.getWidth()) / tex->getHeight() ) );
 		
-		// flip to draw
-		gl::translate( vec2( 0, tex->getHeight() ) );
-		gl::rotate( M_PI, vec3( 1, 0, 0 ) );
+		
 
 		gl::ScopedTextureBind scpTex( mFontTextures[i] );
 		//gl::ScopedGlslProg scpGlsl( gl::getStockShader( gl::ShaderDef().texture() ) );
 		//gl::drawSolidRect( drawingArea );
 		
 		mRectBatch->draw();
+
+
+		// flip to draw
+		//gl::translate( vec2( 0, tex->getHeight() ) );
+		//gl::rotate( M_PI, vec3( 1, 0, 0 ) );
+
+		// draw glyph areas
+		for( auto iter = mGlyphMap.begin(); iter != mGlyphMap.end(); ++iter ){
+			
+			int textureIndex = (*iter).second.textureIndex;
+			if (textureIndex == i) {
+				gl::ScopedColor scpColor;
+								
+				auto glyphInfo = (*iter).second;
+
+				{
+					auto rect = Rectf( glyphInfo.glyph.bbox );
+					//rect += vec2(0.0, glyphInfo.glyph.top);
+
+					// full glyph boundry
+					gl::color( ColorA( 1.0, 1.0, 0.0, 0.25 ) );
+					gl::drawSolidRect( rect );
+					gl::color( ColorA( 0.0, 0.0, 0.0, 0.25 ) );
+					gl::drawStrokedRect( rect );
+				}
+			}
+
+				/*// draw logical rect
+				{
+					auto rect = Rectf( glyphInfo.mTexCoords );
+					rect.scale( glyphInfo.mScaler );
+						
+					// full glyph boundry
+					gl::color( ColorA( 1.0, 1.0, 0.0, 0.25 ) );
+					gl::drawSolidRect( rect );
+					gl::color( ColorA( 0.0, 0.0, 0.0, 0.25 ) );
+					gl::drawStrokedRect( rect );
+					
+					// baseline
+					gl::color( ColorA( 0.0, 0.0, 1.0, 1.0 ) );
+					float baseline = rect.y1 + (glyphInfo.mBaseline * glyphInfo.mScaler.y);
+					gl::drawLine( vec2( rect.x1, baseline ), vec2( rect.x2, baseline ) );
+					
+					// ascent
+					float ascent = rect.y1 + (glyphInfo.mAscent * glyphInfo.mScaler.y);
+					gl::drawLine( vec2( rect.x1, ascent ), vec2( rect.x2, ascent ) );
+					
+					// descent
+					float descent = rect.y1 + (glyphInfo.mDescent * glyphInfo.mScaler.y);
+					gl::drawLine( vec2( rect.x1, descent ), vec2( rect.x2,descent ) );
+				}
+
+				// draw ink rect
+				{
+					auto rect = Rectf( (*iter).second.mInkTexCoords );
+					rect.scale( glyphInfo.mScaler );
+					
+					gl::color( ColorA( 1.0, 0.0, 0.0, 0.25 ) );
+					gl::drawSolidRect( rect );
+					gl::color(ColorA( 0.0, 0.0, 0.0, 0.25) );
+					gl::drawStrokedRect( rect );
+
+					gl::color( ColorA( 0.0, 1.0, 0.0, 1.0 ) );
+				}*/
+
+				
+			}
 	}
 }
 

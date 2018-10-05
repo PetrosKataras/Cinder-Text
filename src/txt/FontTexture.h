@@ -13,6 +13,12 @@ class FontTexture
 {
   public:
 
+	struct GlyphInfo {
+		int16_t index;
+		Layout::Glyph glyph;
+		int textureIndex;
+	};
+
 	class Format {
 	  public:
 		Format() : mTextureWidth( 1024 ), mTextureHeight( 1024 ), mPremultiply( false ), mMipmapping( false )
@@ -56,7 +62,7 @@ class FontTexture
 	void setLayout( const txt::Layout& layout );
 	void drawGlyphs();
 	//! Returns the current set of characters along with its location into the set of textures
-	//const std::unordered_map<ci::Font::Glyph, GlyphInfo>& getGlyphMap() const { return mGlyphMap; }
+	const std::unordered_map<int16_t, txt::FontTexture::GlyphInfo>& getGlyphMap() const { return mGlyphMap; }
 	//! Returns the vector of gl::TextureRef corresponding to each page of the atlas
 	const std::vector<ci::gl::TextureRef>& getTextures() const { return mTextures; }
 
@@ -67,6 +73,7 @@ class FontTexture
 	
 	Layout mLayout;
 	std::vector<ci::gl::Texture2dRef>				mTextures;
+	std::unordered_map<int16_t, txt::FontTexture::GlyphInfo>		mGlyphMap;
 	//std::unordered_map<ci::Font::Glyph, GlyphInfo>	mGlyphMap;
 	FontTexture::Format								mFormat;
 	std::string										mSupportedChars;

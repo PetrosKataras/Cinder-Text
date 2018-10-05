@@ -92,7 +92,8 @@ void FontTexture::drawGlyphs()
 		int stopGlyphIndex = 0;
 		string stopGlyph;
 
-		//auto glyphs = mLayout.getGlyphBoxes();
+		auto glyphCount = mLayout.getGlyphMap().size();
+		/*
 		auto glyphs = mLayout.getGlyphMap();
 		for( auto glyphIter = glyphs.begin(); glyphIter != glyphs.end(); ++glyphIter )
 		{
@@ -104,10 +105,17 @@ void FontTexture::drawGlyphs()
 				CI_LOG_V( glyph.value );
 				stopGlyph = glyph.value;
 			}
+
+			GlyphInfo glyphInfo;
+			glyphInfo.glyph = glyph;
+			glyphInfo.index = glyph.index;
+			glyphInfo.textureIndex = curTextureIndex;
+			mGlyphMap[glyph.index] = glyphInfo; 
+
 			glyphIndex++;
 		}
+		*/
 		
-		/*
 		for (auto iter = lines.begin(); iter != lines.end(); ++iter) 
 		{
 			auto line = *iter;
@@ -120,18 +128,38 @@ void FontTexture::drawGlyphs()
 
 				for( auto glyphIter = glyphs.begin(); glyphIter != glyphs.end(); ++glyphIter )
 				{
-					highestPoint = glm::max( (*glyphIter).bbox.y2, highestPoint );
-					glyphCount++;
+					/*highestPoint = glm::max( (*glyphIter).bbox.y2, highestPoint );
+					glyphCount++;*/
+
+
+					auto glyph = (*glyphIter);
+					highestPoint = glm::max( glyph.bbox.y2, highestPoint );
+
+					if( highestPoint > mFormat.getTextureHeight() && stopGlyphIndex == 0 && glyph.index != 3 ) {
+						stopGlyphIndex = glyphIndex - 1;
+						CI_LOG_V( glyph.value );
+						stopGlyph = glyph.value;
+					}
+
+					GlyphInfo glyphInfo;
+					glyphInfo.glyph = glyph;
+					glyphInfo.index = glyph.index;
+					glyphInfo.textureIndex = curTextureIndex;
+					mGlyphMap[glyph.index] = glyphInfo; 
+
+					glyphIndex++;
 				
 				}
 			}
-			if( highestPoint < mFormat.getTextureHeight() ) {
+			/*if( highestPoint < mFormat.getTextureHeight() ) {
 				glyphIndex += glyphCount;
-			}
-		}*/
+			}*/
+		}
+
+
 		
-		CI_LOG_V( "char size: " << glyphs.size() );
-		if( stopGlyphIndex <= 0 && glyphIndex >= glyphs.size() ) {
+		CI_LOG_V( "char size: " << glyphCount );
+		if( stopGlyphIndex <= 0 && glyphIndex >= glyphCount ) {
 			finished = true;
 		}
 		else {
