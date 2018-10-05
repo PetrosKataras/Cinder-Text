@@ -2,9 +2,9 @@
 <cinder>
 <block
 	name="Cairo"
-	id="org.libcinder.cairo"
+	id="org.libcinder.text"
 	author="Cinder Project"
-	summary="Cairo support for Mac OS X and Windows."
+	summary="New Cinder text rendering for Mac OS X and Windows."
 	>
 	<supports os="msw" />
 	<supports os="macosx" />

@@ -87,8 +87,6 @@ namespace txt
 
 		void TextureRenderer::allocateFbo( int size )
 		{
-			
-
 			if( mFbo == nullptr || mFbo->getWidth() < size || mFbo->getHeight() < size ) {
 				// Go up by pow2 until we get the new size
 				int fboSize = 1;

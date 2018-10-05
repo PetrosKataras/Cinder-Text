@@ -283,14 +283,18 @@ namespace txt
 			FT_BitmapGlyph bitmapGlyph = FontManager::get()->getGlyphBitmap( runFont, shapedGlyphs[i].index );
 			ci::vec2 glyphPos;
 			ci::Rectf glyphBBox;
+			ci::Rectf glyphExtents;
 
 			if( direction == HB_DIRECTION_LTR ) {
 				glyphPos = pos + ci::vec2( bitmapGlyph->left, 0.f );
 				glyphBBox = ci::Rectf( glyphPos, glyphPos + ci::vec2( bitmapGlyph->bitmap.width, bitmapGlyph->bitmap.rows ) );
+				glyphExtents = ci::Rectf( glyphPos, glyphPos + ci::vec2( advance.x + kerning, lineHeight ) );
 			}
 			else {
 				glyphPos = pos - ci::vec2( shapedGlyphs[i].advance.x - bitmapGlyph->left, 0.f );
 				glyphBBox = ci::Rectf( glyphPos, glyphPos + ci::vec2( bitmapGlyph->bitmap.width, bitmapGlyph->bitmap.rows ) );
+				// TODO: Test the following glyphExtents
+				glyphExtents = ci::Rectf( glyphPos, glyphPos + ci::vec2( advance ) );
 			}
 
 			// Move the pen forward, except with white space at the beginning of a line
@@ -329,7 +333,7 @@ namespace txt
 			}
 
 			// Create a layout glyph and add to run
-			Layout::Glyph glyph = { shapedGlyphs[i].index, glyphBBox, bitmapGlyph->top, shapedGlyphs[i].text };
+			Layout::Glyph glyph = { shapedGlyphs[i].index, glyphBBox, glyphExtents, bitmapGlyph->top, shapedGlyphs[i].text };
 			run.glyphs.push_back( glyph );
 
 			// Check for forced line breaks
@@ -382,6 +386,7 @@ namespace txt
 				float xOffset = ( mDirection == HB_DIRECTION_RTL ? mCurLineWidth : 0.0 );
 				float yOffset = mCurLineHeight - glyph.top;
 				glyph.bbox.offset( ci::vec2( xOffset, yOffset ) );
+				glyph.extents.offset( ci::vec2( xOffset, yOffset ) );
 			}
 		}
 

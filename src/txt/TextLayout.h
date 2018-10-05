@@ -24,6 +24,7 @@ namespace txt
 			typedef struct {
 				uint32_t index;
 				ci::Rectf bbox;
+				ci::Rectf extents;
 				unsigned int top;
 				std::string value;
 			} Glyph;
@@ -124,7 +125,7 @@ namespace txt
 				return *this;
 			};
 
-		private:
+		protected:
 			// Attributes
 			Font mFont;
 			ci::Color mColor;
