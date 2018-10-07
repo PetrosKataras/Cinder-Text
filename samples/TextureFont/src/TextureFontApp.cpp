@@ -41,10 +41,11 @@ void TextureFontApp::setup()
 
 
 	float mTracking = 0.f;
-	float mLineHeight = 1.2;
+	float mLineHeight = 1.0;
+	float mLeading = 0.0;
 	ivec2 layoutSize = ivec2( 1024 );
-	float superSampling = 16.0f;
-	float fontSize = 16.0f * superSampling;
+	float superSampling = 8.0f;
+	float fontSize = 24.0f * superSampling;
 
 	//auto font = std::make_shared<txt::Font>( "Arial", fontSize );
 	//auto font = std::make_shared<txt::Font>( ci::app::loadAsset( "fonts/SourceSansPro/SourceSansPro-Regular.otf" ), fontSize );
@@ -58,7 +59,7 @@ void TextureFontApp::setup()
 	//mLayout.setScript( mScript );
 	//mLayout.setDirection( mDirection );
 	//mLayout.setLineHeight( mLineHeight );
-	mLayout.setLineHeight( txt::Unit( mLineHeight, txt::EM ) );
+	//mLayout.setLineHeight( txt::Unit( mLineHeight, txt::EM ) );
 	//mLayout.calculateLayout( mTestText );
 
 	//mRenderer.setLayout( mLayout );
@@ -134,8 +135,8 @@ void TextureFontApp::draw()
 				auto glyphInfo = (*iter).second;
 
 				{
-					auto rect = Rectf( glyphInfo.glyph.bbox );
-					//rect += vec2(0.0, glyphInfo.glyph.top);
+					//auto rect = Rectf( glyphInfo.glyph.bbox );
+					auto rect = Rectf( glyphInfo.glyph.extents );
 
 					// full glyph boundry
 					gl::color( ColorA( 1.0, 1.0, 0.0, 0.25 ) );

@@ -87,7 +87,7 @@ namespace txt
 			const std::vector<Layout::Glyph>& getGlyphMap() const { return mGlyphMap; }
 			bool getMaxLinesReached() const { return mMaxLinesReached; }
 
-			float getLineHeight() const { return mLineHeight.getValue( getFont().getSize() ); }
+			float getLineHeight() const { return mLineHeight.getValue( getFont().getLineHeight() ); }
 			Layout& setLineHeight( const float& lineHeight ) { mLineHeight = txt::Unit( lineHeight ); return *this; };
 			Layout& setLineHeight( const Unit& lineHeight ) { mLineHeight = lineHeight; return *this; };
 

@@ -282,14 +282,29 @@ namespace txt
 
 			// Get the glyph metrics/position
 			FT_BitmapGlyph bitmapGlyph = FontManager::get()->getGlyphBitmap( runFont, shapedGlyphs[i].index );
+			FT_Glyph g = FontManager::get()->getGlyph( runFont, shapedGlyphs[i].index );
+			
+			//vec2 extents = FontManager::get()->getMaxGlyphSize( runFont );
 			ci::vec2 glyphPos;
 			ci::Rectf glyphBBox;
 			ci::Rectf glyphExtents;
 
+			//auto h = mFont.getLineHeight();
+			FT_BBox bbox;
+			FT_Glyph_Get_CBox( g, FT_GLYPH_BBOX_SUBPIXELS, &bbox );
+
+			
+
+
+			auto face = FontManager::get()->getFace( runFont );
+			int font_height = (face->bbox.yMax - face->bbox.yMin);
+			double baseline = abs(face->descender) * mFont.getSize() / face->units_per_EM;
+			float ascent =  bbox.yMax/64.0;
+
 			if( direction == HB_DIRECTION_LTR ) {
-				glyphPos = pos + ci::vec2( bitmapGlyph->left, 0.f );
+				glyphPos = pos + ci::vec2( bitmapGlyph->left, mCurLineHeight - baseline - ascent );
 				glyphBBox = ci::Rectf( glyphPos, glyphPos + ci::vec2( bitmapGlyph->bitmap.width, bitmapGlyph->bitmap.rows ) );
-				glyphExtents = ci::Rectf( glyphPos, glyphPos + ci::vec2( advance.x + kerning, lineHeight ) );
+				glyphExtents = ci::Rectf( pos, pos + ci::vec2( advance.x + kerning, mCurLineHeight ) );
 			}
 			else {
 				glyphPos = pos - ci::vec2( shapedGlyphs[i].advance.x - bitmapGlyph->left, 0.f );
@@ -387,8 +402,8 @@ namespace txt
 			for( auto& glyph : run.glyphs ) {
 				float xOffset = ( mDirection == HB_DIRECTION_RTL ? mCurLineWidth : 0.0 );
 				float yOffset = mCurLineHeight - glyph.top;
-				glyph.bbox.offset( ci::vec2( xOffset, yOffset ) );
-				glyph.extents.offset( ci::vec2( xOffset, yOffset ) );
+				//glyph.bbox.offset( ci::vec2( xOffset, yOffset ) );
+				//glyph.extents.offset( ci::vec2( xOffset, yOffset ) );
 			}
 		}
 
