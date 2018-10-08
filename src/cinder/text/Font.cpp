@@ -1,6 +1,6 @@
-#include "text/Font.h"
-#include "text/FontManager.h"
-#include "text/SystemFonts.h"
+#include "cinder/text/Font.h"
+#include "cinder/text/FontManager.h"
+#include "cinder/text/SystemFonts.h"
 
 namespace text {
 

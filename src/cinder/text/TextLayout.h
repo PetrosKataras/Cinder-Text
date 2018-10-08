@@ -6,11 +6,11 @@
 #include <cinder/Vector.h>
 #include <cinder/Rect.h>
 
-#include "text/Font.h"
-#include "text/FontManager.h"
-#include "text/AttributedString.h"
-#include "text/TextUnits.h"
-#include "text/Shaper.h"
+#include "cinder/text/Font.h"
+#include "cinder/text/FontManager.h"
+#include "cinder/text/AttributedString.h"
+#include "cinder/text/TextUnits.h"
+#include "cinder/text/Shaper.h"
 
 namespace text {
 

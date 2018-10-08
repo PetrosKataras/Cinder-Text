@@ -1,5 +1,5 @@
-#include "text/TextBox.h"
-#include "text/gl/TextureRenderer.h"
+#include "cinder/text/TextBox.h"
+#include "cinder/text/gl/TextureRenderer.h"
 
 namespace text {
 

@@ -8,8 +8,8 @@
 
 #include "cinder/Color.h"
 
-#include "text/Font.h"
-#include "text/TextUnits.h"
+#include "cinder/text/Font.h"
+#include "cinder/text/TextUnits.h"
 
 namespace rapidxml { // forward declaration
 	template<class Ch> class xml_node;

@@ -1,5 +1,5 @@
-#include "text/Shaper.h"
-#include "text/FontManager.h"
+#include "cinder/text/Shaper.h"
+#include "cinder/text/FontManager.h"
 
 #include "hb-ft.h"
 

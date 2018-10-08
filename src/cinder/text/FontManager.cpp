@@ -1,8 +1,8 @@
 #include "cinder/app/App.h"
 #include "cinder/Log.h"
 #include "cinder/gl/Context.h"
-#include "text/FontManager.h"
-#include "text/SystemFonts.h"
+#include "cinder/text/FontManager.h"
+#include "cinder/text/SystemFonts.h"
 
 #include <freetype/ft2build.h>
 #include FT_FREETYPE_H

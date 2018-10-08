@@ -1,4 +1,4 @@
-#include "text/gl/TextureRenderer.h"
+#include "cinder/text/gl/TextureRenderer.h"
 
 #include "cinder/gl/gl.h"
 #include "cinder/gl/scoped.h"
@@ -7,7 +7,7 @@
 #include "cinder/ip/Flip.h"
 #include "cinder/Log.h"
 
-#include "text/FontManager.h"
+#include "cinder/text/FontManager.h"
 
 namespace text { namespace gl {
 // Shared font cache

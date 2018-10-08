@@ -1,7 +1,7 @@
 #include "cinder/app/App.h"
-#include "text/AttributedString.h"
-#include "text/Font.h"
-#include "text/FontManager.h"
+#include "cinder/text/AttributedString.h"
+#include "cinder/text/Font.h"
+#include "cinder/text/FontManager.h"
 
 #include "rapidxml/rapidxml.hpp"
 #include "rapidxml/rapidxml_print.hpp"

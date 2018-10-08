@@ -1,7 +1,7 @@
 #pragma once
 
 #include "cinder/Vector.h"
-#include "text/TextLayout.h"
+#include "cinder/text/TextLayout.h"
 
 #include <string>
 

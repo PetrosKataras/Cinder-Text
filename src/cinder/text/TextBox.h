@@ -1,9 +1,9 @@
 #pragma once
 
-#include "text/Font.h"
-#include "text/TextLayout.h"
-#include "text/TextRenderer.h"
-#include "text/gl/TextureRenderer.h"
+#include "cinder/text/Font.h"
+#include "cinder/text/TextLayout.h"
+#include "cinder/text/TextRenderer.h"
+#include "cinder/text/gl/TextureRenderer.h"
 
 namespace text {
 

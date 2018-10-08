@@ -3,7 +3,7 @@
 #include "cinder/Filesystem.h"
 #include "cinder/Vector.h"
 #include "cinder/app/App.h"
-#include "text/Font.h"
+#include "cinder/text/Font.h"
 
 #include <memory>
 #include <unordered_map>

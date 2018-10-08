@@ -1,7 +1,7 @@
 #include "cinder/Unicode.h"
 #include "cinder/app/App.h"
-#include "text/FontManager.h"
-#include "text/TextLayout.h"
+#include "cinder/text/FontManager.h"
+#include "cinder/text/TextLayout.h"
 
 #include <string.h>
 

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "cinder/Vector.h"
-#include "text/Font.h"
+#include "cinder/text/Font.h"
 
 #include <memory>
 #include <string>

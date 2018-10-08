@@ -7,14 +7,14 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		0063521C216BF7790045A495 /* Font.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0063520A216BF7780045A495 /* Font.cpp */; };
-		0063521D216BF7790045A495 /* SystemFonts.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0063520B216BF7780045A495 /* SystemFonts.cpp */; };
-		0063521E216BF7790045A495 /* Shaper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0063520C216BF7780045A495 /* Shaper.cpp */; };
-		0063521F216BF7790045A495 /* TextBox.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0063520D216BF7780045A495 /* TextBox.cpp */; };
-		00635220216BF7790045A495 /* TextureRenderer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00635212216BF7780045A495 /* TextureRenderer.cpp */; };
-		00635221216BF7790045A495 /* AttributedString.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00635217216BF7790045A495 /* AttributedString.cpp */; };
-		00635222216BF7790045A495 /* TextLayout.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00635219216BF7790045A495 /* TextLayout.cpp */; };
-		00635223216BF7790045A495 /* FontManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0063521A216BF7790045A495 /* FontManager.cpp */; };
+		00635237216C0AE50045A495 /* SystemFonts.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00635225216C0AE40045A495 /* SystemFonts.cpp */; };
+		00635238216C0AE50045A495 /* AttributedString.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00635226216C0AE40045A495 /* AttributedString.cpp */; };
+		00635239216C0AE50045A495 /* Shaper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0063522A216C0AE40045A495 /* Shaper.cpp */; };
+		0063523A216C0AE50045A495 /* TextBox.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0063522B216C0AE40045A495 /* TextBox.cpp */; };
+		0063523B216C0AE50045A495 /* TextLayout.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0063522E216C0AE40045A495 /* TextLayout.cpp */; };
+		0063523C216C0AE50045A495 /* FontManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00635230216C0AE40045A495 /* FontManager.cpp */; };
+		0063523D216C0AE50045A495 /* Font.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00635231216C0AE50045A495 /* Font.cpp */; };
+		0063523E216C0AE50045A495 /* TextureRenderer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00635236216C0AE50045A495 /* TextureRenderer.cpp */; };
 		006D720419952D00008149E2 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 006D720219952D00008149E2 /* AVFoundation.framework */; };
 		006D720519952D00008149E2 /* CoreMedia.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 006D720319952D00008149E2 /* CoreMedia.framework */; };
 		0091D8F90E81B9330029341E /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0091D8F80E81B9330029341E /* OpenGL.framework */; };
@@ -31,24 +31,24 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		00635209216BF7780045A495 /* TextBox.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TextBox.h; path = ../../../src/text/TextBox.h; sourceTree = "<group>"; };
-		0063520A216BF7780045A495 /* Font.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Font.cpp; path = ../../../src/text/Font.cpp; sourceTree = "<group>"; };
-		0063520B216BF7780045A495 /* SystemFonts.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SystemFonts.cpp; path = ../../../src/text/SystemFonts.cpp; sourceTree = "<group>"; };
-		0063520C216BF7780045A495 /* Shaper.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Shaper.cpp; path = ../../../src/text/Shaper.cpp; sourceTree = "<group>"; };
-		0063520D216BF7780045A495 /* TextBox.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TextBox.cpp; path = ../../../src/text/TextBox.cpp; sourceTree = "<group>"; };
-		0063520E216BF7780045A495 /* TextRenderer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TextRenderer.h; path = ../../../src/text/TextRenderer.h; sourceTree = "<group>"; };
-		0063520F216BF7780045A495 /* Shaper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Shaper.h; path = ../../../src/text/Shaper.h; sourceTree = "<group>"; };
-		00635211216BF7780045A495 /* TextureRenderer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TextureRenderer.h; sourceTree = "<group>"; };
-		00635212216BF7780045A495 /* TextureRenderer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TextureRenderer.cpp; sourceTree = "<group>"; };
-		00635213216BF7790045A495 /* SystemFonts.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SystemFonts.h; path = ../../../src/text/SystemFonts.h; sourceTree = "<group>"; };
-		00635214216BF7790045A495 /* TextLayout.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TextLayout.h; path = ../../../src/text/TextLayout.h; sourceTree = "<group>"; };
-		00635215216BF7790045A495 /* Font.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Font.h; path = ../../../src/text/Font.h; sourceTree = "<group>"; };
-		00635216216BF7790045A495 /* FontManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FontManager.h; path = ../../../src/text/FontManager.h; sourceTree = "<group>"; };
-		00635217216BF7790045A495 /* AttributedString.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = AttributedString.cpp; path = ../../../src/text/AttributedString.cpp; sourceTree = "<group>"; };
-		00635218216BF7790045A495 /* AttributedString.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AttributedString.h; path = ../../../src/text/AttributedString.h; sourceTree = "<group>"; };
-		00635219216BF7790045A495 /* TextLayout.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TextLayout.cpp; path = ../../../src/text/TextLayout.cpp; sourceTree = "<group>"; };
-		0063521A216BF7790045A495 /* FontManager.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FontManager.cpp; path = ../../../src/text/FontManager.cpp; sourceTree = "<group>"; };
-		0063521B216BF7790045A495 /* TextUnits.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TextUnits.h; path = ../../../src/text/TextUnits.h; sourceTree = "<group>"; };
+		00635224216C0AE40045A495 /* Font.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Font.h; path = ../../../src/cinder/text/Font.h; sourceTree = "<group>"; };
+		00635225216C0AE40045A495 /* SystemFonts.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SystemFonts.cpp; path = ../../../src/cinder/text/SystemFonts.cpp; sourceTree = "<group>"; };
+		00635226216C0AE40045A495 /* AttributedString.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = AttributedString.cpp; path = ../../../src/cinder/text/AttributedString.cpp; sourceTree = "<group>"; };
+		00635227216C0AE40045A495 /* SystemFonts.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SystemFonts.h; path = ../../../src/cinder/text/SystemFonts.h; sourceTree = "<group>"; };
+		00635228216C0AE40045A495 /* Shaper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Shaper.h; path = ../../../src/cinder/text/Shaper.h; sourceTree = "<group>"; };
+		00635229216C0AE40045A495 /* TextRenderer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TextRenderer.h; path = ../../../src/cinder/text/TextRenderer.h; sourceTree = "<group>"; };
+		0063522A216C0AE40045A495 /* Shaper.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Shaper.cpp; path = ../../../src/cinder/text/Shaper.cpp; sourceTree = "<group>"; };
+		0063522B216C0AE40045A495 /* TextBox.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TextBox.cpp; path = ../../../src/cinder/text/TextBox.cpp; sourceTree = "<group>"; };
+		0063522C216C0AE40045A495 /* FontManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FontManager.h; path = ../../../src/cinder/text/FontManager.h; sourceTree = "<group>"; };
+		0063522D216C0AE40045A495 /* TextBox.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TextBox.h; path = ../../../src/cinder/text/TextBox.h; sourceTree = "<group>"; };
+		0063522E216C0AE40045A495 /* TextLayout.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TextLayout.cpp; path = ../../../src/cinder/text/TextLayout.cpp; sourceTree = "<group>"; };
+		0063522F216C0AE40045A495 /* AttributedString.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AttributedString.h; path = ../../../src/cinder/text/AttributedString.h; sourceTree = "<group>"; };
+		00635230216C0AE40045A495 /* FontManager.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FontManager.cpp; path = ../../../src/cinder/text/FontManager.cpp; sourceTree = "<group>"; };
+		00635231216C0AE50045A495 /* Font.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Font.cpp; path = ../../../src/cinder/text/Font.cpp; sourceTree = "<group>"; };
+		00635232216C0AE50045A495 /* TextUnits.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TextUnits.h; path = ../../../src/cinder/text/TextUnits.h; sourceTree = "<group>"; };
+		00635233216C0AE50045A495 /* TextLayout.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TextLayout.h; path = ../../../src/cinder/text/TextLayout.h; sourceTree = "<group>"; };
+		00635235216C0AE50045A495 /* TextureRenderer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TextureRenderer.h; sourceTree = "<group>"; };
+		00635236216C0AE50045A495 /* TextureRenderer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TextureRenderer.cpp; sourceTree = "<group>"; };
 		006D720219952D00008149E2 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
 		006D720319952D00008149E2 /* CoreMedia.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMedia.framework; path = System/Library/Frameworks/CoreMedia.framework; sourceTree = SDKROOT; };
 		0091D8F80E81B9330029341E /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = /System/Library/Frameworks/OpenGL.framework; sourceTree = "<absolute>"; };
@@ -94,35 +94,35 @@
 		006351E8216BF24B0045A495 /* Cinder-Text */ = {
 			isa = PBXGroup;
 			children = (
-				00635217216BF7790045A495 /* AttributedString.cpp */,
-				00635218216BF7790045A495 /* AttributedString.h */,
-				0063520A216BF7780045A495 /* Font.cpp */,
-				00635215216BF7790045A495 /* Font.h */,
-				0063521A216BF7790045A495 /* FontManager.cpp */,
-				00635216216BF7790045A495 /* FontManager.h */,
-				00635210216BF7780045A495 /* gl */,
-				0063520C216BF7780045A495 /* Shaper.cpp */,
-				0063520F216BF7780045A495 /* Shaper.h */,
-				0063520B216BF7780045A495 /* SystemFonts.cpp */,
-				00635213216BF7790045A495 /* SystemFonts.h */,
-				0063520D216BF7780045A495 /* TextBox.cpp */,
-				00635209216BF7780045A495 /* TextBox.h */,
-				00635219216BF7790045A495 /* TextLayout.cpp */,
-				00635214216BF7790045A495 /* TextLayout.h */,
-				0063520E216BF7780045A495 /* TextRenderer.h */,
-				0063521B216BF7790045A495 /* TextUnits.h */,
+				00635226216C0AE40045A495 /* AttributedString.cpp */,
+				0063522F216C0AE40045A495 /* AttributedString.h */,
+				00635231216C0AE50045A495 /* Font.cpp */,
+				00635224216C0AE40045A495 /* Font.h */,
+				00635230216C0AE40045A495 /* FontManager.cpp */,
+				0063522C216C0AE40045A495 /* FontManager.h */,
+				00635234216C0AE50045A495 /* gl */,
+				0063522A216C0AE40045A495 /* Shaper.cpp */,
+				00635228216C0AE40045A495 /* Shaper.h */,
+				00635225216C0AE40045A495 /* SystemFonts.cpp */,
+				00635227216C0AE40045A495 /* SystemFonts.h */,
+				0063522B216C0AE40045A495 /* TextBox.cpp */,
+				0063522D216C0AE40045A495 /* TextBox.h */,
+				0063522E216C0AE40045A495 /* TextLayout.cpp */,
+				00635233216C0AE50045A495 /* TextLayout.h */,
+				00635229216C0AE40045A495 /* TextRenderer.h */,
+				00635232216C0AE50045A495 /* TextUnits.h */,
 			);
 			name = "Cinder-Text";
 			sourceTree = "<group>";
 		};
-		00635210216BF7780045A495 /* gl */ = {
+		00635234216C0AE50045A495 /* gl */ = {
 			isa = PBXGroup;
 			children = (
-				00635211216BF7780045A495 /* TextureRenderer.h */,
-				00635212216BF7780045A495 /* TextureRenderer.cpp */,
+				00635235216C0AE50045A495 /* TextureRenderer.h */,
+				00635236216C0AE50045A495 /* TextureRenderer.cpp */,
 			);
 			name = gl;
-			path = ../../../src/text/gl;
+			path = ../../../src/cinder/text/gl;
 			sourceTree = "<group>";
 		};
 		01B97315FEAEA392516A2CEA /* Blocks */ = {
@@ -278,15 +278,15 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				00635220216BF7790045A495 /* TextureRenderer.cpp in Sources */,
-				00635221216BF7790045A495 /* AttributedString.cpp in Sources */,
-				00635222216BF7790045A495 /* TextLayout.cpp in Sources */,
-				0063521C216BF7790045A495 /* Font.cpp in Sources */,
-				0063521D216BF7790045A495 /* SystemFonts.cpp in Sources */,
-				00635223216BF7790045A495 /* FontManager.cpp in Sources */,
-				0063521F216BF7790045A495 /* TextBox.cpp in Sources */,
-				0063521E216BF7790045A495 /* Shaper.cpp in Sources */,
+				0063523D216C0AE50045A495 /* Font.cpp in Sources */,
+				0063523B216C0AE50045A495 /* TextLayout.cpp in Sources */,
 				9EE596F904CB40719990A9D4 /* RichTextApp.cpp in Sources */,
+				00635237216C0AE50045A495 /* SystemFonts.cpp in Sources */,
+				0063523C216C0AE50045A495 /* FontManager.cpp in Sources */,
+				0063523A216C0AE50045A495 /* TextBox.cpp in Sources */,
+				0063523E216C0AE50045A495 /* TextureRenderer.cpp in Sources */,
+				00635239216C0AE50045A495 /* Shaper.cpp in Sources */,
+				00635238216C0AE50045A495 /* AttributedString.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
