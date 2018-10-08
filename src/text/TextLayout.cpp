@@ -1,4 +1,4 @@
-#include "txt/TextLayout.h"
+#include "text/TextLayout.h"
 
 #include <string.h>
 
@@ -7,7 +7,7 @@
 #include "cinder/app/App.h"
 #include <cinder/Unicode.h>
 
-#include "txt/FontManager.h"
+#include "text/FontManager.h"
 
 //#include "libunibreak\linebreak.h"
 //#include "libunibreak\wordbreak.h"

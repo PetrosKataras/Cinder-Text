@@ -4,9 +4,9 @@
 #include "cinder/FileWatcher.h"
 #include "cinder/Utilities.h"
 
-#include "txt/FontManager.h"
-#include "txt/TextLayout.h"
-#include "txt/gl/TextureRenderer.h"
+#include "text/FontManager.h"
+#include "text/TextLayout.h"
+#include "text/gl/TextureRenderer.h"
 
 using namespace ci;
 using namespace ci::app;

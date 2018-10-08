@@ -6,7 +6,7 @@
 #include "hb.h"
 #include "cinder/Vector.h"
 
-#include "txt/Font.h"
+#include "text/Font.h"
 
 namespace txt
 {

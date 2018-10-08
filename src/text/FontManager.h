@@ -12,7 +12,7 @@
 
 #include "cinder/app/App.h"
 
-#include "txt/Font.h"
+#include "text/Font.h"
 
 namespace txt
 {

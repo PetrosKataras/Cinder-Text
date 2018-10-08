@@ -1,6 +1,6 @@
-#include "txt/Font.h"
-#include "txt/FontManager.h"
-#include "txt/SystemFonts.h"
+#include "text/Font.h"
+#include "text/FontManager.h"
+#include "text/SystemFonts.h"
 
 namespace txt
 {

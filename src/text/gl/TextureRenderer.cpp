@@ -1,4 +1,4 @@
-#include "txt/gl/TextureRenderer.h"
+#include "text/gl/TextureRenderer.h"
 
 #include "cinder/gl/gl.h"
 #include "cinder/gl/scoped.h"
@@ -7,7 +7,7 @@
 #include "cinder/ip/Flip.h"
 #include "cinder/Log.h"
 
-#include "txt/FontManager.h"
+#include "text/FontManager.h"
 
 namespace txt
 {

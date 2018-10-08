@@ -1,9 +1,9 @@
 #pragma once
 
-#include "txt/Font.h"
-#include "txt/TextLayout.h"
-#include "txt/TextRenderer.h"
-#include "txt/gl/TextureRenderer.h"
+#include "text/Font.h"
+#include "text/TextLayout.h"
+#include "text/TextRenderer.h"
+#include "text/gl/TextureRenderer.h"
 
 namespace txt
 {

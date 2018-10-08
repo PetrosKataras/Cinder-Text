@@ -6,8 +6,8 @@
 #include "cinder/gl/Batch.h"
 #include "cinder/gl/Fbo.h"
 
-#include "txt/TextLayout.h"
-#include "txt/TextRenderer.h"
+#include "text/TextLayout.h"
+#include "text/TextRenderer.h"
 
 namespace txt
 {

@@ -5,7 +5,7 @@
 
 #include "cinder/Buffer.h"
 
-#include "txt/Font.h"
+#include "text/Font.h"
 
 namespace txt
 {

@@ -1,4 +1,4 @@
-#include "txt/AttributedString.h"
+#include "text/AttributedString.h"
 
 #include <string>
 #include <sstream>
@@ -9,8 +9,8 @@
 
 #include "cinder/app/App.h"
 
-#include "txt/Font.h"
-#include "txt/FontManager.h"
+#include "text/Font.h"
+#include "text/FontManager.h"
 
 using namespace rapidxml;
 

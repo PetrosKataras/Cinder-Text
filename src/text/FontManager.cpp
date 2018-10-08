@@ -1,4 +1,4 @@
-#include "txt/FontManager.h"
+#include "text/FontManager.h"
 
 #ifdef CINDER_MSW
 	#include <ShellScalingAPI.h>
@@ -10,7 +10,7 @@
 
 #include "hb-ft.h"
 
-#include "txt/SystemFonts.h"
+#include "text/SystemFonts.h"
 
 namespace txt
 {

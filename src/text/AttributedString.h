@@ -9,8 +9,8 @@
 
 #include "cinder/Color.h"
 
-#include "txt/Font.h"
-#include "txt/TextUnits.h"
+#include "text/Font.h"
+#include "text/TextUnits.h"
 
 namespace txt
 {

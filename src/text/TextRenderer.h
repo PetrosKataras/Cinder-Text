@@ -3,7 +3,7 @@
 #include <string>
 #include <cinder/Vector.h>
 
-#include "txt/TextLayout.h"
+#include "text/TextLayout.h"
 
 namespace txt
 {
