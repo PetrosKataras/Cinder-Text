@@ -1,16 +1,17 @@
+#include "cinder/app/App.h"
+#include "cinder/Log.h"
+#include "cinder/gl/Context.h"
 #include "text/FontManager.h"
+#include "text/SystemFonts.h"
+
+#include <freetype/ft2build.h>
+#include FT_FREETYPE_H
+#include <freetype/ftcache.h>
+#include "hb-ft.h"
 
 #ifdef CINDER_MSW
 	#include <ShellScalingAPI.h>
 #endif
-
-#include "cinder/app/App.h"
-#include "cinder/Log.h"
-#include "cinder/gl/Context.h"
-
-#include "hb-ft.h"
-
-#include "text/SystemFonts.h"
 
 namespace text {
 
