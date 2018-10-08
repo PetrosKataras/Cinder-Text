@@ -2,59 +2,58 @@
 
 #include "cinder/app/App.h"
 
-namespace text
-{
-	enum UnitType {
-		PX,
-		PT,
-		EM,
-		PCT
-	};
+namespace text {
+enum UnitType {
+	PX,
+	PT,
+	EM,
+	PCT
+};
 
-	class Unit
+class Unit {
+  public:
+	Unit() :
+		mType( UnitType::PX ),
+		mIsDefault( true ),
+		mValue( 0 )
+	{}
+
+	Unit( float value, UnitType type = UnitType::PX )
+		: mIsDefault( true )
 	{
-		public:
-			Unit() :
-				mType( UnitType::PX ),
-				mIsDefault( true ),
-				mValue( 0 )
-			{}
+		setValue( value, type );
+	}
 
-			Unit( float value, UnitType type = UnitType::PX )
-				: mIsDefault( true )
-			{
-				setValue( value, type );
-			}
+	void setValue( float value, UnitType type = UnitType::PX )
+	{
+		mValue = value;
+		mType = type;
+		mIsDefault = false;
+	}
 
-			void setValue( float value, UnitType type = UnitType::PX )
-			{
-				mValue = value;
-				mType = type;
-				mIsDefault = false;
-			}
+	float getValue( float baseValue ) const
+	{
+		switch( mType ) {
+			case PX:
+				return mValue;
 
-			float getValue( float baseValue ) const
-			{
-				switch( mType ) {
-					case PX:
-						return mValue;
+			case PT:
+				return mValue / ci::app::getWindowContentScale(); // Get Cinder's window scale and apply here
 
-					case PT:
-						return mValue / ci::app::getWindowContentScale(); // Get Cinder's window scale and apply here
+			case EM:
+			case PCT:
+				return mValue * baseValue;
+		}
+	}
 
-					case EM:
-					case PCT:
-						return mValue * baseValue;
-				}
-			}
+	UnitType getValueType() const { return mType; }
 
-			UnitType getValueType() const { return mType; }
+	bool isDefault() const { return mIsDefault; }
 
-			bool isDefault() const { return mIsDefault; }
+  private:
+	float 		mValue;
+	UnitType	mType;
+	bool		mIsDefault;
+};
 
-		private:
-			float mValue;
-			UnitType mType;
-			bool mIsDefault;
-	};
-}
+} // namespace text
