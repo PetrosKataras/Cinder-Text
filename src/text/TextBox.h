@@ -5,50 +5,51 @@
 #include "text/TextRenderer.h"
 #include "text/gl/TextureRenderer.h"
 
-namespace text
+namespace text {
+
+class TextBox
 {
-	class TextBox
-	{
-		public:
-			TextBox();
-			TextBox( ci::vec2 size, RendererRef renderer = std::make_shared<text::gl::TextureRenderer>() );
+  public:
+	TextBox();
+	TextBox( ci::vec2 size, RendererRef renderer = std::make_shared<text::gl::TextureRenderer>() );
 
-			ci::ivec2 getSize();
-			TextBox& setSize( ci::vec2 size );
+	ci::ivec2 getSize();
+	TextBox& setSize( ci::vec2 size );
 
-			const Font&	getFont() const	{ return mFont; }
-			TextBox& setFont( const Font& font );
+	const Font&	getFont() const	{ return mFont; }
+	TextBox& setFont( const Font& font );
 
-			const std::string&	getText() const	{ return mText; }
-			TextBox& setText( std::string text );
+	const std::string&	getText() const	{ return mText; }
+	TextBox& setText( std::string text );
 
-			TextBox& setAttrString( AttributedString attrString );
-			TextBox& setColor( ci::ColorA color );
-			TextBox& setAlignment( Alignment alignment );
+	TextBox& setAttrString( AttributedString attrString );
+	TextBox& setColor( ci::ColorA color );
+	TextBox& setAlignment( Alignment alignment );
 
-			TextBox& layoutIfNeeded();
-			TextBox& doLayout();
+	TextBox& layoutIfNeeded();
+	TextBox& doLayout();
 
-			Layout& getLayout()				{ return mLayout; };
-			const Layout& getLayout() const { return mLayout; };
+	Layout& getLayout()				{ return mLayout; };
+	const Layout& getLayout() const { return mLayout; };
 
-			RendererRef getRenderer() const { return mRenderer; }
-			void setRenderer( RendererRef renderer ) { mRenderer = renderer; }
+	RendererRef getRenderer() const { return mRenderer; }
+	void setRenderer( RendererRef renderer ) { mRenderer = renderer; }
 
-			void draw();
+	void draw();
 
-		private:
-			Font mFont;
-			ci::vec2 mSize;
-			ci::Color mColor;
+  private:
+	Font mFont;
+	ci::vec2 mSize;
+	ci::Color mColor;
 
-			std::string mText;
-			AttributedString mAttrString;
-			bool mExternalAttributedString;
+	std::string mText;
+	AttributedString mAttrString;
+	bool mExternalAttributedString;
 
-			Layout mLayout;
-			bool mNeedsLayout;
+	Layout mLayout;
+	bool mNeedsLayout;
 
-			std::shared_ptr<text::Renderer> mRenderer;
-	};
-}
+	std::shared_ptr<text::Renderer> mRenderer;
+};
+
+} // namespace text
