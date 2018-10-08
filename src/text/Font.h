@@ -3,56 +3,56 @@
 #include "cinder/Filesystem.h"
 #include "cinder/DataSource.h"
 
-namespace text
-{
-	struct Font {
-		public:
-			Font( ci::DataSourceRef dataSource, int size );
-			Font( uint32_t faceId, int size );
-			Font( std::string family, int size );
-			Font( std::string family, std::string style, int size );
-			Font( const Font& font ) : Font( font.mFaceId, font.mSize ) { }
+namespace text {
 
-			const uint32_t getFaceId() const { return mFaceId; }
-			const unsigned int getSize() const { return mSize; }
-			std::string getFamily() const;
-			std::string getStyle() const;
-			float getLineHeight() const;
+struct Font {
+  public:
+	Font( ci::DataSourceRef dataSource, int size );
+	Font( uint32_t faceId, int size );
+	Font( std::string family, int size );
+	Font( std::string family, std::string style, int size );
+	Font( const Font& font ) : Font( font.mFaceId, font.mSize ) { }
 
-			bool operator==( const Font& other ) const
-			{
-				return ( mFaceId == other.mFaceId
-				         && mSize == other.mSize );
-			}
+	const uint32_t 		getFaceId() const { return mFaceId; }
+	const unsigned int	getSize() const { return mSize; }
+	std::string 		getFamily() const;
+	std::string			getStyle() const;
+	float				getLineHeight() const;
 
-			Font& operator=( const Font& other )
-			{
-				mFaceId = other.mFaceId;
-				mSize = other.mSize;
-				return *this;
-			}
+	bool operator==( const Font& other ) const
+	{
+		return ( mFaceId == other.mFaceId && mSize == other.mSize );
+	}
 
-			friend std::ostream& operator<< ( std::ostream& os, Font const& font )
-			{
-				os << "Font:" << std::endl;
-				os << "Family: " << font.getFamily() << std::endl;
-				os << "Style: " << font.getSize() << std::endl;
-				os << "Size: " << font.getSize() << std::endl;
-				return os;
-			}
+	Font& operator=( const Font& other )
+	{
+		mFaceId = other.mFaceId;
+		mSize = other.mSize;
+		return *this;
+	}
 
-			friend class FontManager;
+	friend std::ostream& operator<<( std::ostream& os, Font const& font )
+	{
+		os << "Font:" << std::endl;
+		os << "Family: " << font.getFamily() << std::endl;
+		os << "Style: " << font.getSize() << std::endl;
+		os << "Size: " << font.getSize() << std::endl;
+		return os;
+	}
 
-		private:
-			uint32_t mFaceId;
-			unsigned int mSize;
-	};
+	friend class FontManager;
 
-	struct DefaultFont : public Font {
-		public:
-			DefaultFont();
-	};
-}
+  private:
+	uint32_t mFaceId;
+	unsigned int mSize;
+};
+
+struct DefaultFont : public Font {
+  public:
+	DefaultFont();
+};
+
+} // namespace text
 
 // Hash Function
 namespace std
@@ -68,9 +68,8 @@ namespace std
 			// Compute individual hash values for first,
 			// second and third and combine them using XOR
 			// and bit shifting:
-			return ( ( hash < uint32_t>()( ( uint32_t )k.getFaceId() )
+			return ( ( hash<uint32_t>()( (uint32_t)k.getFaceId() )
 			           ^ ( hash<unsigned int>()( k.getSize() ) << 1 ) ) >> 1 );
 		}
 	};
-
-}
+} // namespace std
