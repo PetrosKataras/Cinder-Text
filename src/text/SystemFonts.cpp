@@ -27,7 +27,7 @@
 #include <unordered_map>
 
 
-namespace txt
+namespace text
 {
 
 	// Windows

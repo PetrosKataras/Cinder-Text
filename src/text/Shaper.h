@@ -8,7 +8,7 @@
 
 #include "text/Font.h"
 
-namespace txt
+namespace text
 {
 
 	class Shaper

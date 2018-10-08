@@ -9,7 +9,7 @@
 
 #include "text/FontManager.h"
 
-namespace txt
+namespace text
 {
 	namespace gl
 	{
@@ -213,12 +213,12 @@ namespace txt
 			glGetIntegerv( GL_MAX_ARRAY_TEXTURE_LAYERS, &maxLayersPerArray );
 
 			// Get the total number of glyphs
-			std::vector<uint32_t> glyphIndices = txt::FontManager::get()->getGlyphIndices( font );
+			std::vector<uint32_t> glyphIndices = text::FontManager::get()->getGlyphIndices( font );
 			unsigned int numGlyphs = glyphIndices.size();
-			//numGlyphs = txt::FontManager::get()->getNumGlyphs( font );
+			//numGlyphs = text::FontManager::get()->getNumGlyphs( font );
 
 			// Calculate max glyph size and pad out to 4 bytes
-			ci::ivec2 maxGlyphSize = txt::FontManager::get()->getMaxGlyphSize( font );
+			ci::ivec2 maxGlyphSize = text::FontManager::get()->getMaxGlyphSize( font );
 			ci::ivec2 padding = ci::ivec2( 4 ) - ( maxGlyphSize % ci::ivec2( 4 ) );
 			maxGlyphSize += padding;
 
@@ -233,7 +233,7 @@ namespace txt
 			unsigned int totalLayers = 0;
 
 			// Go through each glyph and cache
-			for( auto& glyphIndex : txt::FontManager::get()->getGlyphIndices( font ) ) {
+			for( auto& glyphIndex : text::FontManager::get()->getGlyphIndices( font ) ) {
 
 				// Check to see if we need a new texture
 				if( !curTexArray || curLayer >= maxLayersPerArray ) {
@@ -246,7 +246,7 @@ namespace txt
 				}
 
 				// Add the glyph to our cur tex array
-				FT_BitmapGlyph glyph = txt::FontManager::get()->getGlyphBitmap( font, glyphIndex );
+				FT_BitmapGlyph glyph = text::FontManager::get()->getGlyphBitmap( font, glyphIndex );
 				ci::ivec2 glyphSize( glyph->bitmap.width, glyph->bitmap.rows );
 				ci::ChannelRef channel = ci::Channel::create( glyphSize.x, glyphSize.y, glyphSize.x * sizeof( unsigned char ), sizeof( unsigned char ), glyph->bitmap.buffer );
 				ci::ChannelRef flippedChannel = ci::Channel::create( glyphSize.x, glyphSize.y );

@@ -12,7 +12,7 @@
 #include "text/TextUnits.h"
 #include "text/Shaper.h"
 
-namespace txt
+namespace text
 {
 	typedef enum Alignment { LEFT, CENTER, RIGHT, JUSTIFIED } Alignment;
 	enum { GROW = 0 };
@@ -85,11 +85,11 @@ namespace txt
 			const std::vector<ci::Rectf>& getGlyphBoxes() const { return mGlyphBoxes; }
 
 			float getLineHeight() const { return mLineHeight.getValue( getFont().getSize() ); }
-			Layout& setLineHeight( const float& lineHeight ) { mLineHeight = txt::Unit( lineHeight ); return *this; };
+			Layout& setLineHeight( const float& lineHeight ) { mLineHeight = text::Unit( lineHeight ); return *this; };
 			Layout& setLineHeight( const Unit& lineHeight ) { mLineHeight = lineHeight; return *this; };
 
 			float getTracking() const { return mTracking.getValue( getFont().getSize() ); }
-			Layout& setTracking( float tracking ) { mTracking = txt::Unit( tracking ); return *this; };
+			Layout& setTracking( float tracking ) { mTracking = text::Unit( tracking ); return *this; };
 			Layout& setTracking( const Unit& tracking ) { mTracking = tracking; return *this; };
 
 			Layout& setUseLigatures( const bool useLigatures ) { mUseLigatures = useLigatures; return *this; };
@@ -130,8 +130,8 @@ namespace txt
 			ci::Color mColor;
 			Alignment mAlignment;
 			bool mUseDefaultAlignment;
-			txt::Unit mLineHeight;
-			txt::Unit mTracking;
+			text::Unit mLineHeight;
+			text::Unit mTracking;
 
 			bool mUseLigatures;
 			bool mUseKerning;

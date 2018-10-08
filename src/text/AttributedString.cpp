@@ -14,7 +14,7 @@
 
 using namespace rapidxml;
 
-namespace txt
+namespace text
 {
 	AttributedString::AttributedString()
 		: AttributedString( "", DefaultFont() )

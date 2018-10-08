@@ -14,7 +14,7 @@
 
 #include "text/Font.h"
 
-namespace txt
+namespace text
 {
 	// Lookup tables for family + style to face id
 	// Convenience struct to transform font family + style to lowercase
@@ -58,8 +58,8 @@ namespace txt
 namespace std
 {
 	template <>
-	struct hash<txt::FaceFamilyAndStyle> {
-		std::size_t operator()( const txt::FaceFamilyAndStyle& k ) const
+	struct hash<text::FaceFamilyAndStyle> {
+		std::size_t operator()( const text::FaceFamilyAndStyle& k ) const
 		{
 			using std::size_t;
 			using std::hash;
@@ -75,7 +75,7 @@ namespace std
 	};
 }
 
-namespace txt
+namespace text
 {
 
 

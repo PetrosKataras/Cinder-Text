@@ -5,13 +5,13 @@
 #include "text/TextRenderer.h"
 #include "text/gl/TextureRenderer.h"
 
-namespace txt
+namespace text
 {
 	class TextBox
 	{
 		public:
 			TextBox();
-			TextBox( ci::vec2 size, RendererRef renderer = std::make_shared<txt::gl::TextureRenderer>() );
+			TextBox( ci::vec2 size, RendererRef renderer = std::make_shared<text::gl::TextureRenderer>() );
 
 			ci::ivec2 getSize();
 			TextBox& setSize( ci::vec2 size );
@@ -49,6 +49,6 @@ namespace txt
 			Layout mLayout;
 			bool mNeedsLayout;
 
-			std::shared_ptr<txt::Renderer> mRenderer;
+			std::shared_ptr<text::Renderer> mRenderer;
 	};
 }

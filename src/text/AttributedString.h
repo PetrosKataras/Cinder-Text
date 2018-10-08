@@ -12,7 +12,7 @@
 #include "text/Font.h"
 #include "text/TextUnits.h"
 
-namespace txt
+namespace text
 {
 	// Attributed String
 	enum AttributeType {

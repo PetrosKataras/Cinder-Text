@@ -1,10 +1,10 @@
 #include "text/TextBox.h"
 #include "text/gl/TextureRenderer.h"
 
-namespace txt
+namespace text
 {
 	TextBox::TextBox()
-		: TextBox( ci::vec2( txt::GROW, txt::GROW ) )
+		: TextBox( ci::vec2( text::GROW, text::GROW ) )
 	{}
 
 	TextBox::TextBox( ci::vec2 size, RendererRef renderer )

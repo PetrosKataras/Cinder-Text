@@ -5,7 +5,7 @@
 
 #include "text/TextLayout.h"
 
-namespace txt
+namespace text
 {
 	class Renderer;
 	typedef std::shared_ptr<Renderer> RendererRef;

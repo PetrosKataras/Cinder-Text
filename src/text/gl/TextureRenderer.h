@@ -9,12 +9,12 @@
 #include "text/TextLayout.h"
 #include "text/TextRenderer.h"
 
-namespace txt
+namespace text
 {
 	namespace gl
 	{
 		class TextureRenderer
-			: public txt::Renderer
+			: public text::Renderer
 		{
 			public:
 				TextureRenderer();
@@ -22,7 +22,7 @@ namespace txt
 				//void draw( const std::string& text, const ci::vec2& size = ci::vec2( 0 ) ) override;
 				//void draw( const std::string& text, const Font& font, const ci::vec2 size = ci::vec2( 0 ) ) override;
 				void draw() override;
-				void setLayout( const txt::Layout& layout ) override;
+				void setLayout( const text::Layout& layout ) override;
 				void setOffset( ci::vec2 offset ) { mOffset = offset; }
 
 				static void loadFont( const Font& font );

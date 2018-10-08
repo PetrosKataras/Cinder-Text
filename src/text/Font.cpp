@@ -2,7 +2,7 @@
 #include "text/FontManager.h"
 #include "text/SystemFonts.h"
 
-namespace txt
+namespace text
 {
 	// Font
 	Font::Font( ci::DataSourceRef source, int size )

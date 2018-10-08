@@ -12,7 +12,7 @@
 //#include "libunibreak\linebreak.h"
 //#include "libunibreak\wordbreak.h"
 
-namespace txt
+namespace text
 {
 	bool isWhitespace( const Font& font, uint32_t codepoint )
 	{
@@ -118,11 +118,11 @@ namespace txt
 	{
 		ci::vec2 size( mSize );
 
-		if( size.x == txt::GROW ) {
+		if( size.x == text::GROW ) {
 			size.x = mCurLineWidth;
 		}
 
-		if( size.y == txt::GROW ) {
+		if( size.y == text::GROW ) {
 			size.y = mLinePos;
 		}
 
@@ -247,19 +247,19 @@ namespace txt
 
 		//	Remove features if necessary
 		if( !mUseLigatures ) {
-			shaper.removeFeature( txt::Shaper::Feature::LIGATURES );
+			shaper.removeFeature( text::Shaper::Feature::LIGATURES );
 		}
 
 		if( !mUseKerning ) {
-			shaper.removeFeature( txt::Shaper::Feature::KERNING );
+			shaper.removeFeature( text::Shaper::Feature::KERNING );
 		}
 
 		if( !mUseClig ) {
-			shaper.removeFeature( txt::Shaper::Feature::CLIG );
+			shaper.removeFeature( text::Shaper::Feature::CLIG );
 		}
 
 		if( !mUseCalt ) {
-			shaper.removeFeature( txt::Shaper::Feature::CALT );
+			shaper.removeFeature( text::Shaper::Feature::CALT );
 		}
 
 		Shaper::Text shaperText = {

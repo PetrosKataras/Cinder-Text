@@ -7,7 +7,7 @@
 
 #include "text/Font.h"
 
-namespace txt
+namespace text
 {
 	typedef std::shared_ptr<class SystemFonts> SystemFontsRef;
 

@@ -5,7 +5,7 @@
 
 #include "hb-ft.h"
 
-namespace txt
+namespace text
 {
 	// Create harfbuzz functions
 	namespace

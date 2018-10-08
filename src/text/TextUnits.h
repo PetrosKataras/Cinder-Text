@@ -2,7 +2,7 @@
 
 #include "cinder/app/App.h"
 
-namespace txt
+namespace text
 {
 	enum UnitType {
 		PX,

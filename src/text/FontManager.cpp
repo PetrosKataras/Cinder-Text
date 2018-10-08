@@ -12,7 +12,7 @@
 
 #include "text/SystemFonts.h"
 
-namespace txt
+namespace text
 {
 	// Font Manager
 	FontManagerRef FontManager::get()
