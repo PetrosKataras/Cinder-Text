@@ -12,7 +12,7 @@
 
 #include <unordered_map>
 
-namespace text {
+namespace cinder { namespace text {
 
 // Windows
 #if defined( CINDER_MSW_DESKTOP )
@@ -183,4 +183,4 @@ ci::BufferRef SystemFonts::getFontBuffer( std::string family, std::string style 
 }
 #endif // defined( CINDER_COCOA )
 
-} // namespace text
+} } // namespace cinder::text

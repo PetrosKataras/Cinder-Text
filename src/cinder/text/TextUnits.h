@@ -2,7 +2,7 @@
 
 #include "cinder/app/App.h"
 
-namespace text {
+namespace cinder { namespace text {
 enum UnitType {
 	PX,
 	PT,
@@ -56,4 +56,4 @@ class Unit {
 	bool		mIsDefault;
 };
 
-} // namespace text
+} } // namespace cinder::text

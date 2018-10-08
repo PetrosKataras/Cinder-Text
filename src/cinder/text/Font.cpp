@@ -2,7 +2,7 @@
 #include "cinder/text/FontManager.h"
 #include "cinder/text/SystemFonts.h"
 
-namespace text {
+namespace cinder { namespace text {
 
 // Font
 Font::Font( ci::DataSourceRef source, int size )
@@ -47,4 +47,4 @@ DefaultFont::DefaultFont()
 	: Font( SystemFonts::get()->getDefaultFamily(), SystemFonts::get()->getDefaultStyle(), SystemFonts::get()->getDefaultSize() )
 {}
 
-} // namespace text
+} } // namespace cinder::text

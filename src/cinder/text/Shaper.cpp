@@ -3,7 +3,7 @@
 
 #include "hb-ft.h"
 
-namespace text {
+namespace cinder { namespace text {
 // Create harfbuzz functions
 namespace
 {
@@ -167,4 +167,4 @@ std::vector<Shaper::Glyph> Shaper::getShapedText( Text& text )
 	return glyphs;
 }
 
-} // namespace text
+} } // namespace cinder::text

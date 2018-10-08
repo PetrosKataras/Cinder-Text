@@ -3,7 +3,7 @@
 #include "cinder/Filesystem.h"
 #include "cinder/DataSource.h"
 
-namespace text {
+namespace cinder { namespace text {
 
 struct Font {
   public:
@@ -52,14 +52,14 @@ struct DefaultFont : public Font {
 	DefaultFont();
 };
 
-} // namespace text
+} } // namespace cinder::text
 
 // Hash Function
 namespace std {
 
 template <>
-struct hash<text::Font> {
-	std::size_t operator()( const text::Font& k ) const
+struct hash<cinder::text::Font> {
+	std::size_t operator()( const cinder::text::Font& k ) const
 	{
 		using std::size_t;
 		using std::hash;

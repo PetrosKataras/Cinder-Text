@@ -1,10 +1,10 @@
 #include "cinder/text/TextBox.h"
 #include "cinder/text/gl/TextureRenderer.h"
 
-namespace text {
+namespace cinder { namespace text {
 
 TextBox::TextBox()
-	: TextBox( ci::vec2( text::GROW, text::GROW ) )
+	: TextBox( ci::vec2( cinder::text::GROW, cinder::text::GROW ) )
 {}
 
 TextBox::TextBox( ci::vec2 size, RendererRef renderer )
@@ -97,4 +97,4 @@ void TextBox::draw()
 	mRenderer->draw();
 }
 
-} // namespace text
+} } // namespace cinder::text

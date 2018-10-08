@@ -5,13 +5,13 @@
 #include "cinder/text/TextRenderer.h"
 #include "cinder/text/gl/TextureRenderer.h"
 
-namespace text {
+namespace cinder { namespace text {
 
 class TextBox
 {
   public:
 	TextBox();
-	TextBox( ci::vec2 size, RendererRef renderer = std::make_shared<text::gl::TextureRenderer>() );
+	TextBox( ci::vec2 size, RendererRef renderer = std::make_shared<cinder::text::gl::TextureRenderer>() );
 
 	ci::ivec2 getSize();
 	TextBox& setSize( ci::vec2 size );
@@ -49,7 +49,7 @@ class TextBox
 	Layout mLayout;
 	bool mNeedsLayout;
 
-	std::shared_ptr<text::Renderer> mRenderer;
+	std::shared_ptr<cinder::text::Renderer> mRenderer;
 };
 
-} // namespace text
+} } // namespace cinder::text

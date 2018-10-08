@@ -10,7 +10,7 @@
 //typedef struct hb_buffer_t hb_buffer_t;
 //typedef struct hb_font_t hb_font_t;
 
-namespace text {
+namespace cinder { namespace text {
 
 class Shaper
 {
@@ -56,4 +56,4 @@ class Shaper
 	std::vector<hb_feature_t>	mFeatures;
 };
 
-} // namespace text
+} } // namespace cinder::text

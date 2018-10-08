@@ -9,16 +9,16 @@
 #include "cinder/text/TextLayout.h"
 #include "cinder/text/TextRenderer.h"
 
-namespace text { namespace gl {
+namespace cinder { namespace text { namespace gl {
 
-class TextureRenderer : public text::Renderer {
+class TextureRenderer : public cinder::text::Renderer {
   public:
 	TextureRenderer();
 
 	//void draw( const std::string& text, const ci::vec2& size = ci::vec2( 0 ) ) override;
 	//void draw( const std::string& text, const Font& font, const ci::vec2 size = ci::vec2( 0 ) ) override;
 	void draw() override;
-	void setLayout( const text::Layout& layout ) override;
+	void setLayout( const cinder::text::Layout& layout ) override;
 	void setOffset( ci::vec2 offset ) { mOffset = offset; }
 
 	static void loadFont( const Font& font );
@@ -54,4 +54,4 @@ class TextureRenderer : public text::Renderer {
 	static std::unordered_map<Font, FontCache> fontCache;
 };
 
-} } // namespace text::gl
+} } } // namespace cinder::text::gl

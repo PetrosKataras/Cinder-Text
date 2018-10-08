@@ -12,7 +12,7 @@
 #include FT_FREETYPE_H
 #include <freetype/ftcache.h>
 
-namespace text {
+namespace cinder { namespace text {
 
 class FontManager;
 typedef std::shared_ptr<FontManager> FontManagerRef;
@@ -50,12 +50,12 @@ struct FaceFamilyAndStyle {
 	std::string style;	
 };
 
-} // namespace text
+} } // namespace cinder::text
 
 namespace std {
 template <>
-struct hash<text::FaceFamilyAndStyle> {
-	std::size_t operator()( const text::FaceFamilyAndStyle& k ) const
+struct hash<cinder::text::FaceFamilyAndStyle> {
+	std::size_t operator()( const cinder::text::FaceFamilyAndStyle& k ) const
 	{
 		using std::size_t;
 		using std::hash;
@@ -72,7 +72,7 @@ struct hash<text::FaceFamilyAndStyle> {
 } // namespace std
 
 
-namespace text {
+namespace cinder { namespace text {
 
 class FontManager
 {
@@ -147,4 +147,4 @@ class FontManager
 	FTC_ImageCache mFTCImageCache;
 };
 
-} // namespace text
+} } // namespace cinder::text

@@ -12,7 +12,7 @@
 #include "cinder/text/TextUnits.h"
 #include "cinder/text/Shaper.h"
 
-namespace text {
+namespace cinder { namespace text {
 
 typedef enum Alignment { LEFT, CENTER, RIGHT, JUSTIFIED } Alignment;
 enum { GROW = 0 };
@@ -84,11 +84,11 @@ class Layout {
 	const std::vector<ci::Rectf>& getGlyphBoxes() const { return mGlyphBoxes; }
 
 	float getLineHeight() const { return mLineHeight.getValue( getFont().getSize() ); }
-	Layout& setLineHeight( const float& lineHeight ) { mLineHeight = text::Unit( lineHeight ); return *this; };
+	Layout& setLineHeight( const float& lineHeight ) { mLineHeight = cinder::text::Unit( lineHeight ); return *this; };
 	Layout& setLineHeight( const Unit& lineHeight ) { mLineHeight = lineHeight; return *this; };
 
 	float getTracking() const { return mTracking.getValue( getFont().getSize() ); }
-	Layout& setTracking( float tracking ) { mTracking = text::Unit( tracking ); return *this; };
+	Layout& setTracking( float tracking ) { mTracking = cinder::text::Unit( tracking ); return *this; };
 	Layout& setTracking( const Unit& tracking ) { mTracking = tracking; return *this; };
 
 	Layout& setUseLigatures( const bool useLigatures ) { mUseLigatures = useLigatures; return *this; };
@@ -129,8 +129,8 @@ private:
 	ci::Color mColor;
 	Alignment mAlignment;
 	bool mUseDefaultAlignment;
-	text::Unit mLineHeight;
-	text::Unit mTracking;
+	cinder::text::Unit mLineHeight;
+	cinder::text::Unit mTracking;
 
 	bool mUseLigatures;
 	bool mUseKerning;
@@ -173,4 +173,4 @@ private:
 	bool mMaxLinesReached = false;
 };
 
-} // namespace text
+} } // namespace cinder::text

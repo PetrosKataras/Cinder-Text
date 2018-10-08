@@ -13,7 +13,7 @@
 
 using namespace rapidxml;
 
-namespace text {
+namespace cinder { namespace text {
 
 AttributedString::AttributedString()
 	: AttributedString( "", DefaultFont() )
@@ -249,4 +249,4 @@ void RichTextParser::pushNodeAttributes( rapidxml::xml_node<>* node )
 	}
 }
 
-} // namespace text
+} } // namespace cinder:;text

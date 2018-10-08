@@ -6,12 +6,11 @@
 #include <memory>
 #include <map>
 
-namespace text {
+namespace cinder { namespace text {
 
 typedef std::shared_ptr<class SystemFonts> SystemFontsRef;
 
-class SystemFonts
-{
+class SystemFonts {
   public:
 	static SystemFontsRef get()
 	{
@@ -37,4 +36,4 @@ class SystemFonts
 	int			mDefaultSize;
 };
 
-} // namespace text
+} } // namespace cinder::text

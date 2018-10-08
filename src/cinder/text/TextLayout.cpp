@@ -7,7 +7,7 @@
 
 #include "hb.h"
 
-namespace text {
+namespace cinder { namespace text {
 
 bool isWhitespace( const Font& font, uint32_t codepoint )
 {
@@ -113,11 +113,11 @@ const ci::vec2 Layout::measure()
 {
 	ci::vec2 size( mSize );
 
-	if( size.x == text::GROW ) {
+	if( size.x == cinder::text::GROW ) {
 		size.x = mCurLineWidth;
 	}
 
-	if( size.y == text::GROW ) {
+	if( size.y == cinder::text::GROW ) {
 		size.y = mLinePos;
 	}
 
@@ -242,19 +242,19 @@ void Layout::addSubstringToCurLine( AttributedString::Substring& substring )
 
 	//	Remove features if necessary
 	if( !mUseLigatures ) {
-		shaper.removeFeature( text::Shaper::Feature::LIGATURES );
+		shaper.removeFeature( cinder::text::Shaper::Feature::LIGATURES );
 	}
 
 	if( !mUseKerning ) {
-		shaper.removeFeature( text::Shaper::Feature::KERNING );
+		shaper.removeFeature( cinder::text::Shaper::Feature::KERNING );
 	}
 
 	if( !mUseClig ) {
-		shaper.removeFeature( text::Shaper::Feature::CLIG );
+		shaper.removeFeature( cinder::text::Shaper::Feature::CLIG );
 	}
 
 	if( !mUseCalt ) {
-		shaper.removeFeature( text::Shaper::Feature::CALT );
+		shaper.removeFeature( cinder::text::Shaper::Feature::CALT );
 	}
 
 	Shaper::Text shaperText = {
@@ -501,4 +501,4 @@ Layout::BreakIndices Layout::getClosestBreakForShapedText( int startIndex, const
 	return indices;
 }
 
-} // namespace text
+} } // namespace cinder::text

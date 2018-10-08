@@ -5,7 +5,7 @@
 
 #include <string>
 
-namespace text {
+namespace cinder { namespace text {
 
 class Renderer;
 typedef std::shared_ptr<Renderer> RendererRef;
@@ -29,4 +29,4 @@ class Renderer {
 	Layout mLayout;
 };
 
-} // namespace text
+} } // namespace cinder::text

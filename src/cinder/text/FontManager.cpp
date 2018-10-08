@@ -13,7 +13,7 @@
 	#include <ShellScalingAPI.h>
 #endif
 
-namespace text {
+namespace cinder { namespace text {
 
 // Font Manager
 FontManagerRef FontManager::get()
@@ -401,4 +401,4 @@ const char* FontManager::getFTErrorMessage( FT_Error err )
 	return "(Unknown error)";
 }
 
-} // namespace text
+} } // namespace cinder::text

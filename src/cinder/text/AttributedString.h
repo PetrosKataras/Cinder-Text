@@ -15,7 +15,7 @@ namespace rapidxml { // forward declaration
 	template<class Ch> class xml_node;
 };
 
-namespace text {
+namespace cinder { namespace text {
 // Attributed String
 enum AttributeType {
 	LINE_BREAK,
@@ -236,4 +236,4 @@ class RichTextParser
 	std::vector<AttributedString::Substring> mSubstrings;
 };
 
-} // namespace text
+} } // namespace cinder::text
