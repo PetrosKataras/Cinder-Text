@@ -13,14 +13,18 @@
 //#pragma comment(lib, "gdiplus")
 //#endif
 
-#include "cinder/msw/cindermsw.h"
-#include "cinder/msw/cindermswgdiplus.h"
+#if defined( CINDER_MSW_DESKTOP )
+	#include "cinder/msw/cindermsw.h"
+	#include "cinder/msw/cindermswgdiplus.h"
+	#include <strsafe.h>
+#elif defined( CINDER_MAC )
+	#include <CoreText/CoreText.h>
+#endif
 
 #include "cinder/Unicode.h"
 #include "cinder/app/App.h"
 
 #include <unordered_map>
-#include <strsafe.h>
 
 
 namespace txt
@@ -76,7 +80,6 @@ namespace txt
 
 		return 1;
 	}
-
 
 	void SystemFonts::listFaces()
 	{
@@ -137,6 +140,61 @@ namespace txt
 		else {
 			return nullptr;
 		}
+	}
+
+#else
+	SystemFonts::SystemFonts()
+	{
+		mDefaultFamily = "ArialMT";
+		mDefaultStyle = "Regular";
+		mDefaultSize = 12;
+		
+		CFArrayRef fontUrls = ::CTFontManagerCopyAvailableFontURLs();
+		CFIndex count = ::CFArrayGetCount( fontUrls );
+		
+		const size_t anchorPrefixLength = strlen( "postscript-name=" ); 
+		for( CFIndex i = 0; i < count; ++i ) {
+			unsigned char bytes[4096];
+			char path[4096], postscriptName[4096];
+			CFRange pathRange, pathRangeIncludingSeparators, psNameRange, psNameRangeIncludingSeparators;
+			
+			CFURLRef fontUrl = (CFURLRef)::CFArrayGetValueAtIndex( fontUrls, i );
+			pathRange = ::CFURLGetByteRangeForComponent( fontUrl, kCFURLComponentPath, &pathRangeIncludingSeparators );
+			psNameRange = ::CFURLGetByteRangeForComponent( fontUrl, kCFURLComponentFragment, &psNameRangeIncludingSeparators );
+			if( pathRange.location != kCFNotFound && psNameRange.location != kCFNotFound && psNameRange.length > anchorPrefixLength ) {
+				::CFURLGetBytes( fontUrl, bytes, sizeof(bytes) );
+				
+				CFStringRef pathCopy = ::CFStringCreateWithSubstring( kCFAllocatorDefault, ::CFURLGetString( fontUrl ), pathRange );
+				CFStringRef unescapedPath = ::CFURLCreateStringByReplacingPercentEscapes( kCFAllocatorDefault, pathCopy, CFSTR("") );
+				::CFStringGetCString( unescapedPath, path, 4096, kCFStringEncodingUTF8 );
+				::CFRelease( pathCopy );
+				::CFRelease( unescapedPath );				
+				
+				psNameRange.length -= anchorPrefixLength;
+				psNameRange.location += anchorPrefixLength;
+				strncpy( postscriptName, (const char *)&bytes[psNameRange.location], psNameRange.length );
+				postscriptName[psNameRange.length] = 0;
+			}
+			else
+				continue;
+			
+			mSystemNameToPath[std::string(postscriptName)] = ci::fs::path( path );
+		}
+		::CFRelease( fontUrls );
+	}
+
+	void SystemFonts::listFaces()
+	{
+	}
+
+	ci::BufferRef SystemFonts::getFontBuffer( std::string family, std::string style )
+	{
+		return std::make_shared<ci::Buffer>( ci::loadFile( mSystemNameToPath["ArialMT"] ) );
+		
+		if( mSystemNameToPath.find( family ) != mSystemNameToPath.end() ) 
+			return std::make_shared<ci::Buffer>( ci::loadFile( mSystemNameToPath[family] ) );
+		else
+			return ci::BufferRef();
 	}
 
 #endif

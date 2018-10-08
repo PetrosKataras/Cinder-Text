@@ -3,7 +3,7 @@
 
 #include "cinder/Log.h"
 
-#include "harfbuzz/hb-ft.h"
+#include "hb-ft.h"
 
 namespace txt
 {

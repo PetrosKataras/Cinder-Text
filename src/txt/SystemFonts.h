@@ -30,7 +30,8 @@ namespace txt
 			SystemFonts();
 
 			void listFaces();
-			std::map < std::string, std::vector < std::string>> mFaces;
+			std::map<std::string,std::vector<std::string>> 	mFaces;
+			std::map<std::string,ci::fs::path>				mSystemNameToPath;
 
 			std::string mDefaultFamily;
 			std::string mDefaultStyle;

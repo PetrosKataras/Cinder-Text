@@ -21,8 +21,8 @@ namespace txt
 			{}
 
 			Unit( float value, UnitType type = UnitType::PX )
+				: mIsDefault( true )
 			{
-				Unit::Unit();
 				setValue( value, type );
 			}
 

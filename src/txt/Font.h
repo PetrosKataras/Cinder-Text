@@ -25,7 +25,7 @@ namespace txt
 				         && mSize == other.mSize );
 			}
 
-			Font& Font::operator=( const Font& other )
+			Font& operator=( const Font& other )
 			{
 				mFaceId = other.mFaceId;
 				mSize = other.mSize;

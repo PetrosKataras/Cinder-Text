@@ -3,7 +3,7 @@
 #include <memory>
 #include <string>
 
-#include "harfbuzz/hb.h"
+#include "hb.h"
 #include "cinder/Vector.h"
 
 #include "txt/Font.h"

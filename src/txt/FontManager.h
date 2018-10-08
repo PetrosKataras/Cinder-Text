@@ -3,7 +3,7 @@
 #include <memory>
 #include <unordered_map>
 
-#include <freetype2\ft2build.h>
+#include "freetype/ft2build.h"
 #include FT_FREETYPE_H
 #include <freetype/ftcache.h>
 
@@ -47,7 +47,7 @@ namespace txt
 			return match;
 		}
 
-		FaceFamilyAndStyle& FaceFamilyAndStyle::operator=( const Font& other )
+		FaceFamilyAndStyle& operator=( const Font& other )
 		{
 			return *this;
 		}
@@ -112,7 +112,7 @@ namespace txt
 			float getLineHeight( const Font& font );
 
 			FT_Face getFace( const Font& font );
-			FT_Face getFace( uint32_t faceId );
+			FT_Face getFace( size_t faceId );
 			FT_Face getFace( FTC_FaceID faceId );
 
 			FT_Size getSize( const Font& font );
@@ -131,8 +131,8 @@ namespace txt
 			static void checkForFTError( FT_Error error, std::string description );
 			static const char* getFTErrorMessage( FT_Error error );
 
-			uint32_t getFaceId( const ci::fs::path& path );
-			uint32_t getFaceId( std::string family, std::string style );
+			size_t getFaceId( const ci::fs::path& path );
+			size_t getFaceId( std::string family, std::string style );
 
 			void loadFace( const FaceFamilyAndStyle& familyStyle );
 			void removeFace( FTC_FaceID id );

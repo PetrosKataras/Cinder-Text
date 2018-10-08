@@ -4,7 +4,7 @@
 #include <stack>
 #include <iostream>
 
-#include "harfbuzz/hb.h"
+#include "hb.h"
 #include "rapidxml/rapidxml.hpp"
 
 #include "cinder/Color.h"

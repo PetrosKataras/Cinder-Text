@@ -1,14 +1,14 @@
 #include "txt/FontManager.h"
 
 #ifdef CINDER_MSW
-#include <ShellScalingAPI.h>
+	#include <ShellScalingAPI.h>
 #endif
 
 #include "cinder/app/App.h"
 #include "cinder/Log.h"
 #include "cinder/gl/Context.h"
 
-#include "harfbuzz/hb-ft.h"
+#include "hb-ft.h"
 
 #include "txt/SystemFonts.h"
 
@@ -82,7 +82,7 @@ namespace txt
 			mFacePathsForFaceID[id] = path.string();
 
 			// Load the face family/style values
-			FaceFamilyAndStyle familyStyleFromFace( getFace( ( uint32_t )id ) );
+			FaceFamilyAndStyle familyStyleFromFace( getFace( ( size_t )id ) );
 			FaceFamilyAndStyle familyStyleFromUser( family, style );
 
 			// If user didn't provide a fonts family or style try to use the values in the face
@@ -104,7 +104,7 @@ namespace txt
 		return getFace( font.mFaceId );
 	}
 
-	FT_Face FontManager::getFace( uint32_t faceId )
+	FT_Face FontManager::getFace( size_t faceId )
 	{
 		return getFace( ( FTC_FaceID )faceId );
 	}
@@ -131,7 +131,8 @@ namespace txt
 	{
 		FT_Size ftSize;
 		FT_Error error;
-		error = FTC_Manager_LookupSize( mFTCacheManager, ( FTC_Scaler ) &getScaler( font ), &ftSize );
+		FTC_ScalerRec_ scaler = getScaler( font );
+		error = FTC_Manager_LookupSize( mFTCacheManager, ( FTC_Scaler ) &scaler, &ftSize );
 
 		std::stringstream errorMessage;
 		errorMessage << "Could not lookup size for face " << font.mFaceId << " at size " << std::to_string( font.mSize ) << ".";
@@ -179,7 +180,8 @@ namespace txt
 		//FT_Glyph glyph;
 		FT_Glyph glyph;
 		FT_Error error;
-		error = FTC_ImageCache_LookupScaler( mFTCImageCache, ( FTC_Scaler ) &getScaler( font ), NULL, glyphIndex, ( FT_Glyph* )&glyph, NULL );
+		FTC_ScalerRec_ scaler = getScaler( font );
+		error = FTC_ImageCache_LookupScaler( mFTCImageCache, &scaler, NULL, glyphIndex, ( FT_Glyph* )&glyph, NULL );
 
 		std::stringstream errorMessage;
 		errorMessage << "Could not get glyph " << glyphIndex << " for face " << font.mFaceId << ".";
@@ -193,7 +195,8 @@ namespace txt
 		//FT_Glyph glyph;
 		FT_BitmapGlyph glyph;
 		FT_Error error;
-		error = FTC_ImageCache_LookupScaler( mFTCImageCache, ( FTC_Scaler ) &getScaler( font ), FT_LOAD_RENDER | FT_RENDER_MODE_NORMAL, glyphIndex, ( FT_Glyph* )&glyph, NULL );
+		FTC_ScalerRec_ scaler = getScaler( font );
+		error = FTC_ImageCache_LookupScaler( mFTCImageCache, &scaler, FT_LOAD_RENDER | FT_RENDER_MODE_NORMAL, glyphIndex, ( FT_Glyph* )&glyph, NULL );
 
 		std::stringstream errorMessage;
 		errorMessage << "Could not get glyph " << glyphIndex << " for face " << font.mFaceId << ".";
@@ -319,16 +322,16 @@ namespace txt
 		mFaceIDsForFamilyAndStyle[familyStyle] = id;
 	}
 
-	uint32_t FontManager::getFaceId( const ci::fs::path& path )
+	size_t FontManager::getFaceId( const ci::fs::path& path )
 	{
 		if( mFaceIDsForPaths.count( path.string() ) == 0 ) {
 			loadFace( path );
 		}
 
-		return ( uint32_t )mFaceIDsForPaths[path.string()];
+		return (size_t)mFaceIDsForPaths[path.string()];
 	}
 
-	uint32_t FontManager::getFaceId( std::string family, std::string style )
+	size_t FontManager::getFaceId( std::string family, std::string style )
 	{
 		FaceFamilyAndStyle familyStyle( family, style );
 
@@ -336,7 +339,7 @@ namespace txt
 			loadFace( familyStyle );
 		}
 
-		return ( uint32_t )mFaceIDsForFamilyAndStyle[familyStyle];
+		return (size_t)mFaceIDsForFamilyAndStyle[familyStyle];
 	}
 
 	void FontManager::loadFace( const FaceFamilyAndStyle& familyStyle )
@@ -348,7 +351,7 @@ namespace txt
 
 			registerFamilyStyleForFaceID( familyStyle, faceId );
 
-			getFace( ( uint32_t )faceId );
+			getFace( (size_t)faceId );
 		}
 	}
 

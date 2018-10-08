@@ -2,15 +2,15 @@
 
 #include <string.h>
 
-#include "harfbuzz/hb.h"
+#include "hb.h"
 
 #include "cinder/app/App.h"
 #include <cinder/Unicode.h>
 
 #include "txt/FontManager.h"
 
-#include "libunibreak\linebreak.h"
-#include "libunibreak\wordbreak.h"
+//#include "libunibreak\linebreak.h"
+//#include "libunibreak\wordbreak.h"
 
 namespace txt
 {
@@ -18,22 +18,22 @@ namespace txt
 	{
 		std::string separatorSpaces;
 		separatorSpaces += ' '; // SPACE
-		separatorSpaces += '\u00A0'; // NO-BREAK SPACE
-		separatorSpaces += '\u1680'; // OGHAM SPACE MARK
-		separatorSpaces += '\u2000'; // EN QUAD
-		separatorSpaces += '\u2001'; // EM QUAD
-		separatorSpaces += '\u2002'; // EN SPACE
-		separatorSpaces += '\u2003'; // EM SPACE
-		separatorSpaces += '\u2004'; // THREE-PER-EM SPACE
-		separatorSpaces += '\u2005'; // FOUR-PER-EM SPACE
-		separatorSpaces += '\u2006'; // SIX-PER-EM SPACE
-		separatorSpaces += '\u2007'; // FIGURE SPACE
-		separatorSpaces += '\u2008'; // PUNCTUATION SPACE
-		separatorSpaces += '\u2009'; // THIN SPACE
-		separatorSpaces += '\u200A'; // HAIR SPACE
-		separatorSpaces += '\u202F'; // NARROW NO-BREAK SPACE
-		separatorSpaces += '\u205F'; // MEDIUM MATHEMATICAL SPACE
-		separatorSpaces += '\u3000'; // IDEOGRAPHIC SPACE
+		separatorSpaces += u'\u00A0'; // NO-BREAK SPACE
+		separatorSpaces += u'\u1680'; // OGHAM SPACE MARK
+		separatorSpaces += u'\u2000'; // EN QUAD
+		separatorSpaces += u'\u2001'; // EM QUAD
+		separatorSpaces += u'\u2002'; // EN SPACE
+		separatorSpaces += u'\u2003'; // EM SPACE
+		separatorSpaces += u'\u2004'; // THREE-PER-EM SPACE
+		separatorSpaces += u'\u2005'; // FOUR-PER-EM SPACE
+		separatorSpaces += u'\u2006'; // SIX-PER-EM SPACE
+		separatorSpaces += u'\u2007'; // FIGURE SPACE
+		separatorSpaces += u'\u2008'; // PUNCTUATION SPACE
+		separatorSpaces += u'\u2009'; // THIN SPACE
+		separatorSpaces += u'\u200A'; // HAIR SPACE
+		separatorSpaces += u'\u202F'; // NARROW NO-BREAK SPACE
+		separatorSpaces += u'\u205F'; // MEDIUM MATHEMATICAL SPACE
+		separatorSpaces += u'\u3000'; // IDEOGRAPHIC SPACE
 
 		std::vector<uint32_t> separatorSpaceIndices = FontManager::get()->getGlyphIndices( font, separatorSpaces );
 
@@ -329,7 +329,7 @@ namespace txt
 			}
 
 			// Create a layout glyph and add to run
-			Layout::Glyph glyph = { shapedGlyphs[i].index, glyphBBox, bitmapGlyph->top, shapedGlyphs[i].text };
+			Layout::Glyph glyph = { shapedGlyphs[i].index, glyphBBox, (unsigned int)bitmapGlyph->top, shapedGlyphs[i].text };
 			run.glyphs.push_back( glyph );
 
 			// Check for forced line breaks
