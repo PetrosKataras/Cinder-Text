@@ -75,7 +75,7 @@ namespace text
 			Layout& setFont( const Font& font ) { mFont = font; return *this; }
 
 			const ci::Color& getColor() const { return mColor; }
-			Layout& setColor( const ci::Color& color ) { mColor = color; }
+			Layout& setColor( const ci::Color& color ) { mColor = color; return *this; }
 
 			const ci::vec2& getSize() const { return mSize; }
 			Layout& setSize( ci::vec2 size ) { mSize = size; return *this; }

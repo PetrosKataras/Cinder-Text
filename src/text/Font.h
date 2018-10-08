@@ -21,7 +21,7 @@ struct Font {
 
 	bool operator==( const Font& other ) const
 	{
-		return ( mFaceId == other.mFaceId && mSize == other.mSize );
+		return mFaceId == other.mFaceId && mSize == other.mSize;
 	}
 
 	Font& operator=( const Font& other )
@@ -55,21 +55,21 @@ struct DefaultFont : public Font {
 } // namespace text
 
 // Hash Function
-namespace std
-{
-	template <>
-	struct hash<text::Font> {
-		std::size_t operator()( const text::Font& k ) const
-		{
-			using std::size_t;
-			using std::hash;
-			using std::string;
+namespace std {
 
-			// Compute individual hash values for first,
-			// second and third and combine them using XOR
-			// and bit shifting:
-			return ( ( hash<uint32_t>()( (uint32_t)k.getFaceId() )
-			           ^ ( hash<unsigned int>()( k.getSize() ) << 1 ) ) >> 1 );
-		}
-	};
+template <>
+struct hash<text::Font> {
+	std::size_t operator()( const text::Font& k ) const
+	{
+		using std::size_t;
+		using std::hash;
+		using std::string;
+
+		// Compute individual hash values for first,
+		// second and third and combine them using XOR
+		// and bit shifting:
+		return ( ( hash<uint32_t>()( (uint32_t)k.getFaceId() ) ^ ( hash<unsigned int>()( k.getSize() ) << 1 ) ) >> 1 );
+	}
+};
+
 } // namespace std
