@@ -9,55 +9,49 @@
 #include "text/TextLayout.h"
 #include "text/TextRenderer.h"
 
-namespace text
-{
-	namespace gl
-	{
-		class TextureRenderer
-			: public text::Renderer
-		{
-			public:
-				TextureRenderer();
+namespace text { namespace gl {
 
-				//void draw( const std::string& text, const ci::vec2& size = ci::vec2( 0 ) ) override;
-				//void draw( const std::string& text, const Font& font, const ci::vec2 size = ci::vec2( 0 ) ) override;
-				void draw() override;
-				void setLayout( const text::Layout& layout ) override;
-				void setOffset( ci::vec2 offset ) { mOffset = offset; }
+class TextureRenderer : public text::Renderer {
+  public:
+	TextureRenderer();
 
-				static void loadFont( const Font& font );
-				static void unloadFont( const Font& font );
+	//void draw( const std::string& text, const ci::vec2& size = ci::vec2( 0 ) ) override;
+	//void draw( const std::string& text, const Font& font, const ci::vec2 size = ci::vec2( 0 ) ) override;
+	void draw() override;
+	void setLayout( const text::Layout& layout ) override;
+	void setOffset( ci::vec2 offset ) { mOffset = offset; }
 
-				ci::gl::TextureRef getTexture();
+	static void loadFont( const Font& font );
+	static void unloadFont( const Font& font );
 
-			protected:
+	ci::gl::TextureRef getTexture();
 
+  protected:
+	// Font + Glyph Caching (shared between all instances)
+	typedef struct {
+		ci::gl::Texture3dRef texArray;
+		unsigned int layer;
+		ci::vec2 subTexSize;
+	} GlyphCache;
 
-				// Font + Glyph Caching (shared between all instances)
-				typedef struct {
-					ci::gl::Texture3dRef texArray;
-					unsigned int layer;
-					ci::vec2 subTexSize;
-				} GlyphCache;
+	typedef struct {
+		std::map<uint32_t, GlyphCache > glyphs;
+	} FontCache;
 
-				typedef struct {
-					std::map<uint32_t, GlyphCache > glyphs;
-				} FontCache;
+  private:
+	// Texture (FBO) caching
+	ci::vec2 mOffset; // amount to offset texture in FBO
+	void renderToFbo();
+	void allocateFbo( int size );
+	ci::gl::FboRef mFbo;
 
-			private:
-				// Texture (FBO) caching
-				ci::vec2 mOffset; // amount to offset texture in FBO
-				void renderToFbo();
-				void allocateFbo( int size );
-				ci::gl::FboRef mFbo;
+	ci::gl::BatchRef mBatch;
 
-				ci::gl::BatchRef mBatch;
+	FontCache& getCacheForFont( const Font& font );
+	static void cacheFont( const Font& font );
+	static void uncacheFont( const Font& font );
 
-				FontCache& getCacheForFont( const Font& font );
-				static void cacheFont( const Font& font );
-				static void uncacheFont( const Font& font );
+	static std::unordered_map<Font, FontCache> fontCache;
+};
 
-				static std::unordered_map<Font, FontCache> fontCache;
-		};
-	}
-}
+} } // namespace text::gl

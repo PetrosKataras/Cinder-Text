@@ -1,32 +1,32 @@
 #pragma once
 
-#include <string>
-#include <cinder/Vector.h>
-
+#include "cinder/Vector.h"
 #include "text/TextLayout.h"
 
-namespace text
-{
-	class Renderer;
-	typedef std::shared_ptr<Renderer> RendererRef;
+#include <string>
 
-	class Renderer
-	{
-		public:
-			Renderer() {}
+namespace text {
 
-			//void draw( const Layout& layout )
-			//{
-			//	mLayout = layout;
-			//	draw();
-			//}
+class Renderer;
+typedef std::shared_ptr<Renderer> RendererRef;
 
-			virtual void draw() = 0;
+class Renderer {
+  public:
+	Renderer() {}
 
-			virtual void setLayout( const Layout& layout ) { mLayout = layout; }
-			virtual const Layout& getLayout( const Layout& layout ) { return mLayout; }
+	//void draw( const Layout& layout )
+	//{
+	//	mLayout = layout;
+	//	draw();
+	//}
 
-		protected:
-			Layout mLayout;
-	};
-}
+	virtual void draw() = 0;
+
+	virtual void setLayout( const Layout& layout ) { mLayout = layout; }
+	virtual const Layout& getLayout( const Layout& layout ) { return mLayout; }
+
+  protected:
+	Layout mLayout;
+};
+
+} // namespace text
