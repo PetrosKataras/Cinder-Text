@@ -4,9 +4,9 @@
 #include "cinder/FileWatcher.h"
 #include "cinder/Utilities.h"
 
-#include "txt/FontManager.h"
-#include "txt/gl/TextureRenderer.h"
-#include "txt/TextLayout.h"
+#include "cinder/text/FontManager.h"
+#include "cinder/text/gl/TextureRenderer.h"
+#include "cinder/text/TextLayout.h"
 
 #include "cinder/Unicode.h"
 
@@ -30,10 +30,10 @@ class CinderProjectApp : public App
 		void updateLayout();
 		void textFileUpdated( const ci::WatchEvent& event );
 
-		std::shared_ptr<txt::Font> mFont;
+		std::shared_ptr<text::Font> mFont;
 
-		txt::gl::TextureRenderer mRenderer;
-		txt::Layout mLayout;
+		text::gl::TextureRenderer mRenderer;
+		text::Layout mLayout;
 
 		int mFontSize = 24.f;
 		float mTracking = 0.f;
@@ -81,9 +81,9 @@ void CinderProjectApp::setup()
 {
 	setWindowSize( 1024.f, 768.f );
 
-	mFont = std::make_shared<txt::Font>( ci::app::loadAsset( fontName ), mFontSize );
-	txt::gl::TextureRenderer::loadFont( *mFont );
-	txt::gl::TextureRenderer::loadFont( *mFont ); // Testing caching, should be nearly a no-op
+	mFont = std::make_shared<text::Font>( ci::app::loadAsset( fontName ), mFontSize );
+	text::gl::TextureRenderer::loadFont( *mFont );
+	text::gl::TextureRenderer::loadFont( *mFont ); // Testing caching, should be nearly a no-op
 	//mLineHeight = mFont->getLineHeight();
 
 	ci::FileWatcher::instance().watch( ci::app::getAssetPath( testTextFilename ), std::bind( &CinderProjectApp::textFileUpdated, this, std::placeholders::_1 ) );
@@ -110,7 +110,7 @@ void CinderProjectApp::draw()
 
 void CinderProjectApp::updateLayout()
 {
-	mFont = std::make_shared<txt::Font>( ci::app::loadAsset( fontName ), mFontSize );
+	mFont = std::make_shared<text::Font>( ci::app::loadAsset( fontName ), mFontSize );
 
 	mLayout.setFont( *mFont );
 	mLayout.setSize( mTextBoxSize );
@@ -119,7 +119,7 @@ void CinderProjectApp::updateLayout()
 	mLayout.setScript( mScript );
 	mLayout.setDirection( mDirection );
 	//mLayout.setLineHeight( mLineHeight );
-	mLayout.setLineHeight( txt::Unit( mLineHeight, txt::EM ) );
+	mLayout.setLineHeight( text::Unit( mLineHeight, text::EM ) );
 	mLayout.calculateLayout( mTestText );
 
 	mRenderer.setLayout( mLayout );
@@ -169,20 +169,20 @@ void CinderProjectApp::textFileUpdated( const ci::WatchEvent& watchEvent )
 void CinderProjectApp::keyDown( KeyEvent event )
 {
 	if( event.getChar() == KeyEvent::KEY_1 ) {
-		mLayout.setAlignment( txt::Alignment::LEFT );
+		mLayout.setAlignment( text::Alignment::LEFT );
 	}
 
 	else if( event.getCode() == KeyEvent::KEY_2 ) {
-		mLayout.setAlignment( txt::Alignment::CENTER );
+		mLayout.setAlignment( text::Alignment::CENTER );
 	}
 
 	else if( event.getCode() == KeyEvent::KEY_3 ) {
-		mLayout.setAlignment( txt::Alignment::RIGHT );
+		mLayout.setAlignment( text::Alignment::RIGHT );
 	}
 
 	else if( event.getCode() == KeyEvent::KEY_4 ) {
 
-		mLayout.setAlignment( txt::Alignment::JUSTIFIED );
+		mLayout.setAlignment( text::Alignment::JUSTIFIED );
 	}
 
 	else if( event.getCode() == KeyEvent::KEY_UP ) {
