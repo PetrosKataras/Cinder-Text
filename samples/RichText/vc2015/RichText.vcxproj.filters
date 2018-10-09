@@ -16,8 +16,11 @@
     <Filter Include="Blocks">
       <UniqueIdentifier>{42b07dc1-adfa-42a7-bbcb-dc77c87d1d6c}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Blocks\Cinder-Typography">
+    <Filter Include="Blocks\Cinder-Text">
       <UniqueIdentifier>{ae578ec7-f1da-4058-bdd9-0e9e425b3b21}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Blocks\Cinder-Text\gl">
+      <UniqueIdentifier>{74b72703-7311-48a5-ba9c-8b189aba10e6}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -30,61 +33,61 @@
     <ClInclude Include="..\include\Resources.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClCompile Include="..\..\..\src\txt\AttributedString.cpp">
-      <Filter>Blocks\Cinder-Typography</Filter>
+    <ClCompile Include="..\..\..\src\cinder\text\AttributedString.cpp">
+      <Filter>Blocks\Cinder-Text</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\txt\Font.cpp">
-      <Filter>Blocks\Cinder-Typography</Filter>
+    <ClCompile Include="..\..\..\src\cinder\text\Font.cpp">
+      <Filter>Blocks\Cinder-Text</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\txt\FontManager.cpp">
-      <Filter>Blocks\Cinder-Typography</Filter>
+    <ClCompile Include="..\..\..\src\cinder\text\FontManager.cpp">
+      <Filter>Blocks\Cinder-Text</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\txt\Shaper.cpp">
-      <Filter>Blocks\Cinder-Typography</Filter>
+    <ClCompile Include="..\..\..\src\cinder\text\Shaper.cpp">
+      <Filter>Blocks\Cinder-Text</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\txt\SystemFonts.cpp">
-      <Filter>Blocks\Cinder-Typography</Filter>
+    <ClCompile Include="..\..\..\src\cinder\text\SystemFonts.cpp">
+      <Filter>Blocks\Cinder-Text</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\txt\TextBox.cpp">
-      <Filter>Blocks\Cinder-Typography</Filter>
+    <ClCompile Include="..\..\..\src\cinder\text\TextBox.cpp">
+      <Filter>Blocks\Cinder-Text</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\txt\TextLayout.cpp">
-      <Filter>Blocks\Cinder-Typography</Filter>
+    <ClCompile Include="..\..\..\src\cinder\text\TextLayout.cpp">
+      <Filter>Blocks\Cinder-Text</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\txt\gl\TextureRenderer.cpp">
-      <Filter>Blocks\Cinder-Typography</Filter>
+    <ClCompile Include="..\..\..\src\cinder\text\gl\TextureRenderer.cpp">
+      <Filter>Blocks\Cinder-Text\gl</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\Resources.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\txt\AttributedString.h">
-      <Filter>Blocks\Cinder-Typography</Filter>
+    <ClInclude Include="..\..\..\src\cinder\text\AttributedString.h">
+      <Filter>Blocks\Cinder-Text</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\txt\Font.h">
-      <Filter>Blocks\Cinder-Typography</Filter>
+    <ClInclude Include="..\..\..\src\cinder\text\Font.h">
+      <Filter>Blocks\Cinder-Text</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\txt\FontManager.h">
-      <Filter>Blocks\Cinder-Typography</Filter>
+    <ClInclude Include="..\..\..\src\cinder\text\FontManager.h">
+      <Filter>Blocks\Cinder-Text</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\txt\Shaper.h">
-      <Filter>Blocks\Cinder-Typography</Filter>
+    <ClInclude Include="..\..\..\src\cinder\text\Shaper.h">
+      <Filter>Blocks\Cinder-Text</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\txt\SystemFonts.h">
-      <Filter>Blocks\Cinder-Typography</Filter>
+    <ClInclude Include="..\..\..\src\cinder\text\SystemFonts.h">
+      <Filter>Blocks\Cinder-Text</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\txt\TextBox.h">
-      <Filter>Blocks\Cinder-Typography</Filter>
+    <ClInclude Include="..\..\..\src\cinder\text\TextBox.h">
+      <Filter>Blocks\Cinder-Text</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\txt\TextLayout.h">
-      <Filter>Blocks\Cinder-Typography</Filter>
+    <ClInclude Include="..\..\..\src\cinder\text\TextLayout.h">
+      <Filter>Blocks\Cinder-Text</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\txt\gl\TextureRenderer.h">
-      <Filter>Blocks\Cinder-Typography</Filter>
+    <ClInclude Include="..\..\..\src\cinder\text\TextRenderer.h">
+      <Filter>Blocks\Cinder-Text</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\txt\TextRenderer.h">
-      <Filter>Blocks\Cinder-Typography</Filter>
+    <ClInclude Include="..\..\..\src\cinder\text\TextUnits.h">
+      <Filter>Blocks\Cinder-Text</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
