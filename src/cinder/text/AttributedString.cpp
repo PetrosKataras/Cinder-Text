@@ -1,4 +1,5 @@
 #include "cinder/app/App.h"
+#include "cinder/Utilities.h"
 #include "cinder/text/AttributedString.h"
 #include "cinder/text/Font.h"
 #include "cinder/text/FontManager.h"
@@ -177,7 +178,7 @@ void RichTextParser::parseNode( rapidxml::xml_node<>* node )
 		if( node->value_size() != 0 ) {
 			mSubstrings.push_back( AttributedString::Substring( node->value(), mAttributesStack.top() ) );
 		}
-		else if( strcasecmp( node->name(), ATTR_LINE_BREAK ) == 0 ) {
+		else if( asciiCaseEqual( node->name(), ATTR_LINE_BREAK ) == 0 ) {
 			if( !mSubstrings.size() ) {
 				mSubstrings.push_back( AttributedString::Substring( "\n", mAttributesStack.top() ) );
 			}
