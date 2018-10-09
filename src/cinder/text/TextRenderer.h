@@ -1,5 +1,6 @@
 #pragma once
 
+#include "cinder/gl/Texture.h"
 #include "cinder/Vector.h"
 #include "cinder/text/TextLayout.h"
 
@@ -21,12 +22,16 @@ class Renderer {
 	//}
 
 	virtual void draw() = 0;
+	void setSize( ci::ivec2 size ) { mSize = size; };
+	void setSize( int x, int y ) { mSize = ivec2( x, y ); };
 
-	virtual void setLayout( const Layout& layout ) { mLayout = layout; }
-	virtual const Layout& getLayout( const Layout& layout ) { return mLayout; }
+	//virtual void setLayout( const Layout& layout ) { mLayout = layout; }
+	//virtual const Layout& getLayout( const Layout& layout ) { return mLayout; }
+	virtual ci::gl::TextureRef render( const ci::text::Layout& layout ) = 0;
 
   protected:
-	Layout mLayout;
+	//Layout mLayout;
+	ci::ivec2 mSize;
 };
 
 } } // namespace cinder::text

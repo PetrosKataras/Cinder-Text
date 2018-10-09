@@ -100,7 +100,7 @@ void TextureFontApp::draw()
 	
 	gl::color( 1.0, 0.0, 0.0);
 	//mTextBox.draw();
-	mRenderer.draw();
+	//mRenderer.draw();
 
 
 	for( int i = 0; i < mFontTextures.size(); i++ ) {

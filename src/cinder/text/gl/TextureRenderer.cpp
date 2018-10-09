@@ -55,12 +55,11 @@ void main( void )
 
 	color = vec4(1.0, 1.0, 1.0, texColor.r);
 	color = color * globalColor;
-	//color = vec4(1.0,0.0,0.0,1.0);
+	color = vec4(1.0,0.0,0.0,1.0);
 }
 )V0G0N";
 
 TextureRenderer::TextureRenderer()
-	: mOffset( ci::vec2() )
 {
 	ci::gl::GlslProgRef shader = ci::gl::GlslProg::create( vertShader, fragShader );
 	shader->uniform( "uTexArray", 0 );
@@ -70,7 +69,7 @@ TextureRenderer::TextureRenderer()
 	}
 }
 
-void TextureRenderer::setLayout( const Layout& layout )
+/*void TextureRenderer::setLayout( const Layout& layout )
 {
 	mLayout = layout;
 	allocateFbo( std::max( mLayout.measure().x, mLayout.measure().y ) );
@@ -84,8 +83,6 @@ ci::gl::TextureRef TextureRenderer::getTexture()
 
 void TextureRenderer::allocateFbo( int size )
 {
-	
-
 	if( mFbo == nullptr || mFbo->getWidth() < size || mFbo->getHeight() < size ) {
 		// Go up by pow2 until we get the new size
 		int fboSize = 1;
@@ -114,7 +111,7 @@ void TextureRenderer::allocateFbo( int size )
 	}
 }
 
-void TextureRenderer::renderToFbo()
+void TextureRenderer::renderToFbo( const cinder::text::Layout& layout )
 {
 	if( mFbo ) {
 		// Set viewport
@@ -128,7 +125,7 @@ void TextureRenderer::renderToFbo()
 
 		ci::gl::ScopedBlendAlpha alpha;
 
-		for( auto& line : mLayout.getLines() ) {
+		for( auto& line : layout.getLines() ) {
 			for( auto& run : line.runs ) {
 				ci::gl::color( ci::ColorA( run.color, run.opacity ) );
 
@@ -158,6 +155,45 @@ void TextureRenderer::renderToFbo()
 			}
 		}
 	}
+}*/
+
+void TextureRenderer::render( const cinder::text::Layout& layout )
+{
+	render( layout.getLines() );
+}
+
+void TextureRenderer::render( const std::vector<cinder::text::Layout::Line>& lines )
+{
+	for( auto& line : lines ) {
+		for( auto& run : line.runs ) {
+		
+			ci::gl::color( ci::ColorA( run.color, run.opacity ) );
+
+			for( auto& glyph : run.glyphs ) {
+				// Make sure we have the glyph
+				if( TextureRenderer::getCacheForFont( run.font ).glyphs.count( glyph.index ) != 0 ) {
+					ci::gl::ScopedMatrices matrices;
+
+					ci::gl::translate( ci::vec2( glyph.bbox.getUpperLeft() ) );
+					ci::gl::scale( glyph.bbox.getSize().x, glyph.bbox.getSize().y );
+
+					//ci::gl::ScopedBlendAlpha alphaBlend;
+					mBatch->getGlslProg()->uniform( "uLayer", getCacheForFont( run.font ).glyphs[glyph.index].layer );
+
+					ci::gl::Texture3dRef tex = getCacheForFont( run.font ).glyphs[glyph.index].texArray;
+
+					//ci::vec2 subTexSize = glyph.bbox.getSize() / ci::vec2( tex->getWidth(), tex->getHeight() );
+					mBatch->getGlslProg()->uniform( "uSubTexSize", getCacheForFont( run.font ).glyphs[glyph.index].subTexSize );
+
+					ci::gl::ScopedTextureBind texBind( tex, 0 );
+					mBatch->draw();
+				}
+				else {
+					//ci::app::console() << "Could not find glyph for index: " << glyph.index << std::endl;
+				}
+			}
+		}
+	}
 }
 
 //void TextureRenderer::draw( const std::string& string, const ci::vec2& frame )
@@ -174,13 +210,13 @@ void TextureRenderer::renderToFbo()
 //	draw( layout );
 //}
 
-void TextureRenderer::draw()
+/*void TextureRenderer::draw()
 {
 	if( mFbo ) {
 		ci::gl::ScopedBlendPremult blend;
 		ci::gl::draw( mFbo->getColorTexture() );
 	}
-}
+}*/
 
 void TextureRenderer::loadFont( const Font& font )
 {

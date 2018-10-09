@@ -80,7 +80,7 @@ class Layout {
 	const ci::vec2& getSize() const { return mSize; }
 	Layout& setSize( ci::vec2 size ) { mSize = size; return *this; }
 
-	const ci::vec2 measure();
+	const ci::vec2 measure() const;
 
 	const std::vector<ci::Rectf>& getGlyphBoxes() const { return mGlyphBoxes; }
 	const std::vector<Layout::Glyph>& getGlyphMap() const { return mGlyphMap; }

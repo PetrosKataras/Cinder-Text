@@ -3,10 +3,10 @@
 
 namespace cinder { namespace text {
 
-TextBox::TextBox()
+/*TextBox::TextBox()
 	: TextBox( ci::vec2( cinder::text::GROW, cinder::text::GROW ) )
-{}
-
+{}*/
+/*
 TextBox::TextBox( ci::vec2 size, RendererRef renderer )
 	: mFont( DefaultFont() )
 	, mSize( size )
@@ -15,7 +15,7 @@ TextBox::TextBox( ci::vec2 size, RendererRef renderer )
 	, mNeedsLayout( true )
 	, mExternalAttributedString( false )
 {
-}
+}*/
 
 ci::ivec2 TextBox::getSize()
 {
@@ -72,6 +72,7 @@ TextBox& TextBox::layoutIfNeeded()
 {
 	if( mNeedsLayout ) {
 		doLayout();
+		mRenderer->render( mLayout );
 	}
 
 	return *this;
@@ -85,7 +86,7 @@ TextBox& TextBox::doLayout()
 
 	mLayout.setSize( mSize );
 	mLayout.calculateLayout( mAttrString );
-	mRenderer->setLayout( mLayout );
+	//mRenderer->setLayout( mLayout );
 	mNeedsLayout = false;
 
 	return *this;

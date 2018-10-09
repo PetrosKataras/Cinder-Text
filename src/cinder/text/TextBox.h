@@ -11,7 +11,7 @@ class TextBox
 {
   public:
 	TextBox();
-	TextBox( ci::vec2 size, RendererRef renderer = std::make_shared<cinder::text::gl::TextureRenderer>() );
+	//TextBox( ci::vec2 size, RendererRef renderer = std::make_shared<cinder::text::gl::TextureRenderer>() );
 
 	ci::ivec2 getSize();
 	TextBox& setSize( ci::vec2 size );

@@ -110,7 +110,7 @@ void Layout::resetLayout()
 	mLayoutSize = mSize;
 }
 
-const ci::vec2 Layout::measure()
+const ci::vec2 Layout::measure() const
 {
 	ci::vec2 size( mSize );
 

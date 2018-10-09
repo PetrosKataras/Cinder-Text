@@ -77,6 +77,10 @@ class TextureFont
 	TextureFont::Format								mFormat;
 	std::string										mSupportedChars;
 	text::gl::TextureRenderer						mRenderer;
+	ci::gl::FboRef									mFbo;
+
+	void renderLayout( const cinder::text::Layout& layout );
+	void allocateFbo();
 
 	/*
 	public:

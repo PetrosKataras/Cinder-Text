@@ -13,6 +13,33 @@ void TextureFont::setLayout( const Layout& layout )
 {
 	mLayout = layout;
 	mLayout.setUseLigatures( true );
+	allocateFbo();
+}
+
+void TextureFont::allocateFbo()
+{
+	// Allocate
+	ci::gl::Fbo::Format fboFormat;
+	ci::gl::Texture::Format texFormat;
+	texFormat.setMagFilter( GL_NEAREST );
+	texFormat.setMinFilter( GL_LINEAR );
+	texFormat.enableMipmapping( mFormat.hasMipmapping() );
+	fboFormat.setColorTextureFormat( texFormat );
+
+	mFbo = ci::gl::Fbo::create( mFormat.getTextureWidth(), mFormat.getTextureHeight(), fboFormat );
+}
+
+void TextureFont::renderLayout( const cinder::text::Layout& layout )
+{
+	ci::gl::ScopedViewport viewportScope( 0, 0, mFbo->getWidth(), mFbo->getHeight() );
+	ci::gl::ScopedMatrices matricesScope;
+	ci::gl::setMatricesWindow( mFbo->getSize(), true );
+
+	// Draw text into FBO
+	ci::gl::ScopedFramebuffer fboScoped( mFbo );
+	ci::gl::clear( ci::ColorA( 0.0, 0.0, 0.0, 0.0 ) );
+
+	mRenderer.render( layout );
 }
 
 void TextureFont::drawGlyphs()
@@ -64,12 +91,7 @@ void TextureFont::drawGlyphs()
 	*/
 	
 
-
-
-
-//	ci::gl::Texture::Format textureFormat = ci::gl::Texture::Format();
-//	textureFormat.enableMipmapping( mFormat.hasMipmapping() );
-	mRenderer.enableMipmapping( mFormat.hasMipmapping() );
+	
 
 	bool finished = false;
 	while (!finished) {
@@ -78,13 +100,11 @@ void TextureFont::drawGlyphs()
 
 		// calculate layout
 		mLayout.calculateLayout( chars );
-		renderer.setLayout( mLayout );
+		renderLayout( mLayout );
 		auto lines = mLayout.getLines();
 
 		int curTextureIndex = mTextures.size();
-		mTextures.push_back( renderer.getTexture() );
-		//ci::gl::Texture2d tex = ci::gl::Texture::create( renderer.getTexture() )
-
+		mTextures.push_back( mFbo->getColorTexture() );
 
 		float lineHeight = mLayout.getFont().getLineHeight();
 		float highestPoint = 0;
