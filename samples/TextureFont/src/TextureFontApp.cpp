@@ -2,9 +2,9 @@
 #include "cinder/app/RendererGl.h"
 #include "cinder/gl/gl.h"
 
-#include "txt/TextBox.h"
-#include "txt/TextLayout.h"
-#include "txt/FontTexture.h"
+#include "cinder/text/TextBox.h"
+#include "cinder/text/TextLayout.h"
+#include "cinder/text/TextureFont.h"
 
 using namespace ci;
 using namespace ci::app;
@@ -17,14 +17,14 @@ class TextureFontApp : public App {
 	void update() override;
 	void draw() override;
 
-	txt::Layout mLayout;
-	txt::gl::TextureRenderer mRenderer;
+	text::Layout mLayout;
+	text::gl::TextureRenderer mRenderer;
 	ci::Rectf mTextBox = ci::Rectf( vec2(), vec2( 1024.f ) );
-	txt::AttributedString mAttrStr;
+	text::AttributedString mAttrStr;
 
 	vector<gl::TextureRef>	mFontTextures;
 	gl::BatchRef			mRectBatch;
-	std::unordered_map<int16_t, txt::FontTexture::GlyphInfo>		mGlyphMap;
+	std::unordered_map<int16_t, text::TextureFont::GlyphInfo>		mGlyphMap;
 	//std::unordered_map<ci::Font::Glyph, GlyphInfo>	mGlyphMap;
 };
 
@@ -32,9 +32,9 @@ void TextureFontApp::setup()
 {
 	//std::string	chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnooppqrstuvwxyz1234567890().?!,:;'\"&*=+-/\\@#_[]<>%^ftllflfiphrids\xC3\xA0\303\221\xEF\xAC\x81\xEF\xAC\x82";
 	//std::string	chars = "A B C D E F G H I J K L M N O P Q R S T U V W X Y Z a b c d e f g h i j k l m n o p p q r s t u v w x y z 1 2 3 4 5 6 7 8 9 0";
-	//mAttrStr << chars << txt::AttributeFontFamily( "Arial" ) << txt::AttributeFontSize( 36.f );
+	//mAttrStr << chars << text::AttributeFontFamily( "Arial" ) << text::AttributeFontSize( 36.f );
 
-	//mLayout.setFont( txt::Font( "Arial", 36 ) );
+	//mLayout.setFont( text::Font( "Arial", 36 ) );
 	//mLayout.setSize( mTextBox.getSize() );
 	//mLayout.calculateLayout( mAttrStr );
 	//mRenderer.setLayout( mLayout );
@@ -47,10 +47,10 @@ void TextureFontApp::setup()
 	float superSampling = 8.0f;
 	float fontSize = 24.0f * superSampling;
 
-	//auto font = std::make_shared<txt::Font>( "Arial", fontSize );
-	//auto font = std::make_shared<txt::Font>( ci::app::loadAsset( "fonts/SourceSansPro/SourceSansPro-Regular.otf" ), fontSize );
-	auto font = std::make_shared<txt::Font>( ci::app::loadAsset( "fonts/NotoSerif/NotoSerif-Medium.ttf" ), fontSize );
-	txt::gl::TextureRenderer::loadFont( *font );
+	//auto font = std::make_shared<text::Font>( "Arial", fontSize );
+	//auto font = std::make_shared<text::Font>( ci::app::loadAsset( "fonts/SourceSansPro/SourceSansPro-Regular.otf" ), fontSize );
+	auto font = std::make_shared<text::Font>( ci::app::loadAsset( "fonts/Noto_Serif/NotoSerif-Regular.ttf" ), fontSize );
+	text::gl::TextureRenderer::loadFont( *font );
 
 	mLayout.setFont( *font );
 	mLayout.setSize( layoutSize );
@@ -59,7 +59,7 @@ void TextureFontApp::setup()
 	//mLayout.setScript( mScript );
 	//mLayout.setDirection( mDirection );
 	//mLayout.setLineHeight( mLineHeight );
-	//mLayout.setLineHeight( txt::Unit( mLineHeight, txt::EM ) );
+	//mLayout.setLineHeight( text::Unit( mLineHeight, text::EM ) );
 	//mLayout.calculateLayout( mTestText );
 
 	//mRenderer.setLayout( mLayout );
@@ -69,10 +69,10 @@ void TextureFontApp::setup()
 
 	bool mipmap = true;
 	//std::string chars = "ABCabc";
-	auto fontTexture = txt::FontTexture::create( txt::FontTexture::Format().enableMipmapping( mipmap ).textureWidth( layoutSize.x ).textureHeight( layoutSize.y ) );
+	auto fontTexture = text::TextureFont::create( text::TextureFont::Format().enableMipmapping( mipmap ).textureWidth( layoutSize.x ).textureHeight( layoutSize.y ) );
 	//fontTexture->setFont( *font );
 	//fontTexture->setTracking( mTracking );
-	//fontTexture->setLineHeight( txt::Unit( mLineHeight, txt::EM ) );
+	//fontTexture->setLineHeight( text::Unit( mLineHeight, text::EM ) );
 	fontTexture->setLayout( mLayout );
 	fontTexture->drawGlyphs();
 	

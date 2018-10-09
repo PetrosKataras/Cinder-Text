@@ -6,37 +6,31 @@
 #include "cinder/gl/Batch.h"
 #include "cinder/gl/Fbo.h"
 
-#include "txt/TextLayout.h"
-#include "txt/TextRenderer.h"
+#include "cinder/text/TextLayout.h"
+#include "cinder/text/TextRenderer.h"
 
-namespace txt
-{
-namespace gl
-{
-class TextureRenderer
-	: public txt::Renderer
-{
+namespace cinder { namespace text { namespace gl {
+
+class TextureRenderer : public cinder::text::Renderer {
   public:
 	TextureRenderer();
 
 	//void draw( const std::string& text, const ci::vec2& size = ci::vec2( 0 ) ) override;
 	//void draw( const std::string& text, const Font& font, const ci::vec2 size = ci::vec2( 0 ) ) override;
 	void draw() override;
-	void setLayout( const txt::Layout& layout ) override;
+	void setLayout( const cinder::text::Layout& layout ) override;
 	void setOffset( ci::vec2 offset ) { mOffset = offset; }
 
 	static void loadFont( const Font& font );
 	static void unloadFont( const Font& font );
 
 	//! Enables or disables mipmapping. Default is disabled.
-	void enableMipmapping( bool enable = true ) { mMipmapping = enable; }
-	//! Returns whether the TextureFont texture has mipmapping enabled
-	bool hasMipmapping() const { return mMipmapping; }
+ 	void enableMipmapping( bool enable = true ) { mMipmapping = enable; }
+ 	bool hasMipmapping() const { return mMipmapping; }
 
 	ci::gl::TextureRef getTexture();
 
   protected:
-
 	// Font + Glyph Caching (shared between all instances)
 	typedef struct {
 		ci::gl::Texture3dRef texArray;
@@ -50,7 +44,7 @@ class TextureRenderer
 
 	bool		mMipmapping { false };
 
-	private:
+  private:
 	// Texture (FBO) caching
 	ci::vec2 mOffset; // amount to offset texture in FBO
 	void renderToFbo();
@@ -66,4 +60,4 @@ class TextureRenderer
 	static std::unordered_map<Font, FontCache> fontCache;
 };
 
-} } // namespace txt:gl
+} } } // namespace cinder::text::gl

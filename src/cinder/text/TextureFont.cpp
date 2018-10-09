@@ -1,21 +1,21 @@
-#include "FontTexture.h"
+#include "cinder/text/TextureFont.h"
 #include "cinder/gl/Texture.h"
 #include "cinder/Log.h"
+#include "cinder/text/TextLayout.h"
 
 using namespace ci;
 using namespace std;
 using namespace ci::app;
 
-namespace txt
-{
+namespace cinder { namespace text {
 
-void FontTexture::setLayout( const Layout& layout )
+void TextureFont::setLayout( const Layout& layout )
 {
 	mLayout = layout;
 	mLayout.setUseLigatures( true );
 }
 
-void FontTexture::drawGlyphs()
+void TextureFont::drawGlyphs()
 {
 	mTextures.clear();
 	std::string chars = std::string( mSupportedChars );
@@ -74,7 +74,7 @@ void FontTexture::drawGlyphs()
 	bool finished = false;
 	while (!finished) {
 		
-		txt::gl::TextureRenderer renderer;
+		text::gl::TextureRenderer renderer;
 
 		// calculate layout
 		mLayout.calculateLayout( chars );
@@ -302,4 +302,4 @@ void FontTexture::drawGlyphs()
 	}*/
 }
 
-}
+} } // namespace cinder::text

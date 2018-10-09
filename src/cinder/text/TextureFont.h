@@ -1,15 +1,14 @@
 #pragma once
 #include "cinder/app/App.h"
 #include "cinder/gl/gl.h"
-#include "txt/TextLayout.h"
-#include "txt/gl/TextureRenderer.h"
+#include "cinder/text/TextLayout.h"
+#include "cinder/text/gl/TextureRenderer.h"
 
+namespace cinder { namespace text {
 
-namespace txt
-{
-typedef std::shared_ptr<class FontTexture>	FontTextureRef;
+typedef std::shared_ptr<class TextureFont>	TextureFontRef;
 
-class FontTexture
+class TextureFont
 {
   public:
 
@@ -50,19 +49,19 @@ class FontTexture
 	};
 
 	    //! Creates a new PangoTextureFontRef with font \a font, ensuring that glyphs necessary to render \a supportedChars are renderable, and format \a format
-	static FontTextureRef create( const Format &format = Format(), const std::string &supportedChars = FontTexture::defaultChars() )
-	{ return FontTextureRef( new FontTexture( format, supportedChars ) ); }
+	static TextureFontRef create( const Format &format = Format(), const std::string &supportedChars = TextureFont::defaultChars() )
+	{ return TextureFontRef( new TextureFont( format, supportedChars ) ); }
 
-	FontTexture( const Format &format, const std::string &supportedChars ) : 
+	TextureFont( const Format &format, const std::string &supportedChars ) : 
 		mFormat( format ), 
 		mSupportedChars( supportedChars )
 	{}
-	~FontTexture() {};
+	~TextureFont() {};
 
-	void setLayout( const txt::Layout& layout );
+	void setLayout( const text::Layout& layout );
 	void drawGlyphs();
 	//! Returns the current set of characters along with its location into the set of textures
-	const std::unordered_map<int16_t, txt::FontTexture::GlyphInfo>& getGlyphMap() const { return mGlyphMap; }
+	const std::unordered_map<int16_t, text::TextureFont::GlyphInfo>& getGlyphMap() const { return mGlyphMap; }
 	//! Returns the vector of gl::TextureRef corresponding to each page of the atlas
 	const std::vector<ci::gl::TextureRef>& getTextures() const { return mTextures; }
 
@@ -73,11 +72,11 @@ class FontTexture
 	
 	Layout mLayout;
 	std::vector<ci::gl::Texture2dRef>				mTextures;
-	std::unordered_map<int16_t, txt::FontTexture::GlyphInfo>		mGlyphMap;
+	std::unordered_map<int16_t, text::TextureFont::GlyphInfo>		mGlyphMap;
 	//std::unordered_map<ci::Font::Glyph, GlyphInfo>	mGlyphMap;
-	FontTexture::Format								mFormat;
+	TextureFont::Format								mFormat;
 	std::string										mSupportedChars;
-	txt::gl::TextureRenderer						mRenderer;
+	text::gl::TextureRenderer						mRenderer;
 
 	/*
 	public:
@@ -136,4 +135,4 @@ class FontTexture
 	std::string										mSupportedChars;*/
 };
 
-} // namespace txt
+} } // namespace cinder::text

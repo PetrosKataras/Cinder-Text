@@ -4,9 +4,9 @@
 #include "cinder/FileWatcher.h"
 #include "cinder/Utilities.h"
 
-#include "txt/FontManager.h"
-#include "txt/TextLayout.h"
-#include "txt/gl/TextureRenderer.h"
+#include "cinder/text/FontManager.h"
+#include "cinder/text/TextLayout.h"
+#include "cinder/text/gl/TextureRenderer.h"
 
 using namespace ci;
 using namespace ci::app;
@@ -25,13 +25,13 @@ class RichTextApp : public App
 
 		//std::string mAttrText = "<span font-family=\"HelveticaRounded LT Std Blk\" font-style=\"Black\">This is system \ntext</span><span font-family=\"Source Serif Pro\" font-style=\"Regular\" font-size=\"20\" color=\"#ff0000\"><span font-size=\"20\">Ligatures like \"fi tf\"</span> This is a test of mixing<br/>font attributes like <i>italics</i>, <span color=\"#0000FF\">color</span> and <b>Bold!</b> </span><span font-family=\"Source Serif Pro\"> Here is some white serif text at <span font-size=\"30\">different</span><span font-size=\"10\"> sizes</span></span>";
 
-		txt::Layout mLayout;
-		txt::gl::TextureRenderer mRenderer;
+		cinder::text::Layout mLayout;
+		cinder::text::gl::TextureRenderer mRenderer;
 
 		ci::Rectf mTextBox;
 
 		// Base font, need to remove this, shouldn't be required
-		std::shared_ptr<txt::Font> mBaseFont;
+		std::shared_ptr<cinder::text::Font> mBaseFont;
 
 		std::string testTextFilename = "text/richText.txt";
 
@@ -43,12 +43,12 @@ void RichTextApp::setup()
 
 	mTextBox = ci::Rectf( 50, 50, 1024.f, 1024.f );
 
-	mBaseFont = std::make_shared<txt::Font>( loadAsset( ( "fonts/SourceSansPro/SourceSansPro-Regular.otf" ) ), 12 );
+	mBaseFont = std::make_shared<cinder::text::Font>( loadAsset( ( "fonts/SourceSansPro/SourceSansPro-Regular.otf" ) ), 12 );
 
 	// Load font faces to use with rich text
-	txt::FontManager::get()->loadFace( getAssetPath( "fonts/SourceSansPro/SourceSansPro-Regular.otf" ) );
-	txt::FontManager::get()->loadFace( getAssetPath( "fonts/SourceSansPro/SourceSansPro-It.otf" ) );
-	txt::FontManager::get()->loadFace( getAssetPath( "fonts/SourceSansPro/SourceSansPro-Bold.otf" ) );
+	cinder::text::FontManager::get()->loadFace( getAssetPath( "fonts/SourceSansPro/SourceSansPro-Regular.otf" ) );
+	cinder::text::FontManager::get()->loadFace( getAssetPath( "fonts/SourceSansPro/SourceSansPro-It.otf" ) );
+	cinder::text::FontManager::get()->loadFace( getAssetPath( "fonts/SourceSansPro/SourceSansPro-Bold.otf" ) );
 
 	ci::FileWatcher::instance().watch( ci::app::getAssetPath( testTextFilename ), std::bind( &RichTextApp::textFileUpdated, this, std::placeholders::_1 ) );
 }
@@ -64,13 +64,13 @@ void RichTextApp::update()
 void RichTextApp::textFileUpdated( const ci::WatchEvent& watchEvent )
 {
 	// Layout text
-	txt::RichText richText( ci::loadString( ci::loadFile( watchEvent.getFile() ) ) );
-	txt::AttributedString attr( richText );
+	cinder::text::RichText richText( ci::loadString( ci::loadFile( watchEvent.getFile() ) ) );
+	cinder::text::AttributedString attr( richText );
 
-	//attr << txt::AttributeFontFamily( "test" )
-	//     << txt::AttributeFontStyle( "italic" )
-	//     << txt::AttributeFontSize( 28 )
-	//     << txt::RichText( "HELLO!" );
+	//attr << cinder::text::AttributeFontFamily( "test" )
+	//     << cinder::text::AttributeFontStyle( "italic" )
+	//     << cinder::text::AttributeFontSize( 28 )
+	//     << cinder::text::RichText( "HELLO!" );
 
 	mLayout.setSize( mTextBox.getSize() );
 	mLayout.calculateLayout( attr );
