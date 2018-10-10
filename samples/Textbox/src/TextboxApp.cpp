@@ -4,7 +4,7 @@
 #include "cinder/FileWatcher.h"
 #include "cinder/Utilities.h"
 
-#include "txt/TextBox.h"
+#include "cinder/text/TextBox.h"
 
 using namespace ci;
 using namespace ci::app;
@@ -22,7 +22,7 @@ class TextboxApp : public App
 		//std::string testTextFilename = "text/simplifiedChinese.txt";
 		std::string testTextFilename = "text/english.txt";
 
-		txt::TextBox mTextBox;
+		text::TextBox mTextBox;
 };
 
 void TextboxApp::setup()
@@ -30,8 +30,8 @@ void TextboxApp::setup()
 	//txt::Font font( loadAsset( "fonts/SourceSerifPro/SourceSerifPro-Regular.otf" ), 12 );
 	//txt::Font font( loadAsset( "fonts/NotoSans/NotoSans-Regular.ttf" ), 12 );
 	//txt::Font font( loadAsset( "fonts/NotoChinese/NotoSansCJKsc-Medium.otf" ), 12 );
-	mTextBox.setSize( ci::vec2( 450, txt::GROW ) )
-	.setFont( txt::Font( "Arial", 12 ) );
+	mTextBox.setSize( ci::vec2( 450, text::GROW ) )
+	.setFont( text::Font( "Arial", 12 ) );
 	//.setFont( font );
 
 	ci::FileWatcher::instance().watch( ci::app::getAssetPath( testTextFilename ), std::bind( &TextboxApp::textFileUpdated, this, std::placeholders::_1 ) );
