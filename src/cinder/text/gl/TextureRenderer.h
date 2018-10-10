@@ -32,6 +32,7 @@ class TextureRenderer : public cinder::text::Renderer {
 		ci::gl::Texture3dRef texArray;
 		unsigned int layer;
 		ci::vec2 subTexSize;
+		ci::vec2 subTexOffset;
 	} GlyphCache;
 
 	typedef struct {

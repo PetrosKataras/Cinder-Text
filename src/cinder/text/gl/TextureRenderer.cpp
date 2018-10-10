@@ -40,6 +40,7 @@ const char* fragShader = R"V0G0N(
 uniform sampler2DArray uTexArray;
 uniform uint uLayer;
 uniform vec2 uSubTexSize;
+uniform vec2 uSubTexOffset;
 
 in vec2 texCoord;
 in vec4 globalColor;
@@ -50,7 +51,7 @@ out vec4 color;
 
 void main( void )
 { 
-	vec3 coord = vec3(texCoord.x * uSubTexSize.x, texCoord.y * uSubTexSize.y, uLayer);
+	vec3 coord = vec3((texCoord.x * uSubTexSize.x) + uSubTexOffset.x, (texCoord.y * uSubTexSize.y) + uSubTexOffset.y, uLayer);
 	vec4 texColor = texture( uTexArray, coord );
 
 	color = vec4(1.0, 1.0, 1.0, texColor.r);
@@ -146,6 +147,7 @@ void TextureRenderer::renderToFbo()
 
 						//ci::vec2 subTexSize = glyph.bbox.getSize() / ci::vec2( tex->getWidth(), tex->getHeight() );
 						mBatch->getGlslProg()->uniform( "uSubTexSize", getCacheForFont( run.font ).glyphs[glyph.index].subTexSize );
+						mBatch->getGlslProg()->uniform( "uSubTexOffset", getCacheForFont( run.font ).glyphs[glyph.index].subTexOffset );
 
 						ci::gl::ScopedTextureBind texBind( tex, 0 );
 						mBatch->draw();
@@ -209,6 +211,8 @@ void TextureRenderer::cacheFont( const Font& font )
 	GLint maxLayersPerArray;
 	glGetIntegerv( GL_MAX_ARRAY_TEXTURE_LAYERS, &maxLayersPerArray );
 
+	GLint maxTextureSize = 1024;
+
 	// Get the total number of glyphs
 	std::vector<uint32_t> glyphIndices = cinder::text::FontManager::get()->getGlyphIndices( font );
 	unsigned int numGlyphs = glyphIndices.size();
@@ -228,18 +232,23 @@ void TextureRenderer::cacheFont( const Font& font )
 
 	unsigned int curLayer = 0;
 	unsigned int totalLayers = 0;
+	unsigned int gridX = 0;
+	unsigned int gridY = 0;
 
 	// Go through each glyph and cache
-	for( auto& glyphIndex : cinder::text::FontManager::get()->getGlyphIndices( font ) ) {
+	for( auto& glyphIndex : cinder::text::FontManager::get()->getGlyphIndices( font ) ) 
+	{
 
 		// Check to see if we need a new texture
 		if( !curTexArray || curLayer >= maxLayersPerArray ) {
 			unsigned int distFromTotal = numGlyphs - totalLayers;
 
 			unsigned int numLayers = distFromTotal >= maxLayersPerArray ? maxLayersPerArray : distFromTotal;
-			curTexArray = ci::gl::Texture3d::create( maxGlyphSize.x, maxGlyphSize.y, numLayers, format );
+			curTexArray = ci::gl::Texture3d::create(maxTextureSize, maxTextureSize, numLayers, format );
 
 			curLayer = 0;
+			gridX = 0;
+			gridY = 0;
 		}
 
 		// Add the glyph to our cur tex array
@@ -252,15 +261,37 @@ void TextureRenderer::cacheFont( const Font& font )
 		ci::ip::fill( expandedChannel.get(), ( uint8_t )0 );
 		expandedChannel->copyFrom( *flippedChannel, ci::Area( 0, 0, glyphSize.x, glyphSize.y ) );
 
-		ci::Surface8u surface( *expandedChannel );
-		curTexArray->update( surface, curLayer );
+		// pack the glyph into the current texture
+		{
+			ci::gl::ScopedTextureBind tbs( curTexArray->getTarget(), curTexArray->getId() );
 
-		TextureRenderer::fontCache[font].glyphs[glyphIndex].texArray = curTexArray;
-		TextureRenderer::fontCache[font].glyphs[glyphIndex].layer = curLayer;
-		TextureRenderer::fontCache[font].glyphs[glyphIndex].subTexSize = ci::vec2( glyphSize ) / ci::vec2( maxGlyphSize );
+			ci::Surface8u surface( *expandedChannel );
+			int mipLevel = 0;
+			GLint dataFormat;
+			GLenum dataType;
+			ci::gl::TextureBase::SurfaceChannelOrderToDataFormatAndType<uint8_t>( surface.getChannelOrder(), &dataFormat, &dataType );
 
-		curLayer++;
-		totalLayers = totalLayers + 1;
+			int w = surface.getWidth();
+			int h = surface.getHeight();
+			ivec2 mipMapSize = ci::gl::TextureBase::calcMipLevelSize( mipLevel, w, h );
+			curTexArray->update( (void*)surface.getData(), dataFormat, dataType, mipLevel, maxGlyphSize.x, maxGlyphSize.y, 1, gridX, gridY, curLayer );
+
+			TextureRenderer::fontCache[font].glyphs[glyphIndex].texArray = curTexArray;
+			TextureRenderer::fontCache[font].glyphs[glyphIndex].layer = curLayer;
+			TextureRenderer::fontCache[font].glyphs[glyphIndex].subTexOffset = ci::vec2( gridX, gridY ) / ci::vec2( maxTextureSize );
+			TextureRenderer::fontCache[font].glyphs[glyphIndex].subTexSize = ci::vec2( glyphSize ) / ci::vec2( maxTextureSize );
+
+			gridX += w;
+			if( gridX + w >= maxTextureSize ) {
+				gridX = 0;
+				gridY += h;
+				if( gridY + h >= maxTextureSize ) {
+					gridY = 0;
+					curLayer++;
+					totalLayers = totalLayers + 1;
+				}
+			}
+		}		
 	}
 }
 
