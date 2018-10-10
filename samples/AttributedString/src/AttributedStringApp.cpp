@@ -2,9 +2,9 @@
 #include "cinder/app/RendererGl.h"
 #include "cinder/gl/gl.h"
 
-#include "txt/TextLayout.h"
-#include "txt/AttributedString.h"
-#include "txt/gl/TextureRenderer.h"
+#include "cinder/text/TextLayout.h"
+#include "cinder/text/AttributedString.h"
+#include "cinder/text/gl/TextureRenderer.h"
 
 using namespace ci;
 using namespace ci::app;
@@ -18,11 +18,11 @@ class AttributedStringApp : public App
 		void update() override;
 		void draw() override;
 
-		txt::Layout mLayout;
-		txt::gl::TextureRenderer mRenderer;
+		text::Layout mLayout;
+		text::gl::TextureRenderer mRenderer;
 
 		ci::Rectf mTextBox = ci::Rectf( 200.f, 200.f, 1000.f, 1000.f );
-		txt::AttributedString mAttrStr;
+		text::AttributedString mAttrStr;
 
 		std::string testText = "This is a test of a basic string to be drawn in a textbox, testing 12345. This is a test of a basic string to be drawn in a textbox. This is a test of a basic string to be drawn in a textbox. This is a test of a basic string to be drawn in a textbox.";
 };
@@ -31,11 +31,11 @@ void AttributedStringApp::setup()
 {
 	setWindowSize( 1024.f, 768.f );
 
-	mAttrStr << "It's" << txt::AttributeColor( ci::ColorA( 1.0f, 0.f, 1.f ) ) << txt::AttributeFontFamily( "Helvetica" );
-	mAttrStr << " Wednesday" << txt::AttributeColor( ci::ColorA( 1.f, 1.f, 1.f ) )  << txt::AttributeFontStyle( "Italic" );
-	mAttrStr << " my" << txt::AttributeFontStyle( "Regular" ) << txt::AttributeLineBreak();
-	mAttrStr << "Dudes!" << txt::AttributeFontSize( 50.f ) << txt::AttributeFontStyle( "Bold" );
-	mAttrStr << txt::RichText( "<br/><span font-fammily=\"Helvetica\" font-style=\"Italic\" color=\"#ff0000\">Rich Text</span>" );
+	mAttrStr << "It's" << text::AttributeColor( ci::ColorA( 1.0f, 0.f, 1.f ) ) << text::AttributeFontFamily( "Helvetica" );
+	mAttrStr << " Wednesday" << text::AttributeColor( ci::ColorA( 1.f, 1.f, 1.f ) )  << text::AttributeFontStyle( "Italic" );
+	mAttrStr << " my" << text::AttributeFontStyle( "Regular" ) << text::AttributeLineBreak();
+	mAttrStr << "Dudes!" << text::AttributeFontSize( 50.f ) << text::AttributeFontStyle( "Bold" );
+	mAttrStr << text::RichText( "<br/><span font-fammily=\"Helvetica\" font-style=\"Italic\" color=\"#ff0000\">Rich Text</span>" );
 
 	mLayout.setSize( mTextBox.getSize() );
 	mLayout.calculateLayout( mAttrStr );
@@ -69,4 +69,7 @@ void AttributedStringApp::draw()
 	mRenderer.draw();
 }
 
-CINDER_APP( AttributedStringApp, RendererGl )
+CINDER_APP( AttributedStringApp, RendererGl, [&]( App::Settings* settings )
+{
+	//settings->setHighDensityDisplayEnabled( true );
+} )
