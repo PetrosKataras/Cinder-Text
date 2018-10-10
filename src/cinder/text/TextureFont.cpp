@@ -50,6 +50,8 @@ void TextureFont::drawGlyphs()
 	mTextures.clear();
 	std::string chars = std::string( mSupportedChars );
 	
+
+
 	/*
 	// calculate layout
 	mLayout.calculateLayout( chars );

@@ -69,98 +69,8 @@ TextureRenderer::TextureRenderer()
 	}
 }
 
-void TextureRenderer::setLayout( const Layout& layout )
-{
-	mLayout = layout;
-	//allocateFbo( std::max( mLayout.measure().x, mLayout.measure().y ) );
-	//renderToFbo();
-}
-/*
-ci::gl::TextureRef TextureRenderer::getTexture()
-{
-	return mFbo->getColorTexture();
-}
-
-void TextureRenderer::allocateFbo( int size )
-{
-	if( mFbo == nullptr || mFbo->getWidth() < size || mFbo->getHeight() < size ) {
-		// Go up by pow2 until we get the new size
-		int fboSize = 1;
-
-		while( fboSize < size ) {
-			fboSize *= 2;
-		}
-
-		// Allocate
-		ci::gl::Fbo::Format fboFormat;
-		ci::gl::Texture::Format texFormat;
-		texFormat.setMagFilter( GL_NEAREST );
-		texFormat.setMinFilter( GL_LINEAR );
-		texFormat.enableMipmapping( mMipmapping );
-		//fboFormat.setColorTextureFormat( ci::gl::Texture2d::Format().internalFormat( GL_RGBA32F ) );
-		fboFormat.setColorTextureFormat( texFormat );
-
-		GLint maxRenderBufferSize;
-		glGetIntegerv( GL_MAX_RENDERBUFFER_SIZE_EXT, &maxRenderBufferSize );
-		if( fboSize < maxRenderBufferSize ) {
-			mFbo = ci::gl::Fbo::create( fboSize, fboSize, fboFormat );
-		}
-		else {
-			CI_LOG_E( "Cannot allocate FBO, requested dimensions are bigger than maximum render buffer size." );
-		}
-	}
-}*/
-
-void TextureRenderer::renderToFbo()
-{
-	//if( mFbo ) {
-		// Set viewport
-		//ci::gl::ScopedViewport viewportScope( 0, 0, mFbo->getWidth(), mFbo->getHeight() );
-		//ci::gl::ScopedMatrices matricesScope;
-		//ci::gl::setMatricesWindow( mFbo->getSize(), true );
-
-		// Draw text into FBO
-		//ci::gl::ScopedFramebuffer fboScoped( mFbo );
-		//ci::gl::clear( ci::ColorA( 0.0, 0.0, 0.0, 0.0 ) );
-
-		ci::gl::ScopedBlendAlpha alpha;
-		ci::gl::drawSolidRect( ci::Rectf( 0, 0, 100, 100) );
-		for( auto& line : mLayout.getLines() ) {
-			for( auto& run : line.runs ) {
-				ci::gl::color( ci::ColorA( run.color, run.opacity ) );
-
-				for( auto& glyph : run.glyphs ) {
-					// Make sure we have the glyph
-					if( TextureRenderer::getCacheForFont( run.font ).glyphs.count( glyph.index ) != 0 ) {
-						ci::gl::ScopedMatrices matrices;
-
-						ci::gl::translate( ci::vec2( glyph.bbox.getUpperLeft() ) );
-						ci::gl::scale( glyph.bbox.getSize().x, glyph.bbox.getSize().y );
-
-						//ci::gl::ScopedBlendAlpha alphaBlend;
-						mBatch->getGlslProg()->uniform( "uLayer", getCacheForFont( run.font ).glyphs[glyph.index].layer );
-
-						ci::gl::Texture3dRef tex = getCacheForFont( run.font ).glyphs[glyph.index].texArray;
-
-						//ci::vec2 subTexSize = glyph.bbox.getSize() / ci::vec2( tex->getWidth(), tex->getHeight() );
-						mBatch->getGlslProg()->uniform( "uSubTexSize", getCacheForFont( run.font ).glyphs[glyph.index].subTexSize );
-
-						ci::gl::ScopedTextureBind texBind( tex, 0 );
-						mBatch->draw();
-					}
-					else {
-						//ci::app::console() << "Could not find glyph for index: " << glyph.index << std::endl;
-					}
-				}
-			}
-		}
-	//}
-}
-
 void TextureRenderer::render( const cinder::text::Layout& layout )
 {
-	//mLayout = layout;
-	//renderToFbo();
 	render( layout.getLines() );
 }
 
@@ -198,28 +108,6 @@ void TextureRenderer::render( const std::vector<cinder::text::Layout::Line>& lin
 		}
 	}
 }
-
-//void TextureRenderer::draw( const std::string& string, const ci::vec2& frame )
-//{
-//	draw( string, DefaultFont(), frame );
-//}
-
-//void TextureRenderer::draw( const std::string& string, const Font& font, ci::vec2 frame )
-//{
-//	Layout layout;
-//	layout.setSize( frame );
-//	layout.setFont( font );
-//	layout.calculateLayout( string );
-//	draw( layout );
-//}
-
-/*void TextureRenderer::draw()
-{
-	if( mFbo ) {
-		ci::gl::ScopedBlendPremult blend;
-		ci::gl::draw( mFbo->getColorTexture() );
-	}
-}*/
 
 void TextureRenderer::loadFont( const Font& font )
 {

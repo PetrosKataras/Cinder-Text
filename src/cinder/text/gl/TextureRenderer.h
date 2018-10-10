@@ -15,20 +15,8 @@ class TextureRenderer {
   public:
 	TextureRenderer();
 
-	//void draw( const std::string& text, const ci::vec2& size = ci::vec2( 0 ) ) override;
-	//void draw( const std::string& text, const Font& font, const ci::vec2 size = ci::vec2( 0 ) ) override;
-	//void draw() override;
-	void setLayout( const cinder::text::Layout& layout );
-	//void setOffset( ci::vec2 offset ) { mOffset = offset; }
-
 	static void loadFont( const Font& font );
 	static void unloadFont( const Font& font );
-
-	//! Enables or disables mipmapping. Default is disabled.
- 	//void enableMipmapping( bool enable = true ) { mMipmapping = enable; }
- 	//bool hasMipmapping() const { return mMipmapping; }
-
-	//ci::gl::TextureRef getTexture();
 
 	void render( const std::vector<cinder::text::Layout::Line>& lines );
 	void render( const cinder::text::Layout& layout );
@@ -46,18 +34,12 @@ class TextureRenderer {
 	} FontCache;
 
 	bool		mMipmapping { false };
+	FontCache& getCacheForFont( const Font& font );
 
   private:
-	// Texture (FBO) caching
-	//ci::vec2 mOffset; // amount to offset texture in FBO
-	void renderToFbo();
-	//void allocateFbo( int size );
-	//ci::gl::FboRef mFbo;
-	Layout mLayout;
-
 	ci::gl::BatchRef mBatch;
 
-	FontCache& getCacheForFont( const Font& font );
+	
 	static void cacheFont( const Font& font );
 	static void uncacheFont( const Font& font );
 
