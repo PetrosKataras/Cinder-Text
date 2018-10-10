@@ -68,12 +68,12 @@ void TextureFontApp::setup()
 
 
 	bool mipmap = true;
-	//std::string chars = "ABCabc";
+	std::string chars = "ABCabc";
 	auto fontTexture = text::TextureFont::create( text::TextureFont::Format().enableMipmapping( mipmap ).textureWidth( layoutSize.x ).textureHeight( layoutSize.y ) );
-	//fontTexture->setFont( *font );
+	fontTexture->addFont( *font );
 	//fontTexture->setTracking( mTracking );
 	//fontTexture->setLineHeight( text::Unit( mLineHeight, text::EM ) );
-	fontTexture->setLayout( mLayout );
+	//fontTexture->setLayout( mLayout );
 	fontTexture->drawGlyphs();
 	
 	mFontTextures = fontTexture->getTextures();
@@ -109,7 +109,7 @@ void TextureFontApp::draw()
 		auto drawingArea = Area::proportionalFit( Area( mFontTextures[i]->getBounds() ), Area( Rectf( w * float(i), 0.0f, w*float(i) + w, float(getWindowHeight()) ) ), true );
 			
 		gl::ScopedMatrices scpMtrx;
-		gl::translate( drawingArea.getUL() );
+		gl::translate( drawingArea.getUL() + ivec2( i * 2, 0 ) );
 		gl::scale( vec2( float(drawingArea.getWidth()) / tex->getHeight() ) );
 		
 		

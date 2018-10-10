@@ -18,7 +18,7 @@ class TextureRenderer {
 	//void draw( const std::string& text, const ci::vec2& size = ci::vec2( 0 ) ) override;
 	//void draw( const std::string& text, const Font& font, const ci::vec2 size = ci::vec2( 0 ) ) override;
 	//void draw() override;
-	//void setLayout( const cinder::text::Layout& layout ) override;
+	void setLayout( const cinder::text::Layout& layout );
 	//void setOffset( ci::vec2 offset ) { mOffset = offset; }
 
 	static void loadFont( const Font& font );
@@ -50,9 +50,10 @@ class TextureRenderer {
   private:
 	// Texture (FBO) caching
 	//ci::vec2 mOffset; // amount to offset texture in FBO
-	//void renderToFbo( const cinder::text::Layout& layout );
+	void renderToFbo();
 	//void allocateFbo( int size );
 	//ci::gl::FboRef mFbo;
+	Layout mLayout;
 
 	ci::gl::BatchRef mBatch;
 

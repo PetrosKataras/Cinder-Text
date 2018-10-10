@@ -55,15 +55,24 @@ class TextureFont
 	TextureFont( const Format &format, const std::string &supportedChars ) : 
 		mFormat( format ), 
 		mSupportedChars( supportedChars )
-	{}
+	{
+		mLayout.setSize( vec2( mFormat.getTextureWidth(), mFormat.getTextureHeight() ) );
+		mLayout.setUseLigatures( true );
+		allocateFbo();
+	}
 	~TextureFont() {};
 
-	void setLayout( const text::Layout& layout );
+	//void setLayout( const text::Layout& layout );
 	void drawGlyphs();
 	//! Returns the current set of characters along with its location into the set of textures
 	const std::unordered_map<int16_t, text::TextureFont::GlyphInfo>& getGlyphMap() const { return mGlyphMap; }
 	//! Returns the vector of gl::TextureRef corresponding to each page of the atlas
 	const std::vector<ci::gl::TextureRef>& getTextures() const { return mTextures; }
+
+	void addFont( const Font& font ) { 
+		mRenderer.loadFont( font );
+		mLayout.setFont( font );
+	};
 
 
   private:

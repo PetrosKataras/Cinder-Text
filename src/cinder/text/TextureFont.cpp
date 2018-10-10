@@ -9,13 +9,6 @@ using namespace ci::app;
 
 namespace cinder { namespace text {
 
-void TextureFont::setLayout( const Layout& layout )
-{
-	mLayout = layout;
-	mLayout.setUseLigatures( true );
-	allocateFbo();
-}
-
 void TextureFont::allocateFbo()
 {
 	// Allocate
@@ -31,15 +24,25 @@ void TextureFont::allocateFbo()
 
 void TextureFont::renderLayout( const cinder::text::Layout& layout )
 {
-	ci::gl::ScopedViewport viewportScope( 0, 0, mFbo->getWidth(), mFbo->getHeight() );
-	ci::gl::ScopedMatrices matricesScope;
-	ci::gl::setMatricesWindow( mFbo->getSize(), true );
+	if( layout.getGlyphBoxes().size() > 0 )
+	{
+		ci::gl::ScopedViewport viewportScope( 0, 0, mFbo->getWidth(), mFbo->getHeight() );
+		ci::gl::ScopedMatrices matricesScope;
+		ci::gl::setMatricesWindow( mFbo->getSize(), true );
 
-	// Draw text into FBO
-	ci::gl::ScopedFramebuffer fboScoped( mFbo );
-	ci::gl::clear( ci::ColorA( 0.0, 0.0, 0.0, 0.0 ) );
+		// Draw text into FBO
+		ci::gl::ScopedFramebuffer fboScoped( mFbo );
+		ci::gl::clear( ci::ColorA( 0.0, 0.0, 0.0, 0.0 ) );
 
-	mRenderer.render( layout );
+		mRenderer.render( layout );
+
+		// copy texture
+		auto newTex = ci::gl::Texture::create( mFbo->getWidth(), mFbo->getHeight() );
+		ci::gl::ScopedTextureBind scpTex( newTex );
+		glCopyTexSubImage2D( GL_TEXTURE_2D, 0, 0, 0, 0, 0, mFbo->getWidth(), mFbo->getHeight() );
+		glGenerateMipmap( newTex->getTarget() );
+		mTextures.push_back( newTex );
+	}
 }
 
 void TextureFont::drawGlyphs()
@@ -96,15 +99,18 @@ void TextureFont::drawGlyphs()
 	bool finished = false;
 	while (!finished) {
 		
-		text::gl::TextureRenderer renderer;
+		//text::gl::TextureRenderer renderer;
 
 		// calculate layout
+		int curTextureIndex = mTextures.size();
+
 		mLayout.calculateLayout( chars );
 		renderLayout( mLayout );
+
 		auto lines = mLayout.getLines();
 
-		int curTextureIndex = mTextures.size();
-		mTextures.push_back( mFbo->getColorTexture() );
+		
+		
 
 		float lineHeight = mLayout.getFont().getLineHeight();
 		float highestPoint = 0;
