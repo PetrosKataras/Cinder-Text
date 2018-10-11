@@ -22,8 +22,6 @@ public:
 
 	void init( int width, int height );
 
-	bool isAreaAvailable( const ci::Rectf &rect ) const; // TODO: (keep max size in freeRect instead of going through the whole list everytime)
-
 	std::pair<uint32_t, ci::Rectf> insert( const ci::ivec2 &size, bool merge = true );
 	std::pair<uint32_t, ci::Rectf> insert( int width, int height, bool merge = true );
 
@@ -46,86 +44,39 @@ protected:
 
 //////////////////////////////////////////////////////////////////
 
-class TextureArray : public ci::gl::TextureBase {
+class TextureArray {
 public:
-	class Format {
-	public:
-		Format() : mInternalFormat( GL_RGBA8 ), mNumSamples( 0 ), mImmutable( false ) {}
+	
+	static TextureArrayRef create( const ci::ivec3 &size ) { return std::make_shared<TextureArray>( size ); }
 
-		Format&		samples( size_t samples ) { mNumSamples = samples; return *this; }
-		Format&		internalFormat( GLint format ) { mInternalFormat = format; return *this; }
-		Format&		immutable( bool immutable = true ) { mImmutable = immutable; return *this; }
+	TextureArray( const ci::ivec3 &size );
 
-		size_t		getNumSamples() const { return mNumSamples; }
-		GLint		getInternalFormat() const { return mInternalFormat; }
-		bool		isImmutable() const { return mImmutable; }
-	protected:
-		size_t		mNumSamples;
-		GLint		mInternalFormat;
-		bool		mImmutable;
+	struct Region {
+		Region( const ci::Rectf &rect = Rectf::zero(), uint16_t layer = -1 ):
+			rect( rect ), layer( layer )
+		{};
+
+		ci::Rectf rect;
+		int		  layer;
 	};
 
-	//static TextureArrayPtr create( const ci::ivec3 &size, const Format &format = Format() );
-	static TextureArrayRef create( const ci::ivec3 &size, const Format &format = Format() );
-	TextureArray( const ci::ivec3 &size, const Format &format = Format() );
-
-	class Region {
-	public:
-		Region( TextureArray* atlas, const ci::Rectf &rect, uint32_t id, uint16_t page, const ci::ivec2 &padding );
-		~Region();
-
-		ci::vec2 getUpperLeftTexcoord() const;
-		ci::vec2 getLowerRightTexcoord() const;
-
-		ci::Rectf getInnerBounds() const;
-		ci::Rectf getOuterBounds() const;
-
-		uint16_t getPage() const;
-		uint32_t getId() const;
-		ci::vec2 getPadding() const;
-
-		TextureArray* getTextureArray() const;
-
-	protected:
-		uint16_t mPage;
-		uint32_t mId;
-		ci::Rectf mRect;
-		ci::ivec2 mPadding;
-		TextureArray* mParent;
-	};
-
-	using RegionRef = std::shared_ptr<Region>;
-	using RegionPtr = std::unique_ptr<Region>;
-
-	RegionPtr request( const ci::ivec2 &size, const ci::ivec2 &padding = ci::ivec2( 10 ) );
+	Region request( const ci::ivec2 &size, const ci::ivec2 &padding = ci::ivec2( 10 ) );
 
 	//! Returns the width of the texture in pixels, ignoring clean bounds.
-	GLint	getWidth() const override;
+	GLint	getWidth() const { return mSize.x; };
 	//! Returns the height of the texture in pixels, ignoring clean bounds.
-	GLint	getHeight() const override;
+	GLint	getHeight() const { return mSize.y;};
 	//! Returns the depth of the texture in pixels, ignoring clean bounds.
-	GLint	getDepth() const override;
+	GLint	getDepth() const { return mSize.z; };
+	ci::ivec3 getSize() const {	return mSize; }
 
-	ci::ivec3 getSize() const;
-
-	GLuint getId() const;
-	GLenum getTarget() const;
-	GLenum getInternalFormat() const;
-
-	bool isImmutable() const;
-	uint8_t getSamples() const;
-
+	ci::gl::Texture3dRef getTexture() const { return mTexture; }
 	const std::vector<TexturePack>& getTexturePacks() const { return mTexturePacks; }
 
 protected:
-	void printDims( std::ostream &os ) const override;
-	void release( const Region* region );
-	friend class Region;
-
-	ci::ivec3 mSize;
+	ci::ivec3				 mSize;
+	ci::gl::Texture3dRef	 mTexture;
 	std::vector<TexturePack> mTexturePacks;
-	bool mImmutable;
-	uint8_t mSamples;
 };
 
 //////////////////////////////////////////////////////////////////
@@ -144,7 +95,6 @@ class TextureRenderer : public cinder::text::Renderer {
 	static void unloadFont( const Font& font );
 
 	ci::gl::TextureRef getTexture();
-	//const std::vector<TexturePack>& getTexturePacks() const { return mTexturePacks; }
 
 
   protected:
@@ -174,8 +124,6 @@ class TextureRenderer : public cinder::text::Renderer {
 	static void uncacheFont( const Font& font );
 
 	static std::unordered_map<Font, FontCache> fontCache;
-	//static std::map<ci::gl::Texture3dRef, TexturePack> mTexturePacks;
-	//static RegionPtr requestRegion( const ci::ivec2 &size, const ci::ivec2 &padding = ci::ivec2( 10 ) );
 };
 
 class TexturePackOutOfBoundExc : public ci::Exception {

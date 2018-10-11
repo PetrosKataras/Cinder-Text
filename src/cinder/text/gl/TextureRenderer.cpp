@@ -160,7 +160,7 @@ void TextureRenderer::renderToFbo()
 						//ci::gl::ScopedBlendAlpha alphaBlend;
 						mBatch->getGlslProg()->uniform( "uLayer", getCacheForFont( run.font ).glyphs[glyph.index].layer );
 
-						auto tex = getCacheForFont( run.font ).glyphs[glyph.index].texArray;
+						auto tex = getCacheForFont( run.font ).glyphs[glyph.index].texArray->getTexture();
 
 						//ci::vec2 subTexSize = glyph.bbox.getSize() / ci::vec2( tex->getWidth(), tex->getHeight() );
 						mBatch->getGlslProg()->uniform( "uSubTexSize", getCacheForFont( run.font ).glyphs[glyph.index].subTexSize );
@@ -178,19 +178,6 @@ void TextureRenderer::renderToFbo()
 	}
 }
 
-//void TextureRenderer::draw( const std::string& string, const ci::vec2& frame )
-//{
-//	draw( string, DefaultFont(), frame );
-//}
-
-//void TextureRenderer::draw( const std::string& string, const Font& font, ci::vec2 frame )
-//{
-//	Layout layout;
-//	layout.setSize( frame );
-//	layout.setFont( font );
-//	layout.calculateLayout( string );
-//	draw( layout );
-//}
 
 void TextureRenderer::draw()
 {
@@ -238,21 +225,15 @@ void TextureRenderer::cacheFont( const Font& font )
 
 	// Calculate max glyph size and pad out to 4 bytes
 	ci::ivec2 maxGlyphSize = cinder::text::FontManager::get()->getMaxGlyphSize( font );
-	ci::ivec2 padding = ci::ivec2( 4 ) - ( maxGlyphSize % ci::ivec2( 4 ) );
-	maxGlyphSize += padding;
 
-	ci::gl::Texture3d::Format format;
-	format.setTarget( GL_TEXTURE_2D_ARRAY );
-	format.setInternalFormat( GL_RED );
-
-	TextureArrayRef curTexArray = TextureArray::create( ivec3( atlasSize.x, atlasSize.y, layerCount ), TextureArray::Format().internalFormat( GL_RED ) );
+	TextureArrayRef curTexArray = TextureArray::create( ivec3( atlasSize.x, atlasSize.y, layerCount ) );
 
 	// Go through each glyph and cache
 	for( auto& glyphIndex : cinder::text::FontManager::get()->getGlyphIndices( font ) ) 
 	{
 
 		// temporarily limit
-		//if( glyphIndex > 200 )
+		//if( glyphIndex > 100 )
 			//continue;
 			
 		// Add the glyph to our cur tex array
@@ -269,8 +250,6 @@ void TextureRenderer::cacheFont( const Font& font )
 		expandedChannel->copyFrom( *flippedChannel, ci::Area( 0, 0, glyphSize.x, glyphSize.y ) );
 
 		// pack the glyph into the current texture
-		ci::gl::ScopedTextureBind tbs( curTexArray->getTarget(), curTexArray->getId() );
-
 		ci::Surface8u surface( *expandedChannel );
 		int mipLevel = 0;
 		GLint dataFormat;
@@ -280,18 +259,18 @@ void TextureRenderer::cacheFont( const Font& font )
 		int w = surface.getWidth();
 		int h = surface.getHeight();
 
-		auto rect = curTexArray->request( surface.getSize() );
-		if( !rect ) {
-			curTexArray = TextureArray::create( ivec3( atlasSize.x, atlasSize.y, layerCount ), TextureArray::Format().internalFormat( GL_RED ) );
-			rect = curTexArray->request( surface.getSize() );
+		auto region = curTexArray->request( surface.getSize(), ivec2() );
+		if( region.layer < 0 ) {
+			curTexArray = TextureArray::create( ivec3( atlasSize.x, atlasSize.y, layerCount ) );
+			region = curTexArray->request( surface.getSize() );
 		}
 		
-		auto bounds = rect->getInnerBounds();
-		auto offset = bounds.getUpperLeft();
-		auto size = bounds.getSize();
-		auto layer = rect->getPage();
+		ivec2 offset = region.rect.getUpperLeft();
+		ivec2 size = region.rect.getSize();
+		auto layer = region.layer;
 
-		glTexSubImage3D( curTexArray->getTarget(), mipLevel, offset.x, offset.y, layer, size.x, size.y, 1, dataFormat, dataType,  (void*)surface.getData() );
+		auto tex = curTexArray->getTexture();
+		tex->update(  (void*)surface.getData(), dataFormat, dataType, mipLevel, size.x, size.y, 1, offset.x, offset.y, layer );
 		
 		TextureRenderer::fontCache[font].glyphs[glyphIndex].texArray = curTexArray;
 		TextureRenderer::fontCache[font].glyphs[glyphIndex].layer = layer;
@@ -309,21 +288,20 @@ void TextureRenderer::uncacheFont( const Font& font )
 }
 
 
-
 /////
 TexturePack::TexturePack()
 	: mRectangleId( 0 )
-{
-}
+{}
+
 TexturePack::TexturePack( int width, int height )
 	: mRectangleId( 0 )
 {
 	init( width, height );
 }
+
 TexturePack::TexturePack( const ci::ivec2 &size )
 	: TexturePack( size.x, size.y )
-{
-}
+{}
 
 void TexturePack::init( int width, int height )
 {
@@ -491,67 +469,20 @@ void TexturePack::debugDraw() const
 }
 
 
-
 //////////////
 
-/*
-TextureArrayPtr TextureArray::create( const ci::ivec3 &size, const Format &format )
-{
-	return make_unique<TextureArray>( size, format );
-}*/
-
-TextureArrayRef TextureArray::create( const ci::ivec3 &size, const Format &format )
-{
-	return make_shared<TextureArray>( size, format );
-}
-
-TextureArray::TextureArray( const ci::ivec3 &size, const Format &format )
-	: mSize( size ), mImmutable( format.isImmutable() ), mSamples( format.getNumSamples() )
+TextureArray::TextureArray( const ci::ivec3 &size )
+	: mSize( size )
 {
 	mTexturePacks.resize( mSize.z, TexturePack( mSize.x, mSize.y ) );
 
-	mTarget = format.getNumSamples() ? GL_TEXTURE_2D_MULTISAMPLE_ARRAY : GL_TEXTURE_2D_ARRAY;
-	mInternalFormat = format.getInternalFormat();
-
-	GLsizei levels = 1;
-
-	glGenTextures( 1, &mTextureId );
-
-	ci::gl::ScopedTextureBind texBind( mTarget, mTextureId );
-	if( !format.getNumSamples() ) {
-		if( format.isImmutable() ) {
-			glTexStorage3D( mTarget, levels, mInternalFormat, mSize.x, mSize.y, mSize.z );
-		}
-		else {
-			GLenum dataFormat, dataType;
-			ci::gl::TextureBase::getInternalFormatInfo( mInternalFormat, &dataFormat, &dataType );
-			glTexImage3D( mTarget, 0, mInternalFormat, mSize.x, mSize.y, mSize.z, 0, dataFormat, dataType, nullptr );
-		}
-	}
-	else {
-		if( mTarget != GL_TEXTURE_2D_MULTISAMPLE_ARRAY && mTarget != GL_PROXY_TEXTURE_2D_MULTISAMPLE_ARRAY ) {
-			throw ci::gl::Exception( "multisampling not supported on this format: " + ci::gl::constantToString( mTarget ) );
-		}
-
-		if( format.isImmutable() ) {
-			glTexStorage3DMultisample( mTarget, format.getNumSamples(), mInternalFormat, mSize.x, mSize.y, mSize.z, false );
-		}
-		else {
-			glTexImage3DMultisample( mTarget, format.getNumSamples(), mInternalFormat, mSize.x, mSize.y, mSize.z, false );
-		}
-	}
-
-	if( !format.getNumSamples() ) {
-		glTexParameteri( mTarget, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-		glTexParameteri( mTarget, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-	}
-
-	mMipmapping = false;
-	mBaseMipmapLevel = 0;
-	mMaxMipmapLevel = 0;
+	ci::gl::Texture3d::Format format;
+	format.setTarget( GL_TEXTURE_2D_ARRAY );
+	format.setInternalFormat( GL_RED );
+	mTexture = ci::gl::Texture3d::create( size.x, size.y, size.z, format );
 }
 
-TextureArray::RegionPtr TextureArray::request( const ci::ivec2 &size, const ci::ivec2 &padding )
+TextureArray::Region TextureArray::request( const ci::ivec2 &size, const ci::ivec2 &padding )
 {
 	int i = 0;
 	bool filledPages = false;
@@ -560,113 +491,14 @@ TextureArray::RegionPtr TextureArray::request( const ci::ivec2 &size, const ci::
 			filledPages = true;
 
 		try {
-			pair<uint32_t, Rectf> idRect = mTexturePacks[i].insert( size + padding * 2, false );
-			return make_unique<Region>( this, idRect.second, idRect.first, i, padding );
+			pair<uint32_t, Rectf> rect = mTexturePacks[i].insert( size + padding * 2, false );
+			return Region( rect.second, i );
 		}
 		catch( const TexturePackOutOfBoundExc &exc ) {
 			i++;
 		}
 	}
-	return nullptr;
-}
-
-void TextureArray::release( const Region* region )
-{
-	if( region->getPage() < mTexturePacks.size() ) {
-	//	mTexturePacks[region->getPage()].erase( region->getId() );
-	}
-}
-
-GLint TextureArray::getWidth() const
-{
-	return mSize.x;
-}
-GLint TextureArray::getHeight() const
-{
-	return mSize.y;
-}
-GLint TextureArray::getDepth() const
-{
-	return mSize.z;
-}
-
-ci::ivec3 TextureArray::getSize() const
-{
-	return mSize;
-}
-
-void TextureArray::printDims( std::ostream &os ) const
-{
-	os << getSize();
-}
-
-GLuint TextureArray::getId() const
-{
-	return mTextureId;
-}
-GLenum TextureArray::getTarget() const
-{
-	return mTarget;
-}
-GLenum TextureArray::getInternalFormat() const
-{
-	return mInternalFormat;
-}
-
-TextureArray::Region::Region( TextureArray* atlas, const ci::Rectf &rect, uint32_t id, uint16_t page, const ci::ivec2 &padding )
-	: mParent( atlas ), mRect( rect ), mId( id ), mPage( page ), mPadding( padding )
-{
-}
-
-TextureArray::Region::~Region()
-{
-	if( mParent ) {
-		mParent->release( this );
-	}
-}
-
-ci::vec2 TextureArray::Region::getUpperLeftTexcoord() const
-{
-	return getInnerBounds().getUpperLeft() / vec2( mParent->getSize() );
-}
-ci::vec2 TextureArray::Region::getLowerRightTexcoord() const
-{
-	return getInnerBounds().getLowerRight() / vec2( mParent->getSize() );
-}
-
-ci::Rectf TextureArray::Region::getInnerBounds() const
-{
-	return mRect.inflated( -mPadding );
-}
-ci::Rectf TextureArray::Region::getOuterBounds() const
-{
-	return mRect;
-}
-
-uint16_t TextureArray::Region::getPage() const
-{
-	return mPage;
-}
-uint32_t TextureArray::Region::getId() const
-{
-	return mId;
-}
-ci::vec2 TextureArray::Region::getPadding() const
-{
-	return mPadding;
-}
-TextureArray* TextureArray::Region::getTextureArray() const
-{
-	return mParent;
-}
-
-bool TextureArray::isImmutable() const
-{
-	return mImmutable;
-}
-uint8_t TextureArray::getSamples() const
-{
-	return mSamples;
+	return Region();
 }
 
 } } } // namespace cinder::text::gl
