@@ -213,74 +213,14 @@ TextureRenderer::FontCache& TextureRenderer::getCacheForFont( const Font& font )
 }
 
 // Cache glyphs to gl texture array(s)
-void TextureRenderer::cacheFont( const Font& font )
+void TextureRenderer::cacheFont( const Font& font, const std::string chars )
 {
-	// Determine the max number of layers for texture arrays on platform
-	//GLint maxLayersPerArray;
-	//glGetIntegerv( GL_MAX_ARRAY_TEXTURE_LAYERS, &maxLayersPerArray );
-	int layerCount = 1024;
+	// partial font
+	cacheGlyphs( font, chars );
 
-	//ivec3 atlasSize = ivec3( ivec2( glm::max( MIN_ATLAS_SIZE, getMaxTextureSize() / 4 ) ), 1 );
-	ivec2 atlasSize = ivec2( 1024 );
-
-	// Get the total number of glyphs
-	std::vector<uint32_t> glyphIndices = cinder::text::FontManager::get()->getGlyphIndices( font );
-	unsigned int numGlyphs = glyphIndices.size();
-
-	// Calculate max glyph size and pad out to 4 bytes
-	ci::ivec2 maxGlyphSize = cinder::text::FontManager::get()->getMaxGlyphSize( font );
-
-	TextureArrayRef curTexArray = TextureArray::create( ivec3( atlasSize.x, atlasSize.y, layerCount ) );
-
-	// Go through each glyph and cache
-	for( auto& glyphIndex : cinder::text::FontManager::get()->getGlyphIndices( font ) ) 
-	{
-
-		// temporarily limit
-		//if( glyphIndex > 100 )
-			//continue;
-			
-		// Add the glyph to our cur tex array
-		FT_BitmapGlyph glyph = cinder::text::FontManager::get()->getGlyphBitmap( font, glyphIndex );
-		ci::ivec2 glyphSize( glyph->bitmap.width, glyph->bitmap.rows );
-		ci::ivec2 padding = ci::ivec2( 4 ) - ( glyphSize % ci::ivec2( 4 ) );
-
-		ci::ChannelRef channel = ci::Channel::create( glyphSize.x, glyphSize.y, glyphSize.x * sizeof( unsigned char ), sizeof( unsigned char ), glyph->bitmap.buffer );
-		ci::ChannelRef flippedChannel = ci::Channel::create( glyphSize.x, glyphSize.y );
-		ci::ip::fill( flippedChannel.get(), ( uint8_t )0 );
-		ci::ip::flipVertical( *channel, flippedChannel.get() );
-		ci::Channel8uRef expandedChannel = ci::Channel8u::create( glyphSize.x + padding.x, glyphSize.y + padding.y );
-		ci::ip::fill( expandedChannel.get(), ( uint8_t )0 );
-		expandedChannel->copyFrom( *flippedChannel, ci::Area( 0, 0, glyphSize.x, glyphSize.y ) );
-
-		// pack the glyph into the current texture
-		ci::Surface8u surface( *expandedChannel );
-		int mipLevel = 0;
-		GLint dataFormat;
-		GLenum dataType;
-		ci::gl::TextureBase::SurfaceChannelOrderToDataFormatAndType<uint8_t>( surface.getChannelOrder(), &dataFormat, &dataType );
-
-		int w = surface.getWidth();
-		int h = surface.getHeight();
-
-		auto region = curTexArray->request( surface.getSize(), ivec2() );
-		if( region.layer < 0 ) {
-			curTexArray = TextureArray::create( ivec3( atlasSize.x, atlasSize.y, layerCount ) );
-			region = curTexArray->request( surface.getSize() );
-		}
-		
-		ivec2 offset = region.rect.getUpperLeft();
-		ivec2 size = region.rect.getSize();
-		auto layer = region.layer;
-
-		auto tex = curTexArray->getTexture();
-		tex->update(  (void*)surface.getData(), dataFormat, dataType, mipLevel, size.x, size.y, 1, offset.x, offset.y, layer );
-		
-		TextureRenderer::fontCache[font].glyphs[glyphIndex].texArray = curTexArray;
-		TextureRenderer::fontCache[font].glyphs[glyphIndex].layer = layer;
-		TextureRenderer::fontCache[font].glyphs[glyphIndex].subTexOffset = ci::vec2( offset ) / ci::vec2( atlasSize );
-		TextureRenderer::fontCache[font].glyphs[glyphIndex].subTexSize = ci::vec2( size ) / ci::vec2( atlasSize );
-	}
+	// entire font
+	//std::vector<uint32_t> glyphIndices = cinder::text::FontManager::get()->getGlyphIndices( font );
+	//cacheGlyphs( font, glyphIndices );
 }
 
 void TextureRenderer::uncacheFont( const Font& font )
@@ -288,6 +228,10 @@ void TextureRenderer::uncacheFont( const Font& font )
 	if( !TextureRenderer::fontCache.count( font ) ) {
 		std::unordered_map<Font, FontCache>::iterator it = TextureRenderer::fontCache.find( font );
 		TextureRenderer::fontCache.erase( it );
+		
+		// TODO: 
+		// - find region in rect pack and remove rect ref
+		// - find texture layer and location and clear
 	}
 }
 
@@ -343,7 +287,7 @@ void TextureRenderer::cacheGlyphs( const Font& font, const std::vector<uint32_t>
 		ci::ivec2 glyphSize( glyph->bitmap.width, glyph->bitmap.rows );
 		ci::ivec2 padding = ci::ivec2( 4 ) - ( glyphSize % ci::ivec2( 4 ) );
 		
-		auto region = textureArray->request( glyphSize, layerIndex, ivec2(2.0) );
+		auto region = textureArray->request( glyphSize, layerIndex, ivec2( 2.0f ) );
 	
 		// if current layer is full, upload channel to texture, increment layer id, reset channel
 		if( region.layer < 0 ) {
@@ -355,11 +299,10 @@ void TextureRenderer::cacheGlyphs( const Font& font, const std::vector<uint32_t>
 			layerIndex++;
 			
 			// request a new region
-			region = textureArray->request( glyphSize, layerIndex, ivec2(2.0) );
+			region = textureArray->request( glyphSize, layerIndex, ivec2( 2.0f ) );
 		}
 
 		ivec2 offset = region.rect.getUpperLeft();
-		ivec2 size = region.rect.getSize();
 		auto layer = region.layer;
 
 		// fill channel
@@ -388,7 +331,7 @@ void TextureRenderer::cacheGlyphs( const Font& font, const std::vector<uint32_t>
 		TextureRenderer::fontCache[font].glyphs[glyphIndex].texArray = textureArray;
 		TextureRenderer::fontCache[font].glyphs[glyphIndex].layer = layer;
 		TextureRenderer::fontCache[font].glyphs[glyphIndex].subTexOffset = ci::vec2( offset ) / ci::vec2( textureArray->getSize() );
-		TextureRenderer::fontCache[font].glyphs[glyphIndex].subTexSize = ci::vec2( size ) / ci::vec2( textureArray->getSize() );
+		TextureRenderer::fontCache[font].glyphs[glyphIndex].subTexSize = ci::vec2( glyphSize ) / ci::vec2( textureArray->getSize() );
     }
 
     // we need to reflect any characters we haven't uploaded
@@ -627,6 +570,9 @@ TextureArray::Region TextureArray::request( const ci::ivec2 &size, const ci::ive
 
 TextureArray::Region TextureArray::request( const ci::ivec2 &size, int layerIndex, const ci::ivec2 &padding )
 {
+	if( size.x == 0 || size.y == 0 )
+		return Region( Rectf::zero(), layerIndex );
+
 	try {
 		pair<uint32_t, Rectf> rect = mTexturePacks[layerIndex].insert( size + padding * 2, false );
 		return Region( rect.second, layerIndex );

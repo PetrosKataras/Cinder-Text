@@ -124,14 +124,16 @@ class TextureRenderer : public cinder::text::Renderer {
 	ci::gl::BatchRef	mBatch;
 
 	FontCache& getCacheForFont( const Font& font );
-	static void cacheFont( const Font& font );
+	static void cacheFont( const Font& font, const std::string chars = defaultChars() );
 	
 	static void uncacheFont( const Font& font );
 
-	static std::unordered_map<Font, FontCache> fontCache;
-	static TextureArrayRef mTextureArray;
-	static ci::ChannelRef mGlyphChannel;
-	static int mCurrentLayerIdx;
+	static std::string defaultChars() { return "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890().?!,:;'\"&*=+-/\\@#_[]<>%^llflfiphrids\303\251\303\241\303\250\303\240"; }
+
+	static std::unordered_map<Font, FontCache>	fontCache;
+	static TextureArrayRef						mTextureArray;
+	static ci::ChannelRef						mGlyphChannel;
+	static int									mCurrentLayerIdx;
 
 	static TextureArrayRef makeTextureArray();
 	static void uploadChannelToTexture( ci::ChannelRef channel, int layerIndex );
