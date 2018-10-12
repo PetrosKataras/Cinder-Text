@@ -239,11 +239,10 @@ void TextureRenderer::uncacheFont( const Font& font )
 
 TextureArrayRef TextureRenderer::makeTextureArray()
 {
-	//glGetIntegerv( GL_MAX_ARRAY_TEXTURE_LAYERS, &maxLayersPerArray );
-	int layerCount = 1024;
+	int layerCount = 64;
 
 	//ivec3 atlasSize = ivec3( ivec2( glm::max( MIN_ATLAS_SIZE, getMaxTextureSize() / 4 ) ), 1 );
-	ivec2 atlasSize = ivec2( 1024 );
+	ivec2 atlasSize = ivec2( 512 );
 
 	auto texArray = TextureArray::create( ivec3( atlasSize.x, atlasSize.y, layerCount ) );
 	return texArray;
@@ -259,20 +258,30 @@ void TextureRenderer::cacheGlyphs( const Font& font, const std::vector<uint32_t>
 {
     bool dirty = false;
 	
-	// get tex array
-	if( !TextureRenderer::mSharedTexArrayCache.texArray ){
-		TextureRenderer::mSharedTexArrayCache.texArray = makeTextureArray();
+	// get Texture ARray cache based on whether we are using chared coche or not
+	TexArrayCache *texArrayCache;
+	if( TextureRenderer::mSharedCacheEnabled ) {
+		texArrayCache = &TextureRenderer::mSharedTexArrayCache;
 	}
-	auto textureArray = TextureRenderer::mSharedTexArrayCache.texArray;
-
-	if( !TextureRenderer::mSharedTexArrayCache.mGlyphChannel ){
-		TextureRenderer::mSharedTexArrayCache.mGlyphChannel = ci::Channel::create( textureArray->getWidth(), textureArray->getHeight() );
-		ci::ip::fill( TextureRenderer::mSharedTexArrayCache.mGlyphChannel.get(), ( uint8_t )0 );
-		TextureRenderer::mSharedTexArrayCache.mCurrentLayerIdx = 0;
+	else {
+		texArrayCache = &TextureRenderer::fontCache[font].texArrayCache;
 	}
 
-	auto layerChannel = TextureRenderer::mSharedTexArrayCache.mGlyphChannel;
-	int layerIndex = TextureRenderer::mSharedTexArrayCache.mCurrentLayerIdx;
+	// get or create the TextureArray
+	if( !texArrayCache->texArray ){
+		texArrayCache->texArray = makeTextureArray();
+	}
+	auto textureArray = texArrayCache->texArray;
+
+	// get or create the Glyph Channel
+	if( !texArrayCache->mGlyphChannel ){
+		texArrayCache->mGlyphChannel = ci::Channel::create( textureArray->getWidth(), textureArray->getHeight() );
+		ci::ip::fill( texArrayCache->mGlyphChannel.get(), ( uint8_t )0 );
+		texArrayCache->mCurrentLayerIdx = 0;
+	}
+
+	auto layerChannel = texArrayCache->mGlyphChannel;
+	int layerIndex = texArrayCache->mCurrentLayerIdx;
 
     for( auto glyphIndex : glyphIndices ) {
 
@@ -295,12 +304,13 @@ void TextureRenderer::cacheGlyphs( const Font& font, const std::vector<uint32_t>
 		// if current layer is full, upload channel to texture, increment layer id, reset channel
 		if( region.layer < 0 ) {
 			
-			uploadChannelToTexture( TextureRenderer::mSharedTexArrayCache );
+			uploadChannelToTexture( *texArrayCache );
 
 			// clear channel
 			ci::ip::fill( layerChannel.get(), ( uint8_t )0 );
 			layerIndex++;
-			
+			texArrayCache->mCurrentLayerIdx = layerIndex;
+
 			// request a new region
 			region = textureArray->request( glyphSize, layerIndex, ivec2( 2.0f ) );
 		}
@@ -332,19 +342,15 @@ void TextureRenderer::cacheGlyphs( const Font& font, const std::vector<uint32_t>
 		}
 		
 		//TextureRenderer::fontCache[font].glyphs[glyphIndex].texArray = textureArray;
-		TextureRenderer::fontCache[font].texArrayCache = TextureRenderer::mSharedTexArrayCache;
+		TextureRenderer::fontCache[font].texArrayCache = *texArrayCache;
 		TextureRenderer::fontCache[font].glyphs[glyphIndex].layer = layer;
 		TextureRenderer::fontCache[font].glyphs[glyphIndex].subTexOffset = ci::vec2( offset ) / ci::vec2( textureArray->getSize() );
 		TextureRenderer::fontCache[font].glyphs[glyphIndex].subTexSize = ci::vec2( glyphSize ) / ci::vec2( textureArray->getSize() );
     }
 
-	TextureRenderer::mSharedTexArrayCache.mCurrentLayerIdx = layerIndex;
-
     // we need to reflect any characters we haven't uploaded
     if( dirty )
-        uploadChannelToTexture( TextureRenderer::mSharedTexArrayCache );
-
-	
+        uploadChannelToTexture( *texArrayCache );
 }
 
 

@@ -106,7 +106,6 @@ class TextureRenderer : public cinder::text::Renderer {
   protected:
 	// Font + Glyph Caching (shared between all instances)
 	typedef struct {
-		//TextureArrayRef texArray;
 		int layer = -1;
 		ci::vec2 subTexSize;
 		ci::vec2 subTexOffset;
