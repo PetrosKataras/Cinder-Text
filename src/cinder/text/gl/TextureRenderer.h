@@ -52,7 +52,7 @@ public:
 	TextureArray( const ci::ivec3 &size );
 
 	struct Region {
-		Region( const ci::Rectf &rect = Rectf::zero(), uint16_t layer = -1 ):
+		Region( const ci::Rectf &rect = Rectf::zero(), int layer = -1 ):
 			rect( rect ), layer( layer )
 		{};
 
@@ -130,6 +130,8 @@ class TextureRenderer : public cinder::text::Renderer {
 
 	static std::unordered_map<Font, FontCache> fontCache;
 	static TextureArrayRef mTextureArray;
+	static ci::ChannelRef mGlyphChannel;
+	static int mCurrentLayerIdx;
 
 	static TextureArrayRef makeTextureArray();
 	static void uploadChannelToTexture( ci::ChannelRef channel, int layerIndex );
