@@ -92,6 +92,8 @@ class TextureRenderer : public cinder::text::Renderer {
 	void setLayout( const cinder::text::Layout& layout ) override;
 	void setOffset( ci::vec2 offset ) { mOffset = offset; }
 
+	static void enableSharedCaches( bool enable = true ) { mSharedCacheEnabled = enable; };
+
 	static void loadFont( const Font& font );
 	static void unloadFont( const Font& font );
 
@@ -104,14 +106,21 @@ class TextureRenderer : public cinder::text::Renderer {
   protected:
 	// Font + Glyph Caching (shared between all instances)
 	typedef struct {
-		TextureArrayRef texArray;
-		unsigned int layer;
+		//TextureArrayRef texArray;
+		int layer = -1;
 		ci::vec2 subTexSize;
 		ci::vec2 subTexOffset;
 	} GlyphCache;
 
 	typedef struct {
+		TextureArrayRef texArray;
+		ci::ChannelRef	mGlyphChannel;
+		int				mCurrentLayerIdx;
+	} TexArrayCache;
+
+	typedef struct {
 		std::map<uint32_t, GlyphCache > glyphs;
+		TexArrayCache					texArrayCache;
 	} FontCache;
 
   private:
@@ -131,12 +140,17 @@ class TextureRenderer : public cinder::text::Renderer {
 	static std::string defaultChars() { return "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890().?!,:;'\"&*=+-/\\@#_[]<>%^llflfiphrids\303\251\303\241\303\250\303\240"; }
 
 	static std::unordered_map<Font, FontCache>	fontCache;
-	static TextureArrayRef						mTextureArray;
-	static ci::ChannelRef						mGlyphChannel;
-	static int									mCurrentLayerIdx;
+	
+	
+	//static TextureArrayRef						mTextureArray;
+	//static ci::ChannelRef						mGlyphChannel;
+	//static int									mCurrentLayerIdx;
+
+	static TexArrayCache						mSharedTexArrayCache;
+	static bool									mSharedCacheEnabled;
 
 	static TextureArrayRef makeTextureArray();
-	static void uploadChannelToTexture( ci::ChannelRef channel, int layerIndex );
+	static void uploadChannelToTexture( TexArrayCache &texArrayCache );
 };
 
 class TexturePackOutOfBoundExc : public ci::Exception {
