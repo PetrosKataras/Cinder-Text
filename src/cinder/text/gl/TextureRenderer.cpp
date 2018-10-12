@@ -17,6 +17,8 @@ using namespace std;
 namespace cinder { namespace text { namespace gl {
 // Shared font cache
 std::unordered_map<Font, TextureRenderer::FontCache> TextureRenderer::fontCache;
+TextureArrayRef TextureRenderer::mTextureArray;
+
 
 const int MIN_ATLAS_SIZE = 1024;
 
@@ -287,6 +289,175 @@ void TextureRenderer::uncacheFont( const Font& font )
 	}
 }
 
+void TextureRenderer::cacheGlyphs(const Font& font, const std::string string)
+{
+	std::vector<uint32_t> glyphIndices = cinder::text::FontManager::get()->getGlyphIndices( font, string );
+	cacheGlyphs( font, glyphIndices );
+}
+
+TextureArrayRef TextureRenderer::makeTextureArray()
+{
+	//glGetIntegerv( GL_MAX_ARRAY_TEXTURE_LAYERS, &maxLayersPerArray );
+	int layerCount = 1024;
+
+	//ivec3 atlasSize = ivec3( ivec2( glm::max( MIN_ATLAS_SIZE, getMaxTextureSize() / 4 ) ), 1 );
+	ivec2 atlasSize = ivec2( 1024 );
+
+	auto texArray = TextureArray::create( ivec3( atlasSize.x, atlasSize.y, layerCount ) );
+	return texArray;
+}
+
+void TextureRenderer::cacheGlyphs( const Font& font, const std::vector<uint32_t> &glyphIndices )
+{
+    bool dirty = false;
+	
+	// cached glyphs are stored in TextureRenderer::fontCache
+
+	
+	//FT_BitmapGlyph glyph = cinder::text::FontManager::get()->getGlyphBitmap( font, glyphIndex );
+
+	// get tex array
+	if( !TextureRenderer::mTextureArray )
+		TextureRenderer::mTextureArray = makeTextureArray();
+
+	auto textureArray = TextureRenderer::mTextureArray;
+	//TextureArrayRef textureArray = nullptr;
+	
+	int mCurrentLayerIdx = 0;
+	ci::ChannelRef layerChannel = ci::Channel::create( textureArray->getWidth(), textureArray->getHeight() );
+	ci::ip::fill( layerChannel.get(), ( uint8_t )0 );
+
+    for( auto glyphIndex : glyphIndices ) {
+
+		auto glyphCache = TextureRenderer::fontCache[font].glyphs[glyphIndex];
+		if( glyphCache.texArray ) {
+			continue;
+		}
+		else {
+			CI_LOG_V( "cache this font" );
+		}
+
+        dirty = true;
+
+        Area loc;
+		FT_BitmapGlyph glyph = cinder::text::FontManager::get()->getGlyphBitmap( font, glyphIndex );
+		ci::ivec2 glyphSize( glyph->bitmap.width, glyph->bitmap.rows );
+		ci::ivec2 padding = ci::ivec2( 4 ) - ( glyphSize % ci::ivec2( 4 ) );
+		
+
+		auto region = textureArray->request( glyphSize, mCurrentLayerIdx, ivec2(2.0) );
+		/*if( region.layer < 0 ) {
+			// no room for glyph
+			throw Exception( "Couldn't pack glyph into texture" );
+//			curTexArray = TextureArray::create( ivec3( atlasSize.x, atlasSize.y, layerCount ) );
+//			region = curTexArray->request( surface.getSize() );
+		}*/
+
+		// if current layer is full, upload channel to texture, increment layer id, reset channel
+		if( region.layer < 0 ) {
+			
+			// upload channel to texture
+			/*ci::Surface8u surface( *layerChannel );
+			int mipLevel = 0;
+			GLint dataFormat;
+			GLenum dataType;
+			ci::gl::TextureBase::SurfaceChannelOrderToDataFormatAndType<uint8_t>( surface.getChannelOrder(), &dataFormat, &dataType );
+			auto tex = textureArray->getTexture();
+			tex->update(  (void*)surface.getData(), dataFormat, dataType, mipLevel, surface.getWidth(), surface.getHeight(), 1, 0, 0, mCurrentLayerIdx );*/
+
+			uploadChannelToTexture( layerChannel, mCurrentLayerIdx );
+
+			// clear channel
+			ci::ip::fill( layerChannel.get(), ( uint8_t )0 );
+			mCurrentLayerIdx++;
+			
+			// request a new region
+			region = textureArray->request( glyphSize, mCurrentLayerIdx, ivec2(2.0) );
+		}
+
+		ivec2 offset = region.rect.getUpperLeft();
+		ivec2 size = region.rect.getSize();
+		auto layer = region.layer;
+
+		// fill channel
+		ci::ChannelRef channel = ci::Channel::create( glyphSize.x, glyphSize.y, glyphSize.x * sizeof( unsigned char ), sizeof( unsigned char ), glyph->bitmap.buffer );
+		if( channel->getData() ) {
+			ci::ChannelRef flippedChannel = ci::Channel::create( glyphSize.x, glyphSize.y );
+			ci::ip::fill( flippedChannel.get(), ( uint8_t )0 );
+			ci::ip::flipVertical( *channel, flippedChannel.get() );
+			ci::Channel8uRef expandedChannel = ci::Channel8u::create( glyphSize.x + padding.x, glyphSize.y + padding.y );
+			ci::ip::fill( expandedChannel.get(), ( uint8_t )0 );
+			expandedChannel->copyFrom( *flippedChannel, ci::Area( 0, 0, glyphSize.x, glyphSize.y ) );
+
+			ci::Surface8u surface( *expandedChannel );
+			int mipLevel = 0;
+			GLint dataFormat;
+			GLenum dataType;
+			ci::gl::TextureBase::SurfaceChannelOrderToDataFormatAndType<uint8_t>( surface.getChannelOrder(), &dataFormat, &dataType );
+
+			int w = surface.getWidth();
+			int h = surface.getHeight();
+
+			// update channel
+			layerChannel->copyFrom( *expandedChannel, Area( 0, 0, w, h ), offset );
+		}
+		
+		
+
+		//auto tex = mTextureArray->getTexture();
+		//tex->update(  (void*)surface.getData(), dataFormat, dataType, mipLevel, size.x, size.y, 1, offset.x, offset.y, layer );
+		
+		
+
+
+
+		TextureRenderer::fontCache[font].glyphs[glyphIndex].texArray = textureArray;
+		TextureRenderer::fontCache[font].glyphs[glyphIndex].layer = layer;
+		TextureRenderer::fontCache[font].glyphs[glyphIndex].subTexOffset = ci::vec2( offset ) / ci::vec2( textureArray->getSize() );
+		TextureRenderer::fontCache[font].glyphs[glyphIndex].subTexSize = ci::vec2( size ) / ci::vec2( textureArray->getSize() );
+
+		
+/*        else { // we've filled a layer; upload it and start a new one
+            uploadChannelToTextureLayer( mChannel );
+            ip::fill( &mChannel, black );
+            mCurrentLayerIdx++;
+            
+            // don't forget the character we couldn't pack
+            pack( char, &loc );
+            mCharLoc[char] = { loc, mCurrentLayerIdx };
+        } */
+    }
+    /**/
+    // we need to reflect any characters we haven't uploaded
+    if( dirty )
+        uploadChannelToTexture( layerChannel, mCurrentLayerIdx );
+}
+
+
+void TextureRenderer::uploadChannelToTexture( ci::ChannelRef channel, int layerIndex )
+{
+	// upload channel to texture
+	ci::Surface8u surface( *channel );
+	int mipLevel = 0;
+	GLint dataFormat;
+	GLenum dataType;
+	ci::gl::TextureBase::SurfaceChannelOrderToDataFormatAndType<uint8_t>( surface.getChannelOrder(), &dataFormat, &dataType );
+	auto tex = TextureRenderer::mTextureArray->getTexture();
+	tex->update(  (void*)surface.getData(), dataFormat, dataType, mipLevel, surface.getWidth(), surface.getHeight(), 1, 0, 0, layerIndex );
+}
+
+
+/*
+TextureRenderer::cacheFont( Font, string defaultCharacters = "abdef..." )
+{
+    cacheCharacters( defaultCharacters );
+}
+
+TextureRenderer::drawString( Font, string str )
+{
+    cacheCharacters( str );
+}*/
+
 
 /////
 TexturePack::TexturePack()
@@ -499,6 +670,17 @@ TextureArray::Region TextureArray::request( const ci::ivec2 &size, const ci::ive
 		}
 	}
 	return Region();
+}
+
+TextureArray::Region TextureArray::request( const ci::ivec2 &size, int layerIndex, const ci::ivec2 &padding )
+{
+	try {
+		pair<uint32_t, Rectf> rect = mTexturePacks[layerIndex].insert( size + padding * 2, false );
+		return Region( rect.second, layerIndex );
+	}
+	catch( const TexturePackOutOfBoundExc &exc ) {
+		return Region();
+	}
 }
 
 } } } // namespace cinder::text::gl

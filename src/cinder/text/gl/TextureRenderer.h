@@ -61,6 +61,7 @@ public:
 	};
 
 	Region request( const ci::ivec2 &size, const ci::ivec2 &padding = ci::ivec2( 10 ) );
+	Region request( const ci::ivec2 &size, int layerIndex, const ci::ivec2 &padding = ci::ivec2( 10 ) );
 
 	//! Returns the width of the texture in pixels, ignoring clean bounds.
 	GLint	getWidth() const { return mSize.x; };
@@ -94,6 +95,9 @@ class TextureRenderer : public cinder::text::Renderer {
 	static void loadFont( const Font& font );
 	static void unloadFont( const Font& font );
 
+	static void cacheGlyphs( const Font& font, const std::string string );
+	static void cacheGlyphs( const Font& font, const std::vector<uint32_t> &glyphIndices );
+
 	ci::gl::TextureRef getTexture();
 
 
@@ -121,9 +125,14 @@ class TextureRenderer : public cinder::text::Renderer {
 
 	FontCache& getCacheForFont( const Font& font );
 	static void cacheFont( const Font& font );
+	
 	static void uncacheFont( const Font& font );
 
 	static std::unordered_map<Font, FontCache> fontCache;
+	static TextureArrayRef mTextureArray;
+
+	static TextureArrayRef makeTextureArray();
+	static void uploadChannelToTexture( ci::ChannelRef channel, int layerIndex );
 };
 
 class TexturePackOutOfBoundExc : public ci::Exception {
