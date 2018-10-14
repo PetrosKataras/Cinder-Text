@@ -9,6 +9,7 @@
 #include "cinder/Color.h"
 
 #include "cinder/text/Font.h"
+#include "cinder/text/Types.h"
 #include "cinder/text/TextUnits.h"
 
 namespace rapidxml { // forward declaration
@@ -127,8 +128,8 @@ struct AttributeList {
 		, opacity( 1.f )
 		, kerning( 0 )
 		, language( "" )
-		, script( HB_SCRIPT_INVALID )
-		, direction( HB_DIRECTION_INVALID )
+		, script( Script::INVALID )
+		, direction( Direction::INVALID )
 	{
 	}
 
@@ -144,8 +145,8 @@ struct AttributeList {
 
 	// Shaper properties
 	std::string language;
-	hb_script_t script;
-	hb_direction_t direction;
+	Script script;
+	Direction direction;
 
 	friend std::ostream& operator<< ( std::ostream& os, AttributeList const& attr )
 	{

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0033520A2172C9120090D609 /* Types.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 003352082172C9120090D609 /* Types.cpp */; };
 		00635253216C12F00045A495 /* SystemFonts.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00635241216C12EF0045A495 /* SystemFonts.cpp */; };
 		00635254216C12F00045A495 /* AttributedString.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00635242216C12EF0045A495 /* AttributedString.cpp */; };
 		00635255216C12F00045A495 /* Shaper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00635246216C12EF0045A495 /* Shaper.cpp */; };
@@ -31,6 +32,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		003352082172C9120090D609 /* Types.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Types.cpp; path = ../../../src/cinder/text/Types.cpp; sourceTree = "<group>"; };
+		003352092172C9120090D609 /* Types.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Types.h; path = ../../../src/cinder/text/Types.h; sourceTree = "<group>"; };
 		00635240216C12EF0045A495 /* Font.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Font.h; path = ../../../src/cinder/text/Font.h; sourceTree = "<group>"; };
 		00635241216C12EF0045A495 /* SystemFonts.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SystemFonts.cpp; path = ../../../src/cinder/text/SystemFonts.cpp; sourceTree = "<group>"; };
 		00635242216C12EF0045A495 /* AttributedString.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = AttributedString.cpp; path = ../../../src/cinder/text/AttributedString.cpp; sourceTree = "<group>"; };
@@ -111,6 +114,8 @@
 				0063524F216C12F00045A495 /* TextLayout.h */,
 				00635245216C12EF0045A495 /* TextRenderer.h */,
 				0063524E216C12F00045A495 /* TextUnits.h */,
+				003352082172C9120090D609 /* Types.cpp */,
+				003352092172C9120090D609 /* Types.h */,
 			);
 			name = "Cinder-Text";
 			sourceTree = "<group>";
@@ -278,6 +283,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0033520A2172C9120090D609 /* Types.cpp in Sources */,
 				00635259216C12F00045A495 /* Font.cpp in Sources */,
 				00635257216C12F00045A495 /* TextLayout.cpp in Sources */,
 				58611306CA5B456888775460 /* ParagraphApp.cpp in Sources */,

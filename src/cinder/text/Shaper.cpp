@@ -1,6 +1,7 @@
 #include "cinder/text/Shaper.h"
 #include "cinder/text/FontManager.h"
 
+#include "hb.h"
 #include "hb-ft.h"
 
 namespace cinder { namespace text {
@@ -110,8 +111,8 @@ std::vector<Shaper::Glyph> Shaper::getShapedText( Text& text )
 	//hb_buffer_guess_segment_properties( mBuffer );
 
 	// Alternatively we can set direction, script and language
-	hb_buffer_set_direction( mBuffer, text.direction );
-	hb_buffer_set_script( mBuffer, text.script );
+	hb_buffer_set_direction( mBuffer, (hb_direction_t)text.direction );
+	hb_buffer_set_script( mBuffer, (hb_script_t)text.script );
 	hb_buffer_set_language( mBuffer, hb_language_from_string( text.language.c_str(), text.language.size() ) );
 
 	// Shape the text
@@ -127,7 +128,7 @@ std::vector<Shaper::Glyph> Shaper::getShapedText( Text& text )
 	// If we have RTL text, invert glyph parsing so that we get it in logical order
 	// vs visual order.
 	// This lets us treat RTL and LTR runs the same when processing.
-	if( text.direction == HB_DIRECTION_RTL ) {
+	if( text.direction == Direction::RTL ) {
 		reverseHBArray( glyph_info, glyph_count );
 		reverseHBArray( glyph_pos, glyph_count );
 	}

@@ -3,6 +3,7 @@
 #include "cinder/app/App.h"
 
 namespace cinder { namespace text {
+
 enum UnitType {
 	PX,
 	PT,

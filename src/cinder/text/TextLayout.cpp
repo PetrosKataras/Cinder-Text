@@ -73,8 +73,8 @@ Layout::Layout()
 	, mUseDefaultAlignment( true )
 	, mSize( GROW )
 	, mLanguage( "en" )
-	, mScript( HB_SCRIPT_LATIN )
-	, mDirection( HB_DIRECTION_LTR )
+	, mScript( Script::LATIN )
+	, mDirection( Direction::LTR )
 	, mMaxLinesReached( false )
 {
 	//const std::string testString( "testing test opportunity" );
@@ -202,10 +202,10 @@ void Layout::addSubstringToCurLine( AttributedString::Substring& substring )
 {
 	// Determine direction, script and language with overrides
 	std::string language = substring.attributes.language == "" ? mLanguage : substring.attributes.language;
-	hb_script_t script = substring.attributes.script == HB_SCRIPT_INVALID ? mScript : substring.attributes.script;
-	hb_direction_t direction = substring.attributes.direction == HB_DIRECTION_INVALID ? mDirection : substring.attributes.direction;
+	Script script = substring.attributes.script == Script::INVALID ? mScript : substring.attributes.script;
+	Direction direction = substring.attributes.direction == Direction::INVALID ? mDirection : substring.attributes.direction;
 
-	mCurDirection.x = direction == HB_DIRECTION_LTR ? 1 : -1;
+	mCurDirection.x = direction == Direction::LTR ? 1 : -1;
 
 	// Create a run for this substring
 	const Font runFont( substring.attributes.fontFamily, substring.attributes.fontStyle, substring.attributes.fontSize );
@@ -241,19 +241,19 @@ void Layout::addSubstringToCurLine( AttributedString::Substring& substring )
 	Shaper shaper( runFont );
 
 	//	Remove features if necessary
-	if( !mUseLigatures ) {
+	if( ! mUseLigatures ) {
 		shaper.removeFeature( cinder::text::Shaper::Feature::LIGATURES );
 	}
 
-	if( !mUseKerning ) {
+	if( ! mUseKerning ) {
 		shaper.removeFeature( cinder::text::Shaper::Feature::KERNING );
 	}
 
-	if( !mUseClig ) {
+	if( ! mUseClig ) {
 		shaper.removeFeature( cinder::text::Shaper::Feature::CLIG );
 	}
 
-	if( !mUseCalt ) {
+	if( ! mUseCalt ) {
 		shaper.removeFeature( cinder::text::Shaper::Feature::CALT );
 	}
 
@@ -279,7 +279,7 @@ void Layout::addSubstringToCurLine( AttributedString::Substring& substring )
 		ci::vec2 glyphPos;
 		ci::Rectf glyphBBox;
 
-		if( direction == HB_DIRECTION_LTR ) {
+		if( direction == Direction::LTR ) {
 			glyphPos = pos + ci::vec2( bitmapGlyph->left, 0.f );
 			glyphBBox = ci::Rectf( glyphPos, glyphPos + ci::vec2( bitmapGlyph->bitmap.width, bitmapGlyph->bitmap.rows ) );
 		}
@@ -362,7 +362,7 @@ void Layout::addRunToCurLine( Run& run )
 	mCurLine.runs.push_back( run );
 
 	if( !run.glyphs.empty() ) {
-		mCurLineWidth = mDirection == HB_DIRECTION_RTL ? run.glyphs.back().bbox.x1 : run.glyphs.back().bbox.x2;
+		mCurLineWidth = mDirection == Direction::RTL ? run.glyphs.back().bbox.x1 : run.glyphs.back().bbox.x2;
 	}
 }
 
@@ -374,7 +374,7 @@ void Layout::addCurLine( )
 	// Set the Y glyph position based on culmulative line-height
 	for( auto& run : mCurLine.runs ) {
 		for( auto& glyph : run.glyphs ) {
-			float xOffset = ( mDirection == HB_DIRECTION_RTL ? mCurLineWidth : 0.0 );
+			float xOffset = ( mDirection == Direction::RTL ? mCurLineWidth : 0.0 );
 			float yOffset = mCurLineHeight - glyph.top;
 			glyph.bbox.offset( ci::vec2( xOffset, yOffset ) );
 		}
@@ -479,7 +479,7 @@ void Layout::applyAlignment()
 	}
 }
 
-Layout::BreakIndices Layout::getClosestBreakForShapedText( int startIndex, const std::vector<Shaper::Glyph>& shapedGlyphs, const std::vector<uint8_t> lineBreaks, const hb_direction_t& direction )
+Layout::BreakIndices Layout::getClosestBreakForShapedText( int startIndex, const std::vector<Shaper::Glyph>& shapedGlyphs, const std::vector<uint8_t> lineBreaks, Direction direction )
 {
 	Layout::BreakIndices indices;
 

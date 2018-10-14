@@ -62,8 +62,8 @@ class CinderProjectApp : public App
 		std::string fontName = "fonts/NotoChinese/NotoSansCJKsc-Regular.otf";
 		std::string testTextFilename = "text/simplifiedChinese.txt";
 		std::string mLanguage = "zh-Hans";
-		hb_script_t mScript = HB_SCRIPT_HAN;
-		hb_direction_t mDirection = HB_DIRECTION_LTR;
+		text::Script mScript = text::Script::HAN;
+		text::Direction mDirection = text::Direction::LTR;
 
 		// Cyrillic
 		//std::string fontName = "fonts/SourceSerifPro/SourceSerifPro-Regular.otf";
