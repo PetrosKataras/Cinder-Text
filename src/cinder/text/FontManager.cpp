@@ -176,6 +176,20 @@ std::vector<FT_UInt> FontManager::getGlyphIndices( const Font& font, std::string
 	return indices;
 }
 
+std::vector<uint32_t> FontManager::getGlyphIndices( const Font& font, const std::pair<uint32_t, uint32_t> &unicodeRange )
+{
+	std::vector<FT_UInt> indices;
+	auto face = getFace( font );
+
+	for( uint32_t code = unicodeRange.first; code < unicodeRange.second + 1; code++ ){
+		FT_UInt glyph_index = FT_Get_Char_Index( face, code );
+		if( glyph_index > 0 )
+			indices.push_back( glyph_index );
+	}
+	
+	return indices;
+}
+
 FT_Glyph FontManager::getGlyph( const Font& font, unsigned int glyphIndex )
 {
 	//FT_Glyph glyph;

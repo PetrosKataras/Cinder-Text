@@ -93,6 +93,8 @@ class FontManager
 	// Freetype functions, used by renderers and shapers
 	uint32_t getGlyphIndex( const Font& font, FT_UInt32 charCode, FT_Int mapIndex = 0 );
 	std::vector<uint32_t> getGlyphIndices( const Font& font, std::string string = "" );
+	//! Get Glyph Indices for a unicode range
+	std::vector<uint32_t> getGlyphIndices( const Font& font, const std::pair<uint32_t, uint32_t> &unicodeRange );
 
 	FT_Glyph getGlyph( const Font& font, unsigned int glyphIndex );
 	FT_BitmapGlyph getGlyphBitmap( const Font& font, unsigned int glyphIndex );

@@ -240,24 +240,34 @@ void TextureRenderer::uncacheFont( const Font& font )
 
 TextureArrayRef TextureRenderer::makeTextureArray()
 {
-	int layerCount = 64;
+	int layerCount = 16;
 
 	//ivec3 atlasSize = ivec3( ivec2( glm::max( MIN_ATLAS_SIZE, getMaxTextureSize() / 4 ) ), 1 );
-	ivec2 atlasSize = ivec2( 512 );
+	ivec2 atlasSize = ivec2( 1024 );
 
 	auto texArray = TextureArray::create( ivec3( atlasSize.x, atlasSize.y, layerCount ) );
 	return texArray;
 }
 
-void TextureRenderer::cacheGlyphs(const Font& font, const std::string string)
+void TextureRenderer::cacheGlyphs( const Font& font, const std::string string )
 {
 	std::vector<uint32_t> glyphIndices = cinder::text::FontManager::get()->getGlyphIndices( font, string );
 	cacheGlyphs( font, glyphIndices );
 }
 
+void TextureRenderer::cacheGlyphs( const Font& font, const std::vector<std::pair<uint32_t, uint32_t>> &unicodeRange )
+{
+	std::vector<uint32_t> glyphIndices;
+	for( auto range : unicodeRange ){
+		auto indices = cinder::text::FontManager::get()->getGlyphIndices( font, range );
+		glyphIndices.insert( glyphIndices.end(), indices.begin(), indices.end() );
+	}
+	cacheGlyphs( font, glyphIndices );
+}
+
 void TextureRenderer::cacheGlyphs( const Font& font, const std::vector<uint32_t> &glyphIndices )
 {
-    bool dirty = false;
+	bool dirty = false;
 	
 	// get Texture ARray cache based on whether we are using chared coche or not
 	TexArrayCache *texArrayCache;

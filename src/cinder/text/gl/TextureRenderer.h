@@ -99,9 +99,14 @@ class TextureRenderer : public cinder::text::Renderer {
 
 	static void cacheGlyphs( const Font& font, const std::string string );
 	static void cacheGlyphs( const Font& font, const std::vector<uint32_t> &glyphIndices );
+	static void cacheGlyphs( const Font& font, const std::vector<std::pair<uint32_t, uint32_t>> &unicodeRange );
 
 	ci::gl::TextureRef getTexture();
 
+	static std::string defaultChars() { return "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890().?!,:;'\"&*=+-/\\@#_[]<>%^llflfiphrids\303\251\303\241\303\250\303\240"; }
+	//static std::pair<uint32_t, uint32_t> defaultUnicodeRange() { return { 0x0040, 0x007F }; }
+	// https://en.wikipedia.org/wiki/Latin_script_in_Unicode
+	static std::vector<std::pair<uint32_t, uint32_t>> defaultUnicodeRange() { return { { 0x0040, 0x007F }, { 0x0080, 0x00FF }, { 0xFB00, 0xFB06 } }; }
 
   protected:
 	// Font + Glyph Caching (shared between all instances)
@@ -135,8 +140,6 @@ class TextureRenderer : public cinder::text::Renderer {
 	static void cacheFont( const Font& font, const std::string chars = defaultChars() );
 	
 	static void uncacheFont( const Font& font );
-
-	static std::string defaultChars() { return "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890().?!,:;'\"&*=+-/\\@#_[]<>%^llflfiphrids\303\251\303\241\303\250\303\240"; }
 
 	static std::unordered_map<Font, FontCache>	fontCache;
 	
