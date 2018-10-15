@@ -15,11 +15,9 @@ using namespace ci::app;
 using namespace std;
 
 namespace cinder { namespace text { namespace gl {
+
 // Shared font cache
 std::unordered_map<Font, TextureRenderer::FontCache> TextureRenderer::fontCache;
-//TextureArrayRef TextureRenderer::mTextureArray;
-//ChannelRef TextureRenderer::mGlyphChannel;
-//int TextureRenderer::mCurrentLayerIdx;
 
 bool TextureRenderer::mSharedCacheEnabled = false;
 TextureRenderer::TexArrayCache TextureRenderer::mSharedTexArrayCache;
@@ -162,15 +160,18 @@ void TextureRenderer::renderToFbo()
 						ci::gl::translate( ci::vec2( glyph.bbox.getUpperLeft() ) + mOffset );
 						ci::gl::scale( glyph.bbox.getSize().x, glyph.bbox.getSize().y );
 
-						//ci::gl::ScopedBlendAlpha alphaBlend;
-						mBatch->getGlslProg()->uniform( "uLayer", getCacheForFont( run.font ).glyphs[glyph.index].layer );
+						auto fontCache = getCacheForFont( run.font );
+						auto glyphCache = fontCache.glyphs[glyph.index];
 
 						//auto tex = getCacheForFont( run.font ).glyphs[glyph.index].texArray->getTexture();
-						auto tex = getCacheForFont( run.font ).texArrayCache.texArray->getTexture();
+						auto tex = fontCache.texArrayCache.texArray->getTexture();
+
+						//ci::gl::ScopedBlendAlpha alphaBlend;
+						mBatch->getGlslProg()->uniform( "uLayer", (uint32_t)glyphCache.layer );
 
 						//ci::vec2 subTexSize = glyph.bbox.getSize() / ci::vec2( tex->getWidth(), tex->getHeight() );
-						mBatch->getGlslProg()->uniform( "uSubTexSize", getCacheForFont( run.font ).glyphs[glyph.index].subTexSize );
-						mBatch->getGlslProg()->uniform( "uSubTexOffset", getCacheForFont( run.font ).glyphs[glyph.index].subTexOffset );
+						mBatch->getGlslProg()->uniform( "uSubTexSize", glyphCache.subTexSize );
+						mBatch->getGlslProg()->uniform( "uSubTexOffset", glyphCache.subTexOffset );
 
 						ci::gl::ScopedTextureBind texBind( tex->getTarget(), tex->getId() );
 						mBatch->draw();
@@ -274,14 +275,14 @@ void TextureRenderer::cacheGlyphs( const Font& font, const std::vector<uint32_t>
 	auto textureArray = texArrayCache->texArray;
 
 	// get or create the Glyph Channel
-	if( !texArrayCache->mGlyphChannel ){
-		texArrayCache->mGlyphChannel = ci::Channel::create( textureArray->getWidth(), textureArray->getHeight() );
-		ci::ip::fill( texArrayCache->mGlyphChannel.get(), ( uint8_t )0 );
-		texArrayCache->mCurrentLayerIdx = 0;
+	if( !texArrayCache->layerChannel ){
+		texArrayCache->layerChannel = ci::Channel::create( textureArray->getWidth(), textureArray->getHeight() );
+		ci::ip::fill( texArrayCache->layerChannel.get(), ( uint8_t )0 );
+		texArrayCache->currentLayerIdx = 0;
 	}
 
-	auto layerChannel = texArrayCache->mGlyphChannel;
-	int layerIndex = texArrayCache->mCurrentLayerIdx;
+	auto layerChannel = texArrayCache->layerChannel;
+	int layerIndex = texArrayCache->currentLayerIdx;
 
     for( auto glyphIndex : glyphIndices ) {
 
@@ -309,7 +310,7 @@ void TextureRenderer::cacheGlyphs( const Font& font, const std::vector<uint32_t>
 			// clear channel
 			ci::ip::fill( layerChannel.get(), ( uint8_t )0 );
 			layerIndex++;
-			texArrayCache->mCurrentLayerIdx = layerIndex;
+			texArrayCache->currentLayerIdx = layerIndex;
 
 			// request a new region
 			region = textureArray->request( glyphSize, layerIndex, ivec2( 2.0f ) );
@@ -346,6 +347,8 @@ void TextureRenderer::cacheGlyphs( const Font& font, const std::vector<uint32_t>
 		TextureRenderer::fontCache[font].glyphs[glyphIndex].layer = layer;
 		TextureRenderer::fontCache[font].glyphs[glyphIndex].subTexOffset = ci::vec2( offset ) / ci::vec2( textureArray->getSize() );
 		TextureRenderer::fontCache[font].glyphs[glyphIndex].subTexSize = ci::vec2( glyphSize ) / ci::vec2( textureArray->getSize() );
+		
+		CI_LOG_V( glyphIndex << " " << ci::vec2( offset ) / ci::vec2( textureArray->getSize() ) << " " << ci::vec2( glyphSize ) / ci::vec2( textureArray->getSize() ) );
     }
 
     // we need to reflect any characters we haven't uploaded
@@ -357,15 +360,14 @@ void TextureRenderer::cacheGlyphs( const Font& font, const std::vector<uint32_t>
 void TextureRenderer::uploadChannelToTexture( TexArrayCache &texArrayCache )
 {
 	// upload channel to texture
-	auto channel = texArrayCache.mGlyphChannel;
+	auto channel = texArrayCache.layerChannel;
 	ci::Surface8u surface( *channel );
 	int mipLevel = 0;
 	GLint dataFormat;
 	GLenum dataType;
 	ci::gl::TextureBase::SurfaceChannelOrderToDataFormatAndType<uint8_t>( surface.getChannelOrder(), &dataFormat, &dataType );
-	//auto tex = TextureRenderer::mTextureArray->getTexture();
 	auto tex = texArrayCache.texArray->getTexture();
-	tex->update(  (void*)surface.getData(), dataFormat, dataType, mipLevel, surface.getWidth(), surface.getHeight(), 1, 0, 0, texArrayCache.mCurrentLayerIdx );
+	tex->update(  (void*)surface.getData(), dataFormat, dataType, mipLevel, surface.getWidth(), surface.getHeight(), 1, 0, 0, texArrayCache.currentLayerIdx );
 }
 
 

@@ -113,8 +113,8 @@ class TextureRenderer : public cinder::text::Renderer {
 
 	typedef struct {
 		TextureArrayRef texArray;
-		ci::ChannelRef	mGlyphChannel;
-		int				mCurrentLayerIdx;
+		ci::ChannelRef	layerChannel;
+		int				currentLayerIdx;
 	} TexArrayCache;
 
 	typedef struct {
@@ -140,12 +140,9 @@ class TextureRenderer : public cinder::text::Renderer {
 
 	static std::unordered_map<Font, FontCache>	fontCache;
 	
-	
-	//static TextureArrayRef						mTextureArray;
-	//static ci::ChannelRef						mGlyphChannel;
-	//static int									mCurrentLayerIdx;
-
+	//! The TextureArray cache, when mSharedCacheEnabled is set to true
 	static TexArrayCache						mSharedTexArrayCache;
+	//! Whether the texture cache is shared for all fonts, otherwise per-font
 	static bool									mSharedCacheEnabled;
 
 	static TextureArrayRef makeTextureArray();
