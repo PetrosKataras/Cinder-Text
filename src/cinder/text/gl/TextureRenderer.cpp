@@ -215,11 +215,21 @@ TextureRenderer::FontCache& TextureRenderer::getCacheForFont( const Font& font )
 	return TextureRenderer::fontCache[font];
 }
 
+std::map<uint16_t, TextureRenderer::GlyphCache> TextureRenderer::getGylphMapForFont( const Font& font )
+{
+	return getCacheForFont( font ).glyphs;
+}
+
+ci::gl::Texture3dRef TextureRenderer::getTextureForFont( const Font& font )
+{
+	return getCacheForFont( font ).texArrayCache.texArray->getTexture();
+}
+
 // Cache glyphs to gl texture array(s)
-void TextureRenderer::cacheFont( const Font& font, const std::string chars )
+void TextureRenderer::cacheFont( const Font& font )
 {
 	// partial font
-	cacheGlyphs( font, chars );
+	cacheGlyphs( font, defaultUnicodeRange() );
 
 	// entire font
 	//std::vector<uint32_t> glyphIndices = cinder::text::FontManager::get()->getGlyphIndices( font );
@@ -228,13 +238,15 @@ void TextureRenderer::cacheFont( const Font& font, const std::string chars )
 
 void TextureRenderer::uncacheFont( const Font& font )
 {
-	if( !TextureRenderer::fontCache.count( font ) ) {
+	if( mSharedCacheEnabled ) {
+		CI_LOG_W( "Cannot un-cache fonts loaded into shared caches" );
+		return;
+	}
+
+	auto count = TextureRenderer::fontCache.count( font );
+	if( count ) {
 		std::unordered_map<Font, FontCache>::iterator it = TextureRenderer::fontCache.find( font );
 		TextureRenderer::fontCache.erase( it );
-		
-		// TODO: 
-		// - find region in rect pack and remove rect ref
-		// - find texture layer and location and clear
 	}
 }
 
@@ -249,9 +261,18 @@ TextureArrayRef TextureRenderer::makeTextureArray()
 	return texArray;
 }
 
-void TextureRenderer::cacheGlyphs( const Font& font, const std::string string )
+void TextureRenderer::cacheGlyphs( const Font& font, const std::string string, const std::string language, hb_script_t script, hb_direction_t dir )
 {
-	std::vector<uint32_t> glyphIndices = cinder::text::FontManager::get()->getGlyphIndices( font, string );
+	// Shape the substring
+	Shaper shaper( font );
+	
+	std::vector<uint32_t> glyphIndices;
+	std::vector<Shaper::Glyph> shapedGlyphs = shaper.getShapedText( Shaper::Text( { string, language, script, dir } ) );
+	for( auto glyph : shapedGlyphs ) {
+		glyphIndices.push_back( glyph.index );
+	}
+
+	//std::vector<uint32_t> glyphIndices = cinder::text::FontManager::get()->getGlyphIndices( font, string );
 	cacheGlyphs( font, glyphIndices );
 }
 

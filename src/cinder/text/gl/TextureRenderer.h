@@ -118,7 +118,7 @@ class TextureRenderer : public cinder::text::Renderer {
 	static void loadFont( const Font& font );
 	static void unloadFont( const Font& font );
 
-	static void cacheGlyphs( const Font& font, const std::string string );
+	static void cacheGlyphs( const Font& font, const std::string string, const std::string language = "en", hb_script_t script = HB_SCRIPT_LATIN, hb_direction_t dir = HB_DIRECTION_LTR );
 	static void cacheGlyphs( const Font& font, const std::vector<uint32_t> &glyphIndices );
 	static void cacheGlyphs( const Font& font, const std::vector<std::pair<uint32_t, uint32_t>> &unicodeRange );
 
@@ -130,6 +130,8 @@ class TextureRenderer : public cinder::text::Renderer {
 	static std::vector<std::pair<uint32_t, uint32_t>> defaultUnicodeRange() { return { { 0x0000, 0x007F }, { 0x0080, 0x00FF }, { 0xFB00, 0xFB06 } }; }
 
 	FontCache& getCacheForFont( const Font& font );
+	std::map<uint16_t, GlyphCache> getGylphMapForFont( const Font &font );
+	ci::gl::Texture3dRef getTextureForFont( const Font& font );
 
   private:
 	// Texture (FBO) caching
@@ -141,7 +143,7 @@ class TextureRenderer : public cinder::text::Renderer {
 	ci::gl::BatchRef	mBatch;
 
 	
-	static void cacheFont( const Font& font, const std::string chars = defaultChars() );
+	static void cacheFont( const Font& font );
 	
 	static void uncacheFont( const Font& font );
 
