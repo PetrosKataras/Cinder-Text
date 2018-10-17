@@ -87,6 +87,8 @@ class TextureRenderer : public cinder::text::Renderer {
 	// Font + Glyph Caching (shared between all instances)
 	typedef struct {
 		int layer = -1;
+		ci::vec2 size;
+		ci::vec2 position;
 		ci::vec2 subTexSize;
 		ci::vec2 subTexOffset;
 	} GlyphCache;

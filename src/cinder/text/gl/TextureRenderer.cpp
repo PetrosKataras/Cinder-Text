@@ -355,6 +355,8 @@ void TextureRenderer::cacheGlyphs( const Font& font, const std::vector<uint32_t>
 		//TextureRenderer::fontCache[font].glyphs[glyphIndex].texArray = textureArray;
 		TextureRenderer::fontCache[font].texArrayCache = *texArrayCache;
 		TextureRenderer::fontCache[font].glyphs[glyphIndex].layer = layer;
+		TextureRenderer::fontCache[font].glyphs[glyphIndex].size = ci::vec2( glyphSize );
+		TextureRenderer::fontCache[font].glyphs[glyphIndex].size = ci::vec2( offset );
 		TextureRenderer::fontCache[font].glyphs[glyphIndex].subTexOffset = ci::vec2( offset ) / ci::vec2( textureArray->getSize() );
 		TextureRenderer::fontCache[font].glyphs[glyphIndex].subTexSize = ci::vec2( glyphSize ) / ci::vec2( textureArray->getSize() );
 		
@@ -380,6 +382,23 @@ void TextureRenderer::uploadChannelToTexture( TexArrayCache &texArrayCache )
 	tex->update(  (void*)surface.getData(), dataFormat, dataType, mipLevel, surface.getWidth(), surface.getHeight(), 1, 0, 0, texArrayCache.currentLayerIdx );
 }
 
+/*
+TextureRenderer::TexArrayCache TextureRenderer::getTextureCache()
+{
+	if( mSharedCacheEnabled ) {
+		return mSharedTexArrayCache;
+	}
+	else {
+		CI_LOG_W( "Shared Cache for fonts is not enabled. Try passing in a Font reference." );
+		return TexArrayCache();
+	}
+}
+
+TextureRenderer::TexArrayCache TextureRenderer::getTextureCache( const Font& font )
+{
+	auto fontCache = TextureRenderer::fontCache[font].texArrayCache;
+	return fontCache;
+}*/
 
 /////
 TexturePack::TexturePack()
@@ -560,7 +579,6 @@ void TexturePack::debugDraw() const
 		ci::gl::drawStrokedRect( rect.second );
 	}
 }
-
 
 //////////////
 
