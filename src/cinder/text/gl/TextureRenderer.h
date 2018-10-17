@@ -84,6 +84,25 @@ protected:
 
 class TextureRenderer : public cinder::text::Renderer {
   public:
+	// Font + Glyph Caching (shared between all instances)
+	typedef struct {
+		int layer = -1;
+		ci::vec2 subTexSize;
+		ci::vec2 subTexOffset;
+	} GlyphCache;
+
+	typedef struct {
+		TextureArrayRef texArray;
+		ci::ChannelRef	layerChannel;
+		int				currentLayerIdx;
+	} TexArrayCache;
+
+	typedef struct {
+		std::map<uint32_t, GlyphCache > glyphs;
+		TexArrayCache					texArrayCache;
+	} FontCache;
+
+  public:
 	TextureRenderer();
 
 	//void draw( const std::string& text, const ci::vec2& size = ci::vec2( 0 ) ) override;
@@ -108,24 +127,7 @@ class TextureRenderer : public cinder::text::Renderer {
 	// https://en.wikipedia.org/wiki/Latin_script_in_Unicode
 	static std::vector<std::pair<uint32_t, uint32_t>> defaultUnicodeRange() { return { { 0x0040, 0x007F }, { 0x0080, 0x00FF }, { 0xFB00, 0xFB06 } }; }
 
-  protected:
-	// Font + Glyph Caching (shared between all instances)
-	typedef struct {
-		int layer = -1;
-		ci::vec2 subTexSize;
-		ci::vec2 subTexOffset;
-	} GlyphCache;
-
-	typedef struct {
-		TextureArrayRef texArray;
-		ci::ChannelRef	layerChannel;
-		int				currentLayerIdx;
-	} TexArrayCache;
-
-	typedef struct {
-		std::map<uint32_t, GlyphCache > glyphs;
-		TexArrayCache					texArrayCache;
-	} FontCache;
+	FontCache& getCacheForFont( const Font& font );
 
   private:
 	// Texture (FBO) caching
@@ -136,7 +138,7 @@ class TextureRenderer : public cinder::text::Renderer {
 	ci::gl::FboRef		mFbo;
 	ci::gl::BatchRef	mBatch;
 
-	FontCache& getCacheForFont( const Font& font );
+	
 	static void cacheFont( const Font& font, const std::string chars = defaultChars() );
 	
 	static void uncacheFont( const Font& font );
