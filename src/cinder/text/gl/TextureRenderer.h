@@ -88,7 +88,7 @@ class TextureRenderer : public cinder::text::Renderer {
 	typedef struct {
 		int layer = -1;
 		ci::vec2 size;
-		ci::vec2 position;
+		ci::vec2 offset;
 		ci::vec2 subTexSize;
 		ci::vec2 subTexOffset;
 	} GlyphCache;
@@ -100,7 +100,7 @@ class TextureRenderer : public cinder::text::Renderer {
 	} TexArrayCache;
 
 	typedef struct {
-		std::map<uint32_t, GlyphCache > glyphs;
+		std::map<uint16_t, GlyphCache > glyphs;
 		TexArrayCache					texArrayCache;
 	} FontCache;
 
@@ -127,7 +127,7 @@ class TextureRenderer : public cinder::text::Renderer {
 	static std::string defaultChars() { return "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890().?!,:;'\"&*=+-/\\@#_[]<>%^llflfiphrids\303\251\303\241\303\250\303\240"; }
 	//static std::pair<uint32_t, uint32_t> defaultUnicodeRange() { return { 0x0040, 0x007F }; }
 	// https://en.wikipedia.org/wiki/Latin_script_in_Unicode
-	static std::vector<std::pair<uint32_t, uint32_t>> defaultUnicodeRange() { return { { 0x0040, 0x007F }, { 0x0080, 0x00FF }, { 0xFB00, 0xFB06 } }; }
+	static std::vector<std::pair<uint32_t, uint32_t>> defaultUnicodeRange() { return { { 0x0000, 0x007F }, { 0x0080, 0x00FF }, { 0xFB00, 0xFB06 } }; }
 
 	FontCache& getCacheForFont( const Font& font );
 

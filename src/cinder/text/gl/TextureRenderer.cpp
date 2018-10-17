@@ -306,8 +306,12 @@ void TextureRenderer::cacheGlyphs( const Font& font, const std::vector<uint32_t>
 
         dirty = true;
 
-		FT_BitmapGlyph glyph = cinder::text::FontManager::get()->getGlyphBitmap( font, glyphIndex );
-		ci::ivec2 glyphSize( glyph->bitmap.width, glyph->bitmap.rows );
+		FT_BitmapGlyph bitmapGlyph = cinder::text::FontManager::get()->getGlyphBitmap( font, glyphIndex );
+		FT_Glyph glyph = cinder::text::FontManager::get()->getGlyph( font, glyphIndex );
+		FT_BBox bbox;
+		FT_Glyph_Get_CBox( glyph, FT_GLYPH_BBOX_PIXELS, &bbox );
+
+		ci::ivec2 glyphSize( bitmapGlyph->bitmap.width, bitmapGlyph->bitmap.rows );
 		ci::ivec2 padding = ci::ivec2( 4 ) - ( glyphSize % ci::ivec2( 4 ) );
 		
 		auto region = textureArray->request( glyphSize, layerIndex, ivec2( 2.0f ) );
@@ -330,14 +334,14 @@ void TextureRenderer::cacheGlyphs( const Font& font, const std::vector<uint32_t>
 		auto layer = region.layer;
 
 		// fill channel
-		ci::ChannelRef channel = ci::Channel::create( glyphSize.x, glyphSize.y, glyphSize.x * sizeof( unsigned char ), sizeof( unsigned char ), glyph->bitmap.buffer );
+		ci::ChannelRef channel = ci::Channel::create( glyphSize.x, glyphSize.y, glyphSize.x * sizeof( unsigned char ), sizeof( unsigned char ), bitmapGlyph->bitmap.buffer );
 		if( channel->getData() ) {
-			ci::ChannelRef flippedChannel = ci::Channel::create( glyphSize.x, glyphSize.y );
-			ci::ip::fill( flippedChannel.get(), ( uint8_t )0 );
-			ci::ip::flipVertical( *channel, flippedChannel.get() );
+			//ci::ChannelRef flippedChannel = ci::Channel::create( glyphSize.x, glyphSize.y );
+			//ci::ip::fill( flippedChannel.get(), ( uint8_t )0 );
+			//ci::ip::flipVertical( *channel, flippedChannel.get() );
 			ci::Channel8uRef expandedChannel = ci::Channel8u::create( glyphSize.x + padding.x, glyphSize.y + padding.y );
 			ci::ip::fill( expandedChannel.get(), ( uint8_t )0 );
-			expandedChannel->copyFrom( *flippedChannel, ci::Area( 0, 0, glyphSize.x, glyphSize.y ) );
+			expandedChannel->copyFrom( *channel, ci::Area( 0, 0, glyphSize.x, glyphSize.y ) );
 
 			ci::Surface8u surface( *expandedChannel );
 			int mipLevel = 0;
@@ -356,7 +360,7 @@ void TextureRenderer::cacheGlyphs( const Font& font, const std::vector<uint32_t>
 		TextureRenderer::fontCache[font].texArrayCache = *texArrayCache;
 		TextureRenderer::fontCache[font].glyphs[glyphIndex].layer = layer;
 		TextureRenderer::fontCache[font].glyphs[glyphIndex].size = ci::vec2( glyphSize );
-		TextureRenderer::fontCache[font].glyphs[glyphIndex].size = ci::vec2( offset );
+		TextureRenderer::fontCache[font].glyphs[glyphIndex].offset = ci::vec2( bbox.xMin, bbox.yMax );
 		TextureRenderer::fontCache[font].glyphs[glyphIndex].subTexOffset = ci::vec2( offset ) / ci::vec2( textureArray->getSize() );
 		TextureRenderer::fontCache[font].glyphs[glyphIndex].subTexSize = ci::vec2( glyphSize ) / ci::vec2( textureArray->getSize() );
 		
@@ -380,6 +384,11 @@ void TextureRenderer::uploadChannelToTexture( TexArrayCache &texArrayCache )
 	ci::gl::TextureBase::SurfaceChannelOrderToDataFormatAndType<uint8_t>( surface.getChannelOrder(), &dataFormat, &dataType );
 	auto tex = texArrayCache.texArray->getTexture();
 	tex->update(  (void*)surface.getData(), dataFormat, dataType, mipLevel, surface.getWidth(), surface.getHeight(), 1, 0, 0, texArrayCache.currentLayerIdx );
+
+	{
+		ci::gl::ScopedTextureBind scopedTexBind( tex );
+		glGenerateMipmap( tex->getTarget() );		
+	}
 }
 
 /*
@@ -590,6 +599,7 @@ TextureArray::TextureArray( const ci::ivec3 &size )
 	ci::gl::Texture3d::Format format;
 	format.setTarget( GL_TEXTURE_2D_ARRAY );
 	format.setInternalFormat( GL_RED );
+	format.enableMipmapping( true );
 	mTexture = ci::gl::Texture3d::create( size.x, size.y, size.z, format );
 }
 
