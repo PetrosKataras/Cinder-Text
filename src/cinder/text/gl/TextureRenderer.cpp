@@ -332,6 +332,11 @@ void TextureRenderer::cacheGlyphs( const Font& font, const std::vector<uint32_t>
 		FT_Glyph_Get_CBox( glyph, FT_GLYPH_BBOX_PIXELS, &bbox );
 
 		ci::ivec2 glyphSize( bitmapGlyph->bitmap.width, bitmapGlyph->bitmap.rows );
+		if( glyphSize.x < 0 || glyphSize.y < 0 )
+		{
+			CI_LOG_W( "Problem with size of retreived glyph bitmap for glyph " << glyphIndex );
+			continue;
+		}
 		ci::ivec2 padding = ci::ivec2( 4 ) - ( glyphSize % ci::ivec2( 4 ) );
 		auto region = textureArray->request( glyphSize, layerIndex, ivec2( 2.0f ) );
 	
@@ -635,6 +640,8 @@ TextureArray::Region TextureArray::request( const ci::ivec2 &size, int layerInde
 {
 	if( size.x == 0 || size.y == 0 )
 		return Region( Rectf::zero(), layerIndex );
+	else if(  size.x > mSize.x || size.y > mSize.y )
+		return Region();
 
 	try {
 		pair<uint32_t, Rectf> rect = mTexturePacks[layerIndex].insert( size + padding * 2, false );
