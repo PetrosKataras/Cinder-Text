@@ -45,11 +45,31 @@ protected:
 //////////////////////////////////////////////////////////////////
 
 class TextureArray {
-public:
-	
-	static TextureArrayRef create( const ci::ivec3 &size ) { return std::make_shared<TextureArray>( size ); }
+  
+  public:
+	struct Format {
+		Format(){}
 
-	TextureArray( const ci::ivec3 &size );
+		Format& size( ci::ivec3 size = vec3( 1024, 1024, 8 ) ) { mSize = size; return *this; }
+		Format& mipmap( bool enableMipmapping = true ) { mMipmapping = enableMipmapping; return *this; }
+		Format& maxAnisotropy( float maxAnisotropy ) { mMaxAnisotropy = maxAnisotropy; return *this; }
+		Format& internalFormat( GLint internalFormat ) { mInternalFormat = internalFormat; return *this; }
+		
+	  protected:
+		bool		mMipmapping { false };
+		float		mMaxAnisotropy { -1 };
+		GLint		mInternalFormat { GL_RED };
+		ci::ivec3	mSize { ci::ivec3( 1024, 1024, 8 ) };
+
+		friend class TextureArray;
+		friend class TextureRenderer;
+	};
+
+  public:
+	
+	static TextureArrayRef create( const TextureArray::Format fmt = TextureArray::Format() ) { return std::make_shared<TextureArray>( fmt ); }
+
+	TextureArray( const TextureArray::Format fmt );
 
 	struct Region {
 		Region( const ci::Rectf &rect = Rectf::zero(), int layer = -1 ):
@@ -73,11 +93,14 @@ public:
 
 	ci::gl::Texture3dRef getTexture() const { return mTexture; }
 	const std::vector<TexturePack>& getTexturePacks() const { return mTexturePacks; }
+	void update( ci::ChannelRef channel, int layerIdx );
+
 
 protected:
 	ci::ivec3				 mSize;
 	ci::gl::Texture3dRef	 mTexture;
 	std::vector<TexturePack> mTexturePacks;
+	TextureArray::Format	 mFormat;
 };
 
 //////////////////////////////////////////////////////////////////
@@ -97,6 +120,7 @@ class TextureRenderer : public cinder::text::Renderer {
 		TextureArrayRef texArray;
 		ci::ChannelRef	layerChannel;
 		int				currentLayerIdx;
+		bool			filled = false;
 	} TexArrayCache;
 
 	typedef struct {
@@ -114,6 +138,7 @@ class TextureRenderer : public cinder::text::Renderer {
 	void setOffset( ci::vec2 offset ) { mOffset = offset; }
 
 	static void enableSharedCaches( bool enable = true ) { mSharedCacheEnabled = enable; };
+	static void setTextureFormat( TextureArray::Format fmt ) { mTextureArrayFormat = fmt; };
 
 	static void loadFont( const Font& font );
 	static void unloadFont( const Font& font );
@@ -153,6 +178,8 @@ class TextureRenderer : public cinder::text::Renderer {
 	static TexArrayCache						mSharedTexArrayCache;
 	//! Whether the texture cache is shared for all fonts, otherwise per-font
 	static bool									mSharedCacheEnabled;
+	//! Options for the texture array
+	static TextureArray::Format					mTextureArrayFormat;
 
 	static TextureArrayRef makeTextureArray();
 	static void uploadChannelToTexture( TexArrayCache &texArrayCache );

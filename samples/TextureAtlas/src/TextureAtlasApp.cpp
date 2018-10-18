@@ -75,22 +75,17 @@ void TextureAtlasApp::setup()
 	auto font4 = text::Font( loadAsset( "../../assets/fonts/SourceSerifPro/SourceSerifPro-Light.otf" ), 100 );
 
 	//std::string text = "Aa Bb Cc Dd Ee Ff Gg Hh Ii Jj Kk Ll Mm Nn Oo Pp Qq Rr Ss Tt Uu Vv Ww Xx Yy Zz";
-	
-	//cinder::text::AttributedString attr( text, font3 );
-	//mLayout.setSize( mTextBox.getSize() );
-	//mLayout.calculateLayout( attr );
-
-	
-	//mRenderer.cacheGlyphs( font1, text );
-	//mRenderer.cacheGlyphs( font3, text );
-	/*mRenderer.cacheGlyphs( font3, text );
-	mRenderer.cacheGlyphs( font4, text );
-*/
 	//std::string text = "THIS IS A TEST";
 	std::string text = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890().?!,:;'\"&*=+-/\\@#_[]<>%^llflfiphrids\303\251\303\241\303\250\303\240fiftff";
 
 	// Enable glyphs to be cached in a shared texture array
 	//cinder::text::gl::TextureRenderer::enableSharedCaches( true );
+	cinder::text::gl::TextureArray::Format fmt = cinder::text::gl::TextureArray::Format()
+		.size( vec3( 2048, 1024, 4 ) )
+		.internalFormat( GL_RED )
+		.maxAnisotropy( gl::Texture2d::getMaxAnisotropyMax() )
+		.mipmap( true );
+	cinder::text::gl::TextureRenderer::setTextureFormat( fmt );
 
 	// Glyph caching
 	// caches specified string
@@ -118,11 +113,7 @@ void TextureAtlasApp::setup()
 	mRenderer.unloadFont( font3 );
 	mRenderer.unloadFont( font4 );
 
-	//mRenderer.setLayout( mLayout );
-	//mRenderer.render( mLayout );
-
 	// Rendering glyphs for text
-
 	ci::gl::GlslProgRef shader = ci::gl::GlslProg::create( vertShader, fragShader );
 	shader->uniform( "uTexArray", 0 );
 	mBatch = ci::gl::Batch::create( ci::geom::Rect( Rectf( vec2(0.0), vec2( 1.0f ))), shader );
@@ -147,20 +138,17 @@ void TextureAtlasApp::draw()
 	int depth = mGlyphTexture->getDepth();
 	int cols = ceil( sqrt( depth ) );
 	int rows = cols;
+
+	// draw all textures in the texture array
 	for( int i = 0; i < depth; i++ ) {
 	
 		float w = getWindowWidth() / cols;
-		float h = w * (size.x / size.y);
+		float h = w * (size.y / size.x);
 		float x = (i % cols) * w;
 		float y = (floor( float(i) / float(cols) )) * h;
 		
 		ci::Area drawingArea = Area( vec2( x, y ), vec2( x, y ) + vec2( w, h ) );
 
-		//float w = float( app::getWindowWidth() ) /float( depth );
-		//auto drawingArea = Area::proportionalFit( Area( mGlyphTexture->getBounds() ), Area( Rectf( w * float(i), 0.0f, w*float(i) + w, float(getWindowHeight()) ) ), true );
-		//gl::draw( mFontTextures[i], drawingArea );
-		//auto drawingArea =  Rectf( mFontTextures[i]->getBounds() );
-		//drawingArea.transform( translate( mat3(), vec2( 1024.0f * float( i ), 0.0 )) );
 		{
 			gl::ScopedMatrices scpMtrx;
 			gl::translate( drawingArea.getUL() );
