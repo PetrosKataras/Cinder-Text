@@ -105,7 +105,7 @@ protected:
 
 //////////////////////////////////////////////////////////////////
 
-class TextureRenderer : public cinder::text::Renderer {
+class TextureRenderer {
   public:
 	// Font + Glyph Caching (shared between all instances)
 	typedef struct {
@@ -133,14 +133,14 @@ class TextureRenderer : public cinder::text::Renderer {
 
 	//void draw( const std::string& text, const ci::vec2& size = ci::vec2( 0 ) ) override;
 	//void draw( const std::string& text, const Font& font, const ci::vec2 size = ci::vec2( 0 ) ) override;
-	void draw() override;
-	void setLayout( const cinder::text::Layout& layout ) override;
-	void setOffset( ci::vec2 offset ) { mOffset = offset; }
+	//void draw() override;
+	//void setLayout( const cinder::text::Layout& layout ) override;
+	//void setOffset( ci::vec2 offset ) { mOffset = offset; }
 
 	static void enableSharedCaches( bool enable = true ) { mSharedCacheEnabled = enable; };
 	static void setTextureFormat( TextureArray::Format fmt ) { mTextureArrayFormat = fmt; };
 
-	static void loadFont( const Font& font );
+	static void loadFont( const Font& font, bool loadEntireFont = false );
 	static void unloadFont( const Font& font );
 
 	static void cacheGlyphs( const Font& font, const std::string string, const std::string language = "en", hb_script_t script = HB_SCRIPT_LATIN, hb_direction_t dir = HB_DIRECTION_LTR );
@@ -158,17 +158,20 @@ class TextureRenderer : public cinder::text::Renderer {
 	std::map<uint16_t, GlyphCache> getGylphMapForFont( const Font &font );
 	ci::gl::Texture3dRef getTextureForFont( const Font& font );
 
+	void render( const std::vector<cinder::text::Layout::Line>& lines );
+	void render( const cinder::text::Layout& layout );
+
   private:
 	// Texture (FBO) caching
-	ci::vec2 mOffset; // amount to offset texture in FBO
-	void renderToFbo();
-	void allocateFbo( int size );
+	//ci::vec2 mOffset; // amount to offset texture in FBO
+	//void renderToFbo();
+	//void allocateFbo( int size );
 	
-	ci::gl::FboRef		mFbo;
+	//ci::gl::FboRef		mFbo;
 	ci::gl::BatchRef	mBatch;
 
 	
-	static void cacheFont( const Font& font );
+	static void cacheFont( const Font& font, bool cacheEntireFont = false );
 	
 	static void uncacheFont( const Font& font );
 

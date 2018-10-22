@@ -45,11 +45,11 @@ class CinderProjectApp : public App
 		//ci::Rectf mTextBox = ci::Rectf( 100.f, 100.f, 800.f, 800.f );
 
 		// English
-		//std::string fontName = "fonts/notoserif/notoserif-regular.ttf";
-		//std::string testTextFilename = "text/english.txt";
-		//std::string mLanguage = "en";
-		//hb_script_t mScript = HB_SCRIPT_LATIN;
-		//hb_direction_t mDirection = HB_DIRECTION_LTR;
+		std::string fontName = "fonts/notoserif/notoserif-regular.ttf";
+		std::string testTextFilename = "text/english.txt";
+		std::string mLanguage = "en";
+		hb_script_t mScript = HB_SCRIPT_LATIN;
+		hb_direction_t mDirection = HB_DIRECTION_LTR;
 
 		// Arabic
 		//std::string fontName = "fonts/NotoArabic/NotoSansArabic-Regular.ttf";
@@ -59,11 +59,11 @@ class CinderProjectApp : public App
 		//hb_direction_t mDirection = HB_DIRECTION_RTL;
 
 		// Simplified Chinese
-		std::string fontName = "fonts/NotoChinese/NotoSansCJKsc-Regular.otf";
-		std::string testTextFilename = "text/simplifiedChinese.txt";
-		std::string mLanguage = "zh-Hans";
-		hb_script_t mScript = HB_SCRIPT_HAN;
-		hb_direction_t mDirection = HB_DIRECTION_LTR;
+		//std::string fontName = "fonts/NotoChinese/NotoSansCJKsc-Regular.otf";
+		//std::string testTextFilename = "text/simplifiedChinese.txt";
+		//std::string mLanguage = "zh-Hans";
+		//hb_script_t mScript = HB_SCRIPT_HAN;
+		//hb_direction_t mDirection = HB_DIRECTION_LTR;
 
 		// Cyrillic
 		//std::string fontName = "fonts/SourceSerifPro/SourceSerifPro-Regular.otf";
@@ -73,6 +73,7 @@ class CinderProjectApp : public App
 		//hb_direction_t mDirection = HB_DIRECTION_LTR;
 
 		std::string mTestText;
+		ci::gl::FboRef mFbo;
 };
 
 CinderProjectApp::CinderProjectApp() {}
@@ -81,9 +82,25 @@ void CinderProjectApp::setup()
 {
 	setWindowSize( 1024.f, 768.f );
 
+	ci::gl::Fbo::Format fboFormat;
+	ci::gl::Texture::Format texFormat;
+	texFormat.setMagFilter( GL_NEAREST );
+	texFormat.setMinFilter( GL_LINEAR );
+	texFormat.enableMipmapping( true );
+	fboFormat.setSamples( 8 );
+	fboFormat.setColorTextureFormat( texFormat );
+ 	mFbo = ci::gl::Fbo::create( mTextBoxSize.x, mTextBoxSize.y, fboFormat );
+
+	ci::text::gl::TextureArray::Format fmt = text::gl::TextureArray::Format()
+		.size( ivec3( 2048, 2048, 16) );
+	ci::text::gl::TextureRenderer::setTextureFormat( fmt );
+	
 	mFont = std::make_shared<text::Font>( ci::app::loadAsset( fontName ), mFontSize );
+	//text::gl::TextureRenderer::loadFont( *mFont, true );	// true to load the entire font (as oppose to a predefined subset - for Latin based languages)
 	text::gl::TextureRenderer::loadFont( *mFont );
-	text::gl::TextureRenderer::loadFont( *mFont ); // Testing caching, should be nearly a no-op
+	
+	
+	//text::gl::TextureRenderer::loadFont( *mFont ); // Testing caching, should be nearly a no-op
 	//mLineHeight = mFont->getLineHeight();
 
 	ci::FileWatcher::instance().watch( ci::app::getAssetPath( testTextFilename ), std::bind( &CinderProjectApp::textFileUpdated, this, std::placeholders::_1 ) );
@@ -104,7 +121,18 @@ void CinderProjectApp::draw()
 	ci::gl::drawStrokedRect( ci::Rectf( ci::vec2( 0.f ), mLayout.measure() ) );
 
 	ci::gl::color( 1.f, 1, 1 );
-	mRenderer.draw();
+	
+	{
+		ci::gl::ScopedViewport viewportScope( 0, 0, mFbo->getWidth(), mFbo->getHeight() );
+		ci::gl::ScopedMatrices matricesScope;
+		ci::gl::setMatricesWindow( mFbo->getSize(), true );
+ 		// Draw text into FBO
+		ci::gl::ScopedFramebuffer fboScoped( mFbo );
+		ci::gl::clear( ci::ColorA( 0.0, 0.0, 0.0, 0.0 ) );
+		mRenderer.render( mLayout );
+	}
+
+	gl::draw( mFbo->getColorTexture() );
 }
 
 
@@ -122,7 +150,7 @@ void CinderProjectApp::updateLayout()
 	mLayout.setLineHeight( text::Unit( mLineHeight, text::EM ) );
 	mLayout.calculateLayout( mTestText );
 
-	mRenderer.setLayout( mLayout );
+	//mRenderer.setLayout( mLayout );
 }
 
 std::string unescape( const std::string& s )

@@ -69,7 +69,7 @@ void main( void )
 
 void TextureAtlasApp::setup()
 {
-	auto font1 = text::Font( "Arial", 1024 );
+	auto font1 = text::Font( "Arial", 24 * 8 );
 	auto font2 = text::Font( loadAsset( "../../assets/fonts/SourceSansPro/SourceSansPro-Regular.otf" ), 72 );
 	auto font3 = text::Font( loadAsset( "../../assets/fonts/SourceSerifPro/SourceSerifPro-Black.otf" ), 200 );
 	auto font4 = text::Font( loadAsset( "../../assets/fonts/SourceSerifPro/SourceSerifPro-Light.otf" ), 100 );
@@ -79,7 +79,7 @@ void TextureAtlasApp::setup()
 	std::string text = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890().?!,:;'\"&*=+-/\\@#_[]<>%^llflfiphrids\303\251\303\241\303\250\303\240fiftff";
 
 	// Enable glyphs to be cached in a shared texture array
-	//cinder::text::gl::TextureRenderer::enableSharedCaches( true );
+	cinder::text::gl::TextureRenderer::enableSharedCaches( true );
 	cinder::text::gl::TextureArray::Format fmt = cinder::text::gl::TextureArray::Format()
 		.size( vec3( 1024, 1024, 4 ) )
 		.internalFormat( GL_RED )

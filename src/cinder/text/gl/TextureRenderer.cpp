@@ -62,7 +62,7 @@ out vec4 color;
 
 void main( void )
 { 
-	vec3 coord = vec3((texCoord.x * uSubTexSize.x) + uSubTexOffset.x, (texCoord.y * uSubTexSize.y) + uSubTexOffset.y, uLayer);
+	vec3 coord = vec3((texCoord.x * uSubTexSize.x) + uSubTexOffset.x, ((1.0 - texCoord.y) * uSubTexSize.y) + uSubTexOffset.y, uLayer);
 	vec4 texColor = texture( uTexArray, coord );
 
 	color = vec4(1.0, 1.0, 1.0, texColor.r);
@@ -82,7 +82,6 @@ GLint getMaxTextureSize()
 }
 
 TextureRenderer::TextureRenderer()
-	: mOffset( ci::vec2() )
 {
 	ci::gl::GlslProgRef shader = ci::gl::GlslProg::create( vertShader, fragShader );
 	shader->uniform( "uTexArray", 0 );
@@ -92,113 +91,55 @@ TextureRenderer::TextureRenderer()
 	}
 }
 
-void TextureRenderer::setLayout( const Layout& layout )
+void TextureRenderer::render( const cinder::text::Layout& layout )
 {
-	mLayout = layout;
-	allocateFbo( std::max( mLayout.measure().x, mLayout.measure().y ) );
-	renderToFbo();
+	render( layout.getLines() );
 }
 
-ci::gl::TextureRef TextureRenderer::getTexture()
+void TextureRenderer::render( const std::vector<cinder::text::Layout::Line>& lines )
 {
-	return mFbo->getColorTexture();
-}
+	for( auto& line : lines ) 
+	{
+		for( auto& run : line.runs ) {
+			ci::gl::ScopedGlslProg scopedShader( ci::gl::getStockShader( ci::gl::ShaderDef().color() ) );
+			ci::gl::ScopedColor( ci::ColorA( run.color, run.opacity ) );
 
-void TextureRenderer::allocateFbo( int size )
-{
-	
+			for( auto& glyph : run.glyphs ) 
+			{	
+				// Make sure we have the glyph
+				if( TextureRenderer::getCacheForFont( run.font ).glyphs.count( glyph.index ) != 0 ) {
+					ci::gl::ScopedMatrices matrices;
+					ci::gl::translate( ci::vec2( glyph.bbox.getUpperLeft() ) );
+					ci::gl::scale( glyph.bbox.getSize().x, glyph.bbox.getSize().y );
 
-	if( mFbo == nullptr || mFbo->getWidth() < size || mFbo->getHeight() < size ) {
-		// Go up by pow2 until we get the new size
-		int fboSize = 1;
+					auto fontCache = getCacheForFont( run.font );
+					auto glyphCache = fontCache.glyphs[glyph.index];
 
-		while( fboSize < size ) {
-			fboSize *= 2;
-		}
+					//auto tex = getCacheForFont( run.font ).glyphs[glyph.index].texArray->getTexture();
+					auto tex = fontCache.texArrayCache.texArray->getTexture();
 
-		// Allocate
-		ci::gl::Fbo::Format fboFormat;
-		ci::gl::Texture::Format texFormat;
-		texFormat.setMagFilter( GL_NEAREST );
-		texFormat.setMinFilter( GL_LINEAR );
-		//fboFormat.setColorTextureFormat( ci::gl::Texture2d::Format().internalFormat( GL_RGBA32F ) );
-		fboFormat.setColorTextureFormat( texFormat );
+					//ci::gl::ScopedBlendAlpha alphaBlend;
+					mBatch->getGlslProg()->uniform( "uLayer", (uint32_t)glyphCache.layer );
 
-		GLint maxRenderBufferSize;
-		glGetIntegerv( GL_MAX_RENDERBUFFER_SIZE_EXT, &maxRenderBufferSize );
-		if( fboSize < maxRenderBufferSize ) {
-			mFbo = ci::gl::Fbo::create( fboSize, fboSize, fboFormat );
-		}
-		else {
-			CI_LOG_E( "Cannot allocate FBO, requested dimensions are bigger than maximum render buffer size." );
-		}
-	}
-}
+					//ci::vec2 subTexSize = glyph.bbox.getSize() / ci::vec2( tex->getWidth(), tex->getHeight() );
+					mBatch->getGlslProg()->uniform( "uSubTexSize", glyphCache.subTexSize );
+					mBatch->getGlslProg()->uniform( "uSubTexOffset", glyphCache.subTexOffset );
 
-void TextureRenderer::renderToFbo()
-{
-	if( mFbo ) {
-		// Set viewport
-		ci::gl::ScopedViewport viewportScope( 0, 0, mFbo->getWidth(), mFbo->getHeight() );
-		ci::gl::ScopedMatrices matricesScope;
-		ci::gl::setMatricesWindow( mFbo->getSize(), true );
-
-		// Draw text into FBO
-		ci::gl::ScopedFramebuffer fboScoped( mFbo );
-		ci::gl::clear( ci::ColorA( 0.0, 0.0, 0.0, 0.0 ) );
-
-		ci::gl::ScopedBlendAlpha alpha;
-
-		for( auto& line : mLayout.getLines() ) {
-			for( auto& run : line.runs ) {
-				ci::gl::color( ci::ColorA( run.color, run.opacity ) );
-
-				for( auto& glyph : run.glyphs ) {
-					// Make sure we have the glyph
-					if( TextureRenderer::getCacheForFont( run.font ).glyphs.count( glyph.index ) != 0 ) {
-						ci::gl::ScopedMatrices matrices;
-
-						ci::gl::translate( ci::vec2( glyph.bbox.getUpperLeft() ) + mOffset );
-						ci::gl::scale( glyph.bbox.getSize().x, glyph.bbox.getSize().y );
-
-						auto fontCache = getCacheForFont( run.font );
-						auto glyphCache = fontCache.glyphs[glyph.index];
-
-						//auto tex = getCacheForFont( run.font ).glyphs[glyph.index].texArray->getTexture();
-						auto tex = fontCache.texArrayCache.texArray->getTexture();
-
-						//ci::gl::ScopedBlendAlpha alphaBlend;
-						mBatch->getGlslProg()->uniform( "uLayer", (uint32_t)glyphCache.layer );
-
-						//ci::vec2 subTexSize = glyph.bbox.getSize() / ci::vec2( tex->getWidth(), tex->getHeight() );
-						mBatch->getGlslProg()->uniform( "uSubTexSize", glyphCache.subTexSize );
-						mBatch->getGlslProg()->uniform( "uSubTexOffset", glyphCache.subTexOffset );
-
-						ci::gl::ScopedTextureBind texBind( tex->getTarget(), tex->getId() );
-						mBatch->draw();
-					}
-					else {
-						//ci::app::console() << "Could not find glyph for index: " << glyph.index << std::endl;
-					}
+					ci::gl::ScopedTextureBind texBind( tex->getTarget(), tex->getId() );
+					mBatch->draw();
+				}
+				else {
+					//ci::app::console() << "Could not find glyph for index: " << glyph.index << std::endl;
 				}
 			}
 		}
 	}
 }
 
-
-void TextureRenderer::draw()
-{
-	if( mFbo ) {
-		ci::gl::ScopedBlendPremult blend;
-		ci::gl::draw( mFbo->getColorTexture() );
-	}
-}
-
-void TextureRenderer::loadFont( const Font& font )
+void TextureRenderer::loadFont( const Font& font, bool loadEntireFont )
 {
 	if( TextureRenderer::fontCache.count( font ) == 0 ) {
-		TextureRenderer::cacheFont( font );
+		TextureRenderer::cacheFont( font, loadEntireFont );
 		CI_LOG_V( "Font loaded: \n" << font );
 	}
 }
@@ -228,14 +169,17 @@ ci::gl::Texture3dRef TextureRenderer::getTextureForFont( const Font& font )
 }
 
 // Cache glyphs to gl texture array(s)
-void TextureRenderer::cacheFont( const Font& font )
+void TextureRenderer::cacheFont( const Font& font,  bool cacheEntireFont )
 {
-	// partial font
-	cacheGlyphs( font, defaultUnicodeRange() );
-
-	// entire font
-	//std::vector<uint32_t> glyphIndices = cinder::text::FontManager::get()->getGlyphIndices( font );
-	//cacheGlyphs( font, glyphIndices );
+	if( cacheEntireFont ) {
+		// entire font
+		std::vector<uint32_t> glyphIndices = cinder::text::FontManager::get()->getGlyphIndices( font );
+		cacheGlyphs( font, glyphIndices );
+	}
+	else {
+		// partial font
+		cacheGlyphs( font, defaultUnicodeRange() );
+	}
 }
 
 void TextureRenderer::uncacheFont( const Font& font )
