@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		003352102172D5580090D609 /* Types.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0033520E2172D5580090D609 /* Types.cpp */; };
 		006D720419952D00008149E2 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 006D720219952D00008149E2 /* AVFoundation.framework */; };
 		006D720519952D00008149E2 /* CoreMedia.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 006D720319952D00008149E2 /* CoreMedia.framework */; };
 		0091D8F90E81B9330029341E /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0091D8F80E81B9330029341E /* OpenGL.framework */; };
@@ -16,15 +17,23 @@
 		00B784B60FF439BC000DE1D7 /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 00B784B20FF439BC000DE1D7 /* CoreAudio.framework */; };
 		00B9955A1B128DF400A5C623 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 00B995581B128DF400A5C623 /* IOKit.framework */; };
 		00B9955B1B128DF400A5C623 /* IOSurface.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 00B995591B128DF400A5C623 /* IOSurface.framework */; };
+		25F49979A238412FA37E8FE3 /* CinderApp.icns in Resources */ = {isa = PBXBuildFile; fileRef = 5EBE106A809549728E07ABBC /* CinderApp.icns */; };
 		5323E6B20EAFCA74003A9687 /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5323E6B10EAFCA74003A9687 /* CoreVideo.framework */; };
 		8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
-		2C969647B64147A8836D4649 /* Textbox_Prefix.pch in Headers */ = {isa = PBXBuildFile; fileRef = 24C82A4207FA41D2BB49D100 /* Textbox_Prefix.pch */; };
-		25F49979A238412FA37E8FE3 /* CinderApp.icns in Resources */ = {isa = PBXBuildFile; fileRef = 5EBE106A809549728E07ABBC /* CinderApp.icns */; };
-		C45885E219E2431F88C3C863 /* Resources.h in Headers */ = {isa = PBXBuildFile; fileRef = 5AF9A10DA34E4FF0AB0E0C18 /* Resources.h */; };
 		C0C9462BD2054245970C0392 /* TextboxApp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5E5FF4051ECE42CFA32A80C8 /* TextboxApp.cpp */; };
+		DFA4A449216E962F00F62759 /* TextureRenderer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DFA4A447216E962F00F62759 /* TextureRenderer.cpp */; };
+		DFA4A45A216E963900F62759 /* SystemFonts.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DFA4A44B216E963800F62759 /* SystemFonts.cpp */; };
+		DFA4A45B216E963900F62759 /* FontManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DFA4A44D216E963800F62759 /* FontManager.cpp */; };
+		DFA4A45C216E963900F62759 /* TextLayout.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DFA4A44F216E963900F62759 /* TextLayout.cpp */; };
+		DFA4A45D216E963900F62759 /* AttributedString.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DFA4A451216E963900F62759 /* AttributedString.cpp */; };
+		DFA4A45E216E963900F62759 /* TextBox.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DFA4A453216E963900F62759 /* TextBox.cpp */; };
+		DFA4A45F216E963900F62759 /* Shaper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DFA4A456216E963900F62759 /* Shaper.cpp */; };
+		DFA4A460216E963900F62759 /* Font.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DFA4A458216E963900F62759 /* Font.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		0033520E2172D5580090D609 /* Types.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Types.cpp; path = ../../../src/cinder/text/Types.cpp; sourceTree = "<group>"; };
+		0033520F2172D5580090D609 /* Types.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Types.h; path = ../../../src/cinder/text/Types.h; sourceTree = "<group>"; };
 		006D720219952D00008149E2 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
 		006D720319952D00008149E2 /* CoreMedia.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMedia.framework; path = System/Library/Frameworks/CoreMedia.framework; sourceTree = SDKROOT; };
 		0091D8F80E81B9330029341E /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = /System/Library/Frameworks/OpenGL.framework; sourceTree = "<absolute>"; };
@@ -35,15 +44,32 @@
 		00B995581B128DF400A5C623 /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
 		00B995591B128DF400A5C623 /* IOSurface.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOSurface.framework; path = System/Library/Frameworks/IOSurface.framework; sourceTree = SDKROOT; };
 		1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = /System/Library/Frameworks/Cocoa.framework; sourceTree = "<absolute>"; };
+		24C82A4207FA41D2BB49D100 /* Textbox_Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = "\"\""; path = Textbox_Prefix.pch; sourceTree = "<group>"; };
 		29B97324FDCFA39411CA2CEA /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
 		29B97325FDCFA39411CA2CEA /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
+		381769D4D2294FEAB5805ECE /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		5323E6B10EAFCA74003A9687 /* CoreVideo.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreVideo.framework; path = /System/Library/Frameworks/CoreVideo.framework; sourceTree = "<absolute>"; };
+		5E5FF4051ECE42CFA32A80C8 /* TextboxApp.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.cpp; name = TextboxApp.cpp; path = ../src/TextboxApp.cpp; sourceTree = "<group>"; };
+		5EBE106A809549728E07ABBC /* CinderApp.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = CinderApp.icns; path = ../resources/CinderApp.icns; sourceTree = "<group>"; };
 		8D1107320486CEB800E47090 /* Textbox.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Textbox.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		5E5FF4051ECE42CFA32A80C8 /* TextboxApp.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.cpp; path = ../src/TextboxApp.cpp; sourceTree = "<group>"; name = TextboxApp.cpp; };
-		5AF9A10DA34E4FF0AB0E0C18 /* Resources.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ../include/Resources.h; sourceTree = "<group>"; name = Resources.h; };
-		5EBE106A809549728E07ABBC /* CinderApp.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = ../resources/CinderApp.icns; sourceTree = "<group>"; name = CinderApp.icns; };
-		381769D4D2294FEAB5805ECE /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; name = Info.plist; };
-		24C82A4207FA41D2BB49D100 /* Textbox_Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = "\"\""; path = Textbox_Prefix.pch; sourceTree = "<group>"; name = Textbox_Prefix.pch; };
+		DFA4A447216E962F00F62759 /* TextureRenderer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TextureRenderer.cpp; path = ../../../src/cinder/text/gl/TextureRenderer.cpp; sourceTree = "<group>"; };
+		DFA4A448216E962F00F62759 /* TextureRenderer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TextureRenderer.h; path = ../../../src/cinder/text/gl/TextureRenderer.h; sourceTree = "<group>"; };
+		DFA4A44A216E963800F62759 /* TextUnits.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TextUnits.h; path = ../../../src/cinder/text/TextUnits.h; sourceTree = "<group>"; };
+		DFA4A44B216E963800F62759 /* SystemFonts.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SystemFonts.cpp; path = ../../../src/cinder/text/SystemFonts.cpp; sourceTree = "<group>"; };
+		DFA4A44C216E963800F62759 /* SystemFonts.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SystemFonts.h; path = ../../../src/cinder/text/SystemFonts.h; sourceTree = "<group>"; };
+		DFA4A44D216E963800F62759 /* FontManager.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FontManager.cpp; path = ../../../src/cinder/text/FontManager.cpp; sourceTree = "<group>"; };
+		DFA4A44E216E963800F62759 /* FontManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FontManager.h; path = ../../../src/cinder/text/FontManager.h; sourceTree = "<group>"; };
+		DFA4A44F216E963900F62759 /* TextLayout.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TextLayout.cpp; path = ../../../src/cinder/text/TextLayout.cpp; sourceTree = "<group>"; };
+		DFA4A450216E963900F62759 /* Font.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Font.h; path = ../../../src/cinder/text/Font.h; sourceTree = "<group>"; };
+		DFA4A451216E963900F62759 /* AttributedString.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = AttributedString.cpp; path = ../../../src/cinder/text/AttributedString.cpp; sourceTree = "<group>"; };
+		DFA4A452216E963900F62759 /* Shaper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Shaper.h; path = ../../../src/cinder/text/Shaper.h; sourceTree = "<group>"; };
+		DFA4A453216E963900F62759 /* TextBox.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TextBox.cpp; path = ../../../src/cinder/text/TextBox.cpp; sourceTree = "<group>"; };
+		DFA4A454216E963900F62759 /* AttributedString.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AttributedString.h; path = ../../../src/cinder/text/AttributedString.h; sourceTree = "<group>"; };
+		DFA4A455216E963900F62759 /* TextLayout.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TextLayout.h; path = ../../../src/cinder/text/TextLayout.h; sourceTree = "<group>"; };
+		DFA4A456216E963900F62759 /* Shaper.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Shaper.cpp; path = ../../../src/cinder/text/Shaper.cpp; sourceTree = "<group>"; };
+		DFA4A457216E963900F62759 /* TextRenderer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TextRenderer.h; path = ../../../src/cinder/text/TextRenderer.h; sourceTree = "<group>"; };
+		DFA4A458216E963900F62759 /* Font.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Font.cpp; path = ../../../src/cinder/text/Font.cpp; sourceTree = "<group>"; };
+		DFA4A459216E963900F62759 /* TextBox.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TextBox.h; path = ../../../src/cinder/text/TextBox.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -68,6 +94,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		01B97315FEAEA392516A2CEA /* Blocks */ = {
+			isa = PBXGroup;
+			children = (
+				DFA4A445216E961900F62759 /* Cinder-Text */,
+			);
+			name = Blocks;
+			sourceTree = "<group>";
+		};
 		080E96DDFE201D6D7F000001 /* Source */ = {
 			isa = PBXGroup;
 			children = (
@@ -124,17 +158,9 @@
 			name = Textbox;
 			sourceTree = "<group>";
 		};
-		01B97315FEAEA392516A2CEA /* Blocks */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			name = Blocks;
-			sourceTree = "<group>";
-		};
 		29B97315FDCFA39411CA2CEA /* Headers */ = {
 			isa = PBXGroup;
 			children = (
-				5AF9A10DA34E4FF0AB0E0C18 /* Resources.h */,
 				24C82A4207FA41D2BB49D100 /* Textbox_Prefix.pch */,
 			);
 			name = Headers;
@@ -156,6 +182,41 @@
 				1058C7A2FEA54F0111CA2CBB /* Other Frameworks */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		DFA4A445216E961900F62759 /* Cinder-Text */ = {
+			isa = PBXGroup;
+			children = (
+				DFA4A451216E963900F62759 /* AttributedString.cpp */,
+				DFA4A454216E963900F62759 /* AttributedString.h */,
+				DFA4A458216E963900F62759 /* Font.cpp */,
+				DFA4A450216E963900F62759 /* Font.h */,
+				DFA4A44D216E963800F62759 /* FontManager.cpp */,
+				DFA4A44E216E963800F62759 /* FontManager.h */,
+				DFA4A456216E963900F62759 /* Shaper.cpp */,
+				DFA4A452216E963900F62759 /* Shaper.h */,
+				DFA4A44B216E963800F62759 /* SystemFonts.cpp */,
+				DFA4A44C216E963800F62759 /* SystemFonts.h */,
+				DFA4A453216E963900F62759 /* TextBox.cpp */,
+				DFA4A459216E963900F62759 /* TextBox.h */,
+				DFA4A44F216E963900F62759 /* TextLayout.cpp */,
+				DFA4A455216E963900F62759 /* TextLayout.h */,
+				DFA4A457216E963900F62759 /* TextRenderer.h */,
+				DFA4A44A216E963800F62759 /* TextUnits.h */,
+				0033520E2172D5580090D609 /* Types.cpp */,
+				0033520F2172D5580090D609 /* Types.h */,
+				DFA4A446216E962100F62759 /* gl */,
+			);
+			name = "Cinder-Text";
+			sourceTree = "<group>";
+		};
+		DFA4A446216E962100F62759 /* gl */ = {
+			isa = PBXGroup;
+			children = (
+				DFA4A447216E962F00F62759 /* TextureRenderer.cpp */,
+				DFA4A448216E962F00F62759 /* TextureRenderer.h */,
+			);
+			name = gl;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -184,6 +245,8 @@
 /* Begin PBXProject section */
 		29B97313FDCFA39411CA2CEA /* Project object */ = {
 			isa = PBXProject;
+			attributes = {
+			};
 			buildConfigurationList = C01FCF4E08A954540054247B /* Build configuration list for PBXProject "Textbox" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
@@ -219,6 +282,15 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DFA4A460216E963900F62759 /* Font.cpp in Sources */,
+				003352102172D5580090D609 /* Types.cpp in Sources */,
+				DFA4A449216E962F00F62759 /* TextureRenderer.cpp in Sources */,
+				DFA4A45A216E963900F62759 /* SystemFonts.cpp in Sources */,
+				DFA4A45D216E963900F62759 /* AttributedString.cpp in Sources */,
+				DFA4A45B216E963900F62759 /* FontManager.cpp in Sources */,
+				DFA4A45C216E963900F62759 /* TextLayout.cpp in Sources */,
+				DFA4A45E216E963900F62759 /* TextBox.cpp in Sources */,
+				DFA4A45F216E963900F62759 /* Shaper.cpp in Sources */,
 				C0C9462BD2054245970C0392 /* TextboxApp.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -230,17 +302,17 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				COMBINE_HIDPI_IMAGES = YES;
-				DEAD_CODE_STRIPPING = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_INLINES_ARE_PRIVATE_EXTERN = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = Textbox_Prefix.pch;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
 					"$(inherited)",
 				);
-				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = Textbox_Prefix.pch;
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				INFOPLIST_FILE = Info.plist;
 				INSTALL_PATH = "$(HOME)/Applications";
@@ -262,12 +334,12 @@
 				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
 				GCC_INLINES_ARE_PRIVATE_EXTERN = YES;
 				GCC_OPTIMIZATION_LEVEL = 3;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = Textbox_Prefix.pch;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"NDEBUG=1",
 					"$(inherited)",
 				);
-				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = Textbox_Prefix.pch;
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				INFOPLIST_FILE = Info.plist;
 				INSTALL_PATH = "$(HOME)/Applications";
@@ -284,17 +356,20 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				CINDER_PATH = "../../../../..";
+				CINDER_PATH = ../../../../..;
 				CLANG_CXX_LANGUAGE_STANDARD = "c++11";
 				CLANG_CXX_LIBRARY = "libc++";
 				ENABLE_TESTABILITY = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = "\"$(CINDER_PATH)/include\"";
+				HEADER_SEARCH_PATHS = (
+					"\"$(CINDER_PATH)/include\"",
+					"\"$(CINDER_PATH)/include/freetype\"",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 10.8;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = macosx;
-				USER_HEADER_SEARCH_PATHS = "\"$(CINDER_PATH)/include\" ../include";
+				USER_HEADER_SEARCH_PATHS = "\"$(CINDER_PATH)/include\" \"../include\" \"../../../src\" \"$(CINDER_PATH)/src/harfbuzz\"";
 			};
 			name = Debug;
 		};
@@ -302,15 +377,18 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				CINDER_PATH = "../../../../..";
+				CINDER_PATH = ../../../../..;
 				CLANG_CXX_LANGUAGE_STANDARD = "c++11";
 				CLANG_CXX_LIBRARY = "libc++";
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = "\"$(CINDER_PATH)/include\"";
+				HEADER_SEARCH_PATHS = (
+					"\"$(CINDER_PATH)/include\"",
+					"\"$(CINDER_PATH)/include/freetype\"",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 10.8;
 				SDKROOT = macosx;
-				USER_HEADER_SEARCH_PATHS = "\"$(CINDER_PATH)/include\" ../include";
+				USER_HEADER_SEARCH_PATHS = "\"$(CINDER_PATH)/include\" \"../include\" \"../../../src\" \"$(CINDER_PATH)/src/harfbuzz\"";
 			};
 			name = Release;
 		};

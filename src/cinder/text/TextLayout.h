@@ -100,17 +100,17 @@ class Layout {
 	std::string getLanguage() const { return mLanguage; }
 	Layout& setLanguage( std::string language ) { mLanguage = language; return *this; }
 
-	hb_script_t getScript() const { return mScript; }
-	Layout& setScript( hb_script_t script ) { mScript = script; return *this; }
+	Script getScript() const { return mScript; }
+	Layout& setScript( Script script ) { mScript = script; return *this; }
 
-	hb_direction_t getDirection() const { return mDirection; }
-	Layout& setDirection( hb_direction_t direction )
+	Direction getDirection() const { return mDirection; }
+	Layout& setDirection( Direction direction )
 	{
 		mDirection = direction;
 
 		// If alignment isn't manually set, default to LEFT for LTR and RIGHT for RTL
 		if( mUseDefaultAlignment ) {
-			mAlignment = mDirection == HB_DIRECTION_LTR ? Alignment::LEFT : Alignment::RIGHT;
+			mAlignment = mDirection == Direction::LTR ? Alignment::LEFT : Alignment::RIGHT;
 		}
 
 		return *this;
@@ -139,8 +139,8 @@ private:
 	bool mUseCalt;
 
 	std::string mLanguage;
-	hb_script_t mScript;
-	hb_direction_t mDirection;
+	Script mScript;
+	Direction mDirection;
 
 	ci::vec2 mSize;
 	ci::vec2 mLayoutSize;
@@ -154,7 +154,7 @@ private:
 		int glyphBreakIndex = -1;
 		bool found = false;
 	};
-	BreakIndices getClosestBreakForShapedText( int startIndex, const std::vector<Shaper::Glyph>& shapedGlyphs, const std::vector<uint8_t> lineBreaks, const hb_direction_t& direction );
+	BreakIndices getClosestBreakForShapedText( int startIndex, const std::vector<Shaper::Glyph>& shapedGlyphs, const std::vector<uint8_t> lineBreaks, Direction direction );
 
 	ci::vec2 mCurDirection;
 	float mCharPos, mLinePos;

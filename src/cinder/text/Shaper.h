@@ -2,13 +2,15 @@
 
 #include "cinder/Vector.h"
 #include "cinder/text/Font.h"
+#include "cinder/text/Types.h"
 
 #include <memory>
 #include <string>
 
-#include "hb.h"
-//typedef struct hb_buffer_t hb_buffer_t;
-//typedef struct hb_font_t hb_font_t;
+// Harfbuzz forward declarations
+typedef struct hb_buffer_t hb_buffer_t;
+typedef struct hb_font_t hb_font_t;
+typedef struct hb_feature_t hb_feature_t;
 
 namespace cinder { namespace text {
 
@@ -25,8 +27,8 @@ class Shaper
 	typedef struct {
 		std::string data;
 		std::string language;
-		hb_script_t script;
-		hb_direction_t direction;
+		Script script;
+		Direction direction;
 		const char* c_data() { return data.c_str(); };
 	} Text;
 
