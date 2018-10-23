@@ -8,6 +8,7 @@
 
 #include "cinder/text/TextLayout.h"
 #include "cinder/text/TextRenderer.h"
+#include "cinder/text/Types.h"
 
 namespace cinder { namespace text { namespace gl {
 
@@ -143,7 +144,7 @@ class TextureRenderer {
 	static void loadFont( const Font& font, bool loadEntireFont = false );
 	static void unloadFont( const Font& font );
 
-	static void cacheGlyphs( const Font& font, const std::string string, const std::string language = "en", hb_script_t script = HB_SCRIPT_LATIN, hb_direction_t dir = HB_DIRECTION_LTR );
+	static void cacheGlyphs( const Font& font, const std::string string, const std::string language = "en", Script script = Script::LATIN, Direction dir = Direction::LTR );
 	static void cacheGlyphs( const Font& font, const std::vector<uint32_t> &glyphIndices );
 	static void cacheGlyphs( const Font& font, const std::vector<std::pair<uint32_t, uint32_t>> &unicodeRange );
 

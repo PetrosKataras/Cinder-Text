@@ -202,7 +202,7 @@ TextureArrayRef TextureRenderer::makeTextureArray()
 	return texArray;
 }
 
-void TextureRenderer::cacheGlyphs( const Font& font, const std::string string, const std::string language, hb_script_t script, hb_direction_t dir )
+void TextureRenderer::cacheGlyphs( const Font& font, const std::string string, const std::string language, Script script, Direction dir )
 {
 	// Shape the substring
 	Shaper shaper( font );
