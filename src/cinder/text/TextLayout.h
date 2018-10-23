@@ -23,6 +23,7 @@ class Layout {
 	typedef struct {
 		uint32_t index;
 		ci::Rectf bbox;
+		ci::Rectf extents;
 		unsigned int top;
 		std::string value;
 	} Glyph;
@@ -83,7 +84,7 @@ class Layout {
 
 	const std::vector<ci::Rectf>& getGlyphBoxes() const { return mGlyphBoxes; }
 
-	float getLineHeight() const { return mLineHeight.getValue( getFont().getSize() ); }
+	float getLineHeight() const { return mLineHeight.getValue( getFont().getLineHeight() ); }
 	Layout& setLineHeight( const float& lineHeight ) { mLineHeight = cinder::text::Unit( lineHeight ); return *this; };
 	Layout& setLineHeight( const Unit& lineHeight ) { mLineHeight = lineHeight; return *this; };
 

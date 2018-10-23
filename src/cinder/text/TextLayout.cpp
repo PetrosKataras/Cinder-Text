@@ -276,16 +276,26 @@ void Layout::addSubstringToCurLine( AttributedString::Substring& substring )
 
 		// Get the glyph metrics/position
 		FT_BitmapGlyph bitmapGlyph = FontManager::get()->getGlyphBitmap( runFont, shapedGlyphs[i].index );
+		FT_Glyph g = FontManager::get()->getGlyph( runFont, shapedGlyphs[i].index );
 		ci::vec2 glyphPos;
 		ci::Rectf glyphBBox;
+		ci::Rectf glyphExtents;
+
+		FT_BBox bbox;
+		FT_Glyph_Get_CBox( g, FT_GLYPH_BBOX_SUBPIXELS, &bbox );
+ 		auto face = FontManager::get()->getFace( runFont );
+		double baseline = abs(face->descender) * mFont.getSize() / face->units_per_EM;
+		float ascent =  bbox.yMax/64.0;
 
 		if( direction == Direction::LTR ) {
-			glyphPos = pos + ci::vec2( bitmapGlyph->left, 0.f );
+			glyphPos = pos + ci::vec2( bitmapGlyph->left,mCurLineHeight - baseline - ascent );
 			glyphBBox = ci::Rectf( glyphPos, glyphPos + ci::vec2( bitmapGlyph->bitmap.width, bitmapGlyph->bitmap.rows ) );
+			glyphExtents = ci::Rectf( pos, pos + ci::vec2( advance.x + kerning, mCurLineHeight ) );
 		}
 		else {
 			glyphPos = pos - ci::vec2( shapedGlyphs[i].advance.x - bitmapGlyph->left, 0.f );
 			glyphBBox = ci::Rectf( glyphPos, glyphPos + ci::vec2( bitmapGlyph->bitmap.width, bitmapGlyph->bitmap.rows ) );
+			glyphExtents = ci::Rectf( glyphPos, glyphPos + ci::vec2( advance ) );
 		}
 
 		// Move the pen forward, except with white space at the beginning of a line
@@ -324,7 +334,7 @@ void Layout::addSubstringToCurLine( AttributedString::Substring& substring )
 		}
 
 		// Create a layout glyph and add to run
-		Layout::Glyph glyph = { shapedGlyphs[i].index, glyphBBox, (unsigned int)bitmapGlyph->top, shapedGlyphs[i].text };
+		Layout::Glyph glyph = { shapedGlyphs[i].index, glyphBBox, glyphExtents, (unsigned int)bitmapGlyph->top, shapedGlyphs[i].text };
 		run.glyphs.push_back( glyph );
 
 		// Check for forced line breaks
@@ -370,15 +380,6 @@ void Layout::addCurLine( )
 {
 	// Removed any negative widths from RTL
 	mCurLineWidth = fabs( mCurLineWidth );
-
-	// Set the Y glyph position based on culmulative line-height
-	for( auto& run : mCurLine.runs ) {
-		for( auto& glyph : run.glyphs ) {
-			float xOffset = ( mDirection == Direction::RTL ? mCurLineWidth : 0.0 );
-			float yOffset = mCurLineHeight - glyph.top;
-			glyph.bbox.offset( ci::vec2( xOffset, yOffset ) );
-		}
-	}
 
 	mCurLine.width = mCurLineWidth;
 

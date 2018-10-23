@@ -3,6 +3,7 @@
 #include "cinder/gl/gl.h"
 #include "cinder/FileWatcher.h"
 #include "cinder/Utilities.h"
+#include "cinder/Log.h"
 
 #include "cinder/text/FontManager.h"
 #include "cinder/text/TextLayout.h"
@@ -35,6 +36,17 @@ class RichTextApp : public App
 
 		std::string testTextFilename = "text/richText.txt";
 
+	struct Glyph {
+		ci::vec2 uv0;
+		ci::vec2 uv1;
+		ci::vec2 size;
+		ci::vec2 offset;
+		float textureId;
+		float padding0, padding1, padding2;
+	};
+
+	std::map<uint32_t,int>	mGlyphMap;
+	ci::gl::FboRef mFbo;
 };
 
 void RichTextApp::setup()
@@ -49,6 +61,15 @@ void RichTextApp::setup()
 	cinder::text::FontManager::get()->loadFace( getAssetPath( "fonts/SourceSansPro/SourceSansPro-Regular.otf" ) );
 	cinder::text::FontManager::get()->loadFace( getAssetPath( "fonts/SourceSansPro/SourceSansPro-It.otf" ) );
 	cinder::text::FontManager::get()->loadFace( getAssetPath( "fonts/SourceSansPro/SourceSansPro-Bold.otf" ) );
+	
+	ci::gl::Fbo::Format fboFormat;
+	ci::gl::Texture::Format texFormat;
+	texFormat.setMagFilter( GL_NEAREST );
+	texFormat.setMinFilter( GL_LINEAR );
+	texFormat.enableMipmapping( true );
+	fboFormat.setSamples( 8 );
+	fboFormat.setColorTextureFormat( texFormat );
+ 	mFbo = ci::gl::Fbo::create(  mTextBox.getWidth(), mTextBox.getHeight(), fboFormat );
 
 	ci::FileWatcher::instance().watch( ci::app::getAssetPath( testTextFilename ), std::bind( &RichTextApp::textFileUpdated, this, std::placeholders::_1 ) );
 }
@@ -66,6 +87,7 @@ void RichTextApp::textFileUpdated( const ci::WatchEvent& watchEvent )
 	// Layout text
 	cinder::text::RichText richText( ci::loadString( ci::loadFile( watchEvent.getFile() ) ) );
 	cinder::text::AttributedString attr( richText );
+	
 
 	//attr << cinder::text::AttributeFontFamily( "test" )
 	//     << cinder::text::AttributeFontStyle( "italic" )
@@ -74,7 +96,7 @@ void RichTextApp::textFileUpdated( const ci::WatchEvent& watchEvent )
 
 	mLayout.setSize( mTextBox.getSize() );
 	mLayout.calculateLayout( attr );
-	mRenderer.setLayout( mLayout );
+	//mRenderer.setLayout( mLayout );
 }
 
 void RichTextApp::draw()
@@ -88,7 +110,19 @@ void RichTextApp::draw()
 	ci::gl::drawStrokedRect( ci::Rectf( ci::vec2( 0.f ), mTextBox.getSize() ) );
 
 	ci::gl::color( 1, 1, 1 );
-	mRenderer.draw();
+	//mRenderer.draw();
+
+	{
+		ci::gl::ScopedViewport viewportScope( 0, 0, mFbo->getWidth(), mFbo->getHeight() );
+		ci::gl::ScopedMatrices matricesScope;
+		ci::gl::setMatricesWindow( mFbo->getSize(), true );
+ 		// Draw text into FBO
+		ci::gl::ScopedFramebuffer fboScoped( mFbo );
+		ci::gl::clear( ci::ColorA( 0.0, 0.0, 0.0, 0.0 ) );
+		mRenderer.render( mLayout );
+	}
+
+	gl::draw( mFbo->getColorTexture() );
 }
 
 CINDER_APP( RichTextApp, RendererGl )

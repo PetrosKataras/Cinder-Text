@@ -6,7 +6,7 @@
 #include "cinder/text/gl/TextureRenderer.h"
 
 namespace cinder { namespace text {
-
+/*
 class TextBox
 {
   public:
@@ -51,5 +51,5 @@ class TextBox
 
 	std::shared_ptr<cinder::text::Renderer> mRenderer;
 };
-
+*/
 } } // namespace cinder::text
