@@ -502,4 +502,17 @@ Layout::BreakIndices Layout::getClosestBreakForShapedText( int startIndex, const
 	return indices;
 }
 
+const std::vector<Layout::Glyph> Layout::getGlyphs() const 
+{
+	std::vector<Layout::Glyph> glyphs;
+	for( int i = 0; i < mLines.size(); i++ ) {
+		for( auto& run : mLines[i].runs ) {
+			for( auto& glyph : run.glyphs ) {
+				glyphs.push_back( glyph );
+			}
+		}
+	}
+	return glyphs;
+}
+
 } } // namespace cinder::text

@@ -83,6 +83,7 @@ class Layout {
 	const ci::vec2 measure();
 
 	const std::vector<ci::Rectf>& getGlyphBoxes() const { return mGlyphBoxes; }
+	const std::vector<Glyph> getGlyphs() const;
 
 	float getLineHeight() const { return mLineHeight.getValue( getFont().getLineHeight() ); }
 	Layout& setLineHeight( const float& lineHeight ) { mLineHeight = cinder::text::Unit( lineHeight ); return *this; };
