@@ -48,8 +48,8 @@ class CinderProjectApp : public App
 		std::string fontName = "fonts/notoserif/notoserif-regular.ttf";
 		std::string testTextFilename = "text/english.txt";
 		std::string mLanguage = "en";
-		hb_script_t mScript = HB_SCRIPT_LATIN;
-		hb_direction_t mDirection = HB_DIRECTION_LTR;
+		ci::text::Script mScript = text::Script::LATIN;
+		ci::text::Direction mDirection = text::Direction::LTR;
 
 		// Arabic
 		//std::string fontName = "fonts/NotoArabic/NotoSansArabic-Regular.ttf";
