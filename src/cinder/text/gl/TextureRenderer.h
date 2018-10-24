@@ -162,6 +162,8 @@ class TextureRenderer {
 	void render( const std::vector<cinder::text::Layout::Line>& lines );
 	void render( const cinder::text::Layout& layout );
 
+	std::vector<std::pair<uint32_t, ci::ivec2>> getGlyphMapForLayout( const cinder::text::Layout& layout );
+
   private:
 	// Texture (FBO) caching
 	//ci::vec2 mOffset; // amount to offset texture in FBO

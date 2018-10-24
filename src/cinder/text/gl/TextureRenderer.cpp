@@ -136,6 +136,31 @@ void TextureRenderer::render( const std::vector<cinder::text::Layout::Line>& lin
 	}
 }
 
+std::vector<std::pair<uint32_t, ci::ivec2>> TextureRenderer::getGlyphMapForLayout( const cinder::text::Layout& layout )
+{
+	auto lines = layout.getLines();
+	std::vector<std::pair<uint32_t, ivec2>> map;
+	for( auto& line : lines ) 
+	{
+		for( auto& run : line.runs ) 
+		{
+			for( auto& glyph : run.glyphs ) 
+			{	
+				// Make sure we have the glyph
+				if( TextureRenderer::getCacheForFont( run.font ).glyphs.count( glyph.index ) != 0 ) {
+					auto fontCache = getCacheForFont( run.font );
+					
+					int glyphIndex = cinder::text::FontManager::get()->getGlyphIndex( run.font, glyph.index, 0 );
+					auto glyphCache = fontCache.glyphs[glyph.index];
+					map.push_back( {glyph.index, glyph.position } );
+				}
+			}
+		}
+	}
+	
+	return map;
+}
+
 void TextureRenderer::loadFont( const Font& font, bool loadEntireFont )
 {
 	if( TextureRenderer::fontCache.count( font ) == 0 ) {
@@ -333,7 +358,7 @@ void TextureRenderer::cacheGlyphs( const Font& font, const std::vector<uint32_t>
 				// update channel
 				layerChannel->copyFrom( *expandedChannel, Area( 0, 0, w, h ), offset );
 			}
-		
+			
 			//TextureRenderer::fontCache[font].glyphs[glyphIndex].texArray = textureArray;
 			TextureRenderer::fontCache[font].texArrayCache = *texArrayCache;
 			TextureRenderer::fontCache[font].glyphs[glyphIndex].layer = layer;
