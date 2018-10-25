@@ -105,7 +105,6 @@ protected:
 };
 
 //////////////////////////////////////////////////////////////////
-
 class TextureRenderer {
   public:
 	// Font + Glyph Caching (shared between all instances)
@@ -129,6 +128,22 @@ class TextureRenderer {
 		TexArrayCache					texArrayCache;
 	} FontCache;
 
+	// cache struct for rendering
+	typedef struct {
+		ci::gl::Texture3dRef texture;
+		std::uint32_t layer;
+		ci::vec2 texSize;
+		ci::vec2 texOffset;
+		ci::mat3 mtrx;
+		ci::Rectf rect;
+		ci::ColorA color;
+	} RenderGlyphCacheStuff;
+
+	typedef struct {
+		ci::Rectf bounds;
+		std::vector<RenderGlyphCacheStuff> glyphCache;
+	} RenderLineCache;
+
   public:
 	TextureRenderer();
 
@@ -148,6 +163,8 @@ class TextureRenderer {
 	static void cacheGlyphs( const Font& font, const std::vector<uint32_t> &glyphIndices );
 	static void cacheGlyphs( const Font& font, const std::vector<std::pair<uint32_t, uint32_t>> &unicodeRange );
 
+	RenderLineCache cacheLine( const cinder::text::Layout::Line &line );
+
 	ci::gl::TextureRef getTexture();
 
 	static std::string defaultChars() { return "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890().?!,:;'\"&*=+-/\\@#_[]<>%^llflfiphrids\303\251\303\241\303\250\303\240"; }
@@ -161,6 +178,7 @@ class TextureRenderer {
 
 	void render( const std::vector<cinder::text::Layout::Line>& lines );
 	void render( const cinder::text::Layout& layout );
+	void render( const cinder::text::gl::TextureRenderer::RenderLineCache &line );
 
 	std::vector<std::pair<uint32_t, ci::ivec2>> getGlyphMapForLayout( const cinder::text::Layout& layout );
 
