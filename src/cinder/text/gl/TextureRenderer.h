@@ -142,6 +142,8 @@ class TextureRenderer {
 	typedef struct {
 		ci::Rectf bounds;
 		std::vector<RenderGlyphCacheStuff> glyphCache;
+		ci::gl::BatchRef batch;
+		ci::gl::Texture3dRef texture;
 	} RenderLineCache;
 
   public:

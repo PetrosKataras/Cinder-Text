@@ -24,7 +24,7 @@ TextureRenderer::TexArrayCache	TextureRenderer::mSharedTexArrayCache;
 TextureArray::Format			TextureRenderer::mTextureArrayFormat;
 
 
-// Shader
+// Shaders
 const char* vertShader = R"V0G0N(
 #version 150
 
@@ -71,6 +71,83 @@ void main( void )
 }
 )V0G0N";
 
+const char* vertVboShader = R"V0G0N(
+#version 330
+
+uniform mat4	ciModelViewProjection;
+
+in vec4		ciPosition;
+in vec2		ciTexCoord0;
+in vec4		ciColor;
+
+in vec4 iPosScale;
+in vec3 iUv;
+in vec2 iUvSize;
+in vec4 iColor;
+
+out highp vec2 texCoord;
+out vec4 globalColor;
+out vec3 uv;
+out vec2 uvSize;
+
+mat4 translate( in vec3 position )
+{
+    return mat4( 	1.0f,	0.0f,	0.0f,	0.0f, 
+    				0.0f,	1.0f,	0.0f,	0.0f, 
+    				0.0f,	0.0f,	1.0f,	0.0f, 
+    				position.x, position.y, position.z,	1.0f
+    	);
+}
+
+mat4 scale( in vec3 scl )
+{
+    return mat4( 	scl.x,	0.0f,	0.0f,	0.0f, 
+    				0.0f,	scl.y,	0.0f,	0.0f, 
+    				0.0f,	0.0f,	scl.z,	0.0f, 
+    				0.0f,	0.0f,	0.0f,	1.0f
+    	);
+}
+
+void main( void )
+{
+	texCoord = ciTexCoord0;
+	globalColor = ciColor * iColor;
+	uv = iUv;
+	uvSize = iUvSize;
+	mat4 transform = translate( vec3( iPosScale.xy, 0.0 )) * scale( vec3(iPosScale.zw, 1.0) );
+	vec4 position  = transform * vec4( ciPosition.xy, 0.0f, 1.0f );
+	gl_Position	= ciModelViewProjection * position;
+}
+)V0G0N";
+
+const char* fragVboShader = R"V0G0N(
+#version 330
+
+uniform sampler2DArray uTexArray;
+uniform uint uLayer;
+uniform vec2 uSubTexSize;
+uniform vec2 uSubTexOffset;
+
+in vec2 texCoord;
+in vec4 globalColor;
+in vec3 uv;
+in vec2 uvSize;
+//in float layer;
+
+uniform vec4 runColor;
+
+out vec4 color;
+
+void main( void )
+{ 
+	vec3 coord = vec3((texCoord.x * uvSize.x) + uv.x, ((1.0 - texCoord.y) * uvSize.y) + uv.y, uv.z);
+	vec4 texColor = texture( uTexArray, coord );
+	
+	//color = vec4(1.0,0.0,0.0,1.0);
+	color = vec4(1.0, 1.0, 1.0, texColor.r);
+	color = color * globalColor;
+}
+)V0G0N";
 
 GLint getMaxTextureSize()
 {
@@ -138,24 +215,21 @@ void TextureRenderer::render( const std::vector<cinder::text::Layout::Line>& lin
 
 void TextureRenderer::render( const TextureRenderer::RenderLineCache &line )
 {
-	ci::gl::ScopedGlslProg scopedShader( ci::gl::getStockShader( ci::gl::ShaderDef().color() ) );
-		
-	for( auto& glyph : line.glyphCache) 
-	{
-		ci::gl::ScopedMatrices matrices;
-		ci::gl::translate( ci::vec2( glyph.rect.getUpperLeft() ) );
-		ci::gl::scale( glyph.rect.getSize() );
-		auto tex = glyph.texture;
-		mBatch->getGlslProg()->uniform( "uLayer", glyph.layer );
-		mBatch->getGlslProg()->uniform( "uSubTexSize", glyph.texSize );
-		mBatch->getGlslProg()->uniform( "uSubTexOffset", glyph.texOffset );
-		ci::gl::ScopedTextureBind texBind( tex->getTarget(), tex->getId() );
-		mBatch->draw();
-	}
+	auto tex = line.texture;
+	ci::gl::ScopedTextureBind texBind( tex->getTarget(), tex->getId() );
+	line.batch->drawInstanced( line.glyphCache.size() );
 }
 
 TextureRenderer::RenderLineCache TextureRenderer::cacheLine( const cinder::text::Layout::Line &line )
 {
+	ci::gl::VboMeshRef vboMesh = ci::gl::VboMesh::create( geom::Rect( Rectf(vec2(0.0), vec2(1.0) )) );
+
+	std::vector<vec4> posScales;
+	std::vector<vec3> texCoords;
+	std::vector<vec2> texCoordSizes;
+	std::vector<vec4> colors;
+	std::vector<ci::gl::Texture3dRef> textures;
+
 	std::vector<RenderGlyphCacheStuff> glyphCaches;
 	vec2 br = vec2();
 	vec2 ul = vec2( FLT_MAX );
@@ -168,9 +242,7 @@ TextureRenderer::RenderLineCache TextureRenderer::cacheLine( const cinder::text:
 			{
 				vec2 pos =  ci::vec2( glyph.position + glyph.offset);
 				vec2 size =  glyph.size;
-				glm::mat3 mtrx = glm::translate( mat3(), ci::vec2( glyph.position + glyph.offset) );
-				mtrx = glm::scale( mtrx, glyph.size );
-			
+	
 				auto fontCache = getCacheForFont( run.font );
 				auto glyphCache = fontCache.glyphs[glyph.index];
 				auto tex = fontCache.texArrayCache.texArray->getTexture();
@@ -180,7 +252,6 @@ TextureRenderer::RenderLineCache TextureRenderer::cacheLine( const cinder::text:
 				gc.layer = (uint32_t)glyphCache.layer;
 				gc.texSize = glyphCache.subTexSize;
 				gc.texOffset = glyphCache.subTexOffset;
-				gc.mtrx = mtrx;
 				gc.rect = Rectf( pos, pos + size );
 				gc.color = ci::ColorA( run.color, run.opacity );
 				glyphCaches.push_back( gc );
@@ -189,15 +260,66 @@ TextureRenderer::RenderLineCache TextureRenderer::cacheLine( const cinder::text:
 				br.y = glm::max( br.y, glyph.bbox.y2 );
 				ul.x = glm::min( ul.x, glyph.bbox.x1 );
 				ul.y = glm::min( ul.y, glyph.bbox.y1 );
+
+				int texIndex = -1;
+				for( int i = 0; i < textures.size(); ++i ) {
+					if( textures[i] == tex ) {
+						texIndex = i;
+						break;
+					}
+				}
+				if( texIndex < 0 ){	
+					texIndex = textures.size();
+					textures.push_back( tex );
+				}
+
+				posScales.push_back( vec4( pos, size ) );
+				texCoords.push_back( vec3(	glyphCache.subTexOffset, glyphCache.layer ) );
+				texCoordSizes.push_back( vec2( glyphCache.subTexSize ) );
+				colors.push_back( ci::ColorA( run.color, run.opacity ) );
 			}
 			else {
 				//ci::app::console() << "Could not find glyph for index: " << glyph.index << std::endl;
 			}
 		}
 	}
+
+	ci::gl::VboRef positionBuffer = ci::gl::Vbo::create( GL_ARRAY_BUFFER, posScales.size() * sizeof( vec4 ), posScales.data(), GL_STATIC_DRAW );
+	geom::BufferLayout posDataLayout;
+	posDataLayout.append( geom::Attrib::CUSTOM_0, 4, 0, 0, 1 );
+
+	ci::gl::VboRef uvBuffer = ci::gl::Vbo::create( GL_ARRAY_BUFFER, texCoords.size() * sizeof( vec3 ), texCoords.data(), GL_STATIC_DRAW );
+	geom::BufferLayout uvDataLayout;
+	uvDataLayout.append( geom::Attrib::CUSTOM_1, 3, 0, 0, 1 );
+
+	ci::gl::VboRef uvSizeBuffer = ci::gl::Vbo::create( GL_ARRAY_BUFFER, texCoordSizes.size() * sizeof( vec2 ), texCoordSizes.data(), GL_STATIC_DRAW );
+	geom::BufferLayout uvSizeDataLayout;
+	uvSizeDataLayout.append( geom::Attrib::CUSTOM_2, 2, 0, 0, 1 );
+
+	ci::gl::VboRef colorBuffer = ci::gl::Vbo::create( GL_ARRAY_BUFFER, colors.size() * sizeof( vec4 ), colors.data(), GL_STATIC_DRAW );
+	geom::BufferLayout colorsDataLayout;
+	colorsDataLayout.append( geom::Attrib::CUSTOM_3, 4, 0, 0, 1 );
+
+	vboMesh->appendVbo( posDataLayout, positionBuffer );
+	vboMesh->appendVbo( uvSizeDataLayout, uvSizeBuffer );
+	vboMesh->appendVbo( uvDataLayout, uvBuffer );
+	vboMesh->appendVbo( colorsDataLayout, colorBuffer );
+
+	ci::gl::GlslProgRef glyphShader = ci::gl::GlslProg::create( vertVboShader, fragVboShader );
+	glyphShader->uniform( "uTexArray", 0 );
+
+	auto batch = ci::gl::Batch::create(vboMesh, glyphShader, {
+		{ geom::Attrib::CUSTOM_0, "iPosScale" },
+		{ geom::Attrib::CUSTOM_1, "iUv" },
+		{ geom::Attrib::CUSTOM_2, "iUvSize" },
+		{ geom::Attrib::CUSTOM_3, "iColor" }
+	});
+
 	RenderLineCache lineCache;
 	lineCache.glyphCache = glyphCaches;
 	lineCache.bounds = Rectf( ul, br );
+	lineCache.batch = batch;
+	lineCache.texture = textures[0];
 	return lineCache;
 }
 
