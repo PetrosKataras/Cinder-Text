@@ -22,9 +22,10 @@ class Layout {
 	// A single character
 	typedef struct {
 		uint32_t index;
-		ci::Rectf bbox;
-		ci::Rectf extents;
-		unsigned int top;
+		ci::Rectf bbox;			// combined position, offset and size
+		ci::vec2 position;		// upper left position of glyph
+		ci::vec2 size;			// size of glyph
+		ci::vec2 offset;		// position offset of glyph
 		std::string value;
 	} Glyph;
 

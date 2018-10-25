@@ -136,6 +136,96 @@ void TextureRenderer::render( const std::vector<cinder::text::Layout::Line>& lin
 	}
 }
 
+void TextureRenderer::render( const TextureRenderer::RenderLineCache &line )
+{
+	ci::gl::ScopedGlslProg scopedShader( ci::gl::getStockShader( ci::gl::ShaderDef().color() ) );
+		
+	for( auto& glyph : line.glyphCache) 
+	{
+		ci::gl::ScopedMatrices matrices;
+		ci::gl::translate( ci::vec2( glyph.rect.getUpperLeft() ) );
+		ci::gl::scale( glyph.rect.getSize() );
+		auto tex = glyph.texture;
+		mBatch->getGlslProg()->uniform( "uLayer", glyph.layer );
+		mBatch->getGlslProg()->uniform( "uSubTexSize", glyph.texSize );
+		mBatch->getGlslProg()->uniform( "uSubTexOffset", glyph.texOffset );
+		ci::gl::ScopedTextureBind texBind( tex->getTarget(), tex->getId() );
+		mBatch->draw();
+	}
+}
+
+TextureRenderer::RenderLineCache TextureRenderer::cacheLine( const cinder::text::Layout::Line &line )
+{
+	std::vector<RenderGlyphCacheStuff> glyphCaches;
+	vec2 br = vec2();
+	vec2 ul = vec2( FLT_MAX );
+	for( auto& run : line.runs ) 
+	{
+		for( auto& glyph : run.glyphs ) 
+		{	
+			// Make sure we have the glyph
+			if( TextureRenderer::getCacheForFont( run.font ).glyphs.count( glyph.index ) != 0 ) 
+			{
+				vec2 pos =  ci::vec2( glyph.position + glyph.offset);
+				vec2 size =  glyph.size;
+				glm::mat3 mtrx = glm::translate( mat3(), ci::vec2( glyph.position + glyph.offset) );
+				mtrx = glm::scale( mtrx, glyph.size );
+			
+				auto fontCache = getCacheForFont( run.font );
+				auto glyphCache = fontCache.glyphs[glyph.index];
+				auto tex = fontCache.texArrayCache.texArray->getTexture();
+
+				RenderGlyphCacheStuff gc;
+				gc.texture = tex;
+				gc.layer = (uint32_t)glyphCache.layer;
+				gc.texSize = glyphCache.subTexSize;
+				gc.texOffset = glyphCache.subTexOffset;
+				gc.mtrx = mtrx;
+				gc.rect = Rectf( pos, pos + size );
+				gc.color = ci::ColorA( run.color, run.opacity );
+				glyphCaches.push_back( gc );
+				
+				br.x = glm::max( br.x, glyph.bbox.x2 );
+				br.y = glm::max( br.y, glyph.bbox.y2 );
+				ul.x = glm::min( ul.x, glyph.bbox.x1 );
+				ul.y = glm::min( ul.y, glyph.bbox.y1 );
+			}
+			else {
+				//ci::app::console() << "Could not find glyph for index: " << glyph.index << std::endl;
+			}
+		}
+	}
+	RenderLineCache lineCache;
+	lineCache.glyphCache = glyphCaches;
+	lineCache.bounds = Rectf( ul, br );
+	return lineCache;
+}
+
+std::vector<std::pair<uint32_t, ci::ivec2>> TextureRenderer::getGlyphMapForLayout( const cinder::text::Layout& layout )
+{
+	auto lines = layout.getLines();
+	std::vector<std::pair<uint32_t, ivec2>> map;
+	for( auto& line : lines ) 
+	{
+		for( auto& run : line.runs ) 
+		{
+			for( auto& glyph : run.glyphs ) 
+			{	
+				// Make sure we have the glyph
+				if( TextureRenderer::getCacheForFont( run.font ).glyphs.count( glyph.index ) != 0 ) {
+					auto fontCache = getCacheForFont( run.font );
+					
+					int glyphIndex = cinder::text::FontManager::get()->getGlyphIndex( run.font, glyph.index, 0 );
+					auto glyphCache = fontCache.glyphs[glyph.index];
+					map.push_back( {glyph.index, glyph.position } );
+				}
+			}
+		}
+	}
+	
+	return map;
+}
+
 void TextureRenderer::loadFont( const Font& font, bool loadEntireFont )
 {
 	if( TextureRenderer::fontCache.count( font ) == 0 ) {
@@ -333,7 +423,7 @@ void TextureRenderer::cacheGlyphs( const Font& font, const std::vector<uint32_t>
 				// update channel
 				layerChannel->copyFrom( *expandedChannel, Area( 0, 0, w, h ), offset );
 			}
-		
+			
 			//TextureRenderer::fontCache[font].glyphs[glyphIndex].texArray = textureArray;
 			TextureRenderer::fontCache[font].texArrayCache = *texArrayCache;
 			TextureRenderer::fontCache[font].glyphs[glyphIndex].layer = layer;

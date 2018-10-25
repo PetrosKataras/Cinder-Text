@@ -1,4 +1,5 @@
 #pragma once
+#include <stdint.h>
 
 #define SCRIPT_TAG(c1,c2,c3,c4) ((uint32_t)((((uint32_t)(c1)&0xFF)<<24)|(((uint32_t)(c2)&0xFF)<<16)|(((uint32_t)(c3)&0xFF)<<8)|((uint32_t)(c4)&0xFF)))
 
@@ -14,7 +15,7 @@ enum class Direction {
 };
 
 //! Matches 1:1 with HarfBuzz's hb_script_t type
-enum class Script : std::uint32_t {
+enum class Script : uint32_t {
   /*1.1*/ COMMON			= SCRIPT_TAG ('Z','y','y','y'),
   /*1.1*/ INHERITED			= SCRIPT_TAG ('Z','i','n','h'),
   /*5.0*/ UNKNOWN			= SCRIPT_TAG ('Z','z','z','z'),

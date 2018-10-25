@@ -286,16 +286,20 @@ void Layout::addSubstringToCurLine( AttributedString::Substring& substring )
  		auto face = FontManager::get()->getFace( runFont );
 		double baseline = abs(face->descender) * mFont.getSize() / face->units_per_EM;
 		float ascent =  bbox.yMax/64.0;
+		vec2 bitmapSize = ci::vec2( bitmapGlyph->bitmap.width, bitmapGlyph->bitmap.rows );
+		vec2 bitmapOffset;
 
 		if( direction == Direction::LTR ) {
-			glyphPos = pos + ci::vec2( bitmapGlyph->left,mCurLineHeight - baseline - ascent );
-			glyphBBox = ci::Rectf( glyphPos, glyphPos + ci::vec2( bitmapGlyph->bitmap.width, bitmapGlyph->bitmap.rows ) );
+			bitmapOffset = ci::vec2( bitmapGlyph->left, mCurLineHeight - baseline - ascent );
+			glyphPos = pos + bitmapOffset;
+			glyphBBox = ci::Rectf( glyphPos, glyphPos + bitmapSize );
 			glyphExtents = ci::Rectf( pos, pos + ci::vec2( advance.x + kerning, mCurLineHeight ) );
 		}
 		else {
-			glyphPos = pos - ci::vec2( shapedGlyphs[i].advance.x - bitmapGlyph->left, 0.f );
-			glyphBBox = ci::Rectf( glyphPos, glyphPos + ci::vec2( bitmapGlyph->bitmap.width, bitmapGlyph->bitmap.rows ) );
-			glyphExtents = ci::Rectf( glyphPos, glyphPos + ci::vec2( advance ) );
+			bitmapOffset = - ci::vec2( shapedGlyphs[i].advance.x - bitmapGlyph->left, mCurLineHeight - baseline - ascent );
+			glyphPos = pos + bitmapOffset;
+			glyphBBox = ci::Rectf( glyphPos, glyphPos + bitmapSize );
+			glyphExtents = ci::Rectf( pos, pos + ci::vec2( advance.x + kerning, mCurLineHeight ) );
 		}
 
 		// Move the pen forward, except with white space at the beginning of a line
@@ -334,7 +338,7 @@ void Layout::addSubstringToCurLine( AttributedString::Substring& substring )
 		}
 
 		// Create a layout glyph and add to run
-		Layout::Glyph glyph = { shapedGlyphs[i].index, glyphBBox, glyphExtents, (unsigned int)bitmapGlyph->top, shapedGlyphs[i].text };
+		Layout::Glyph glyph = { shapedGlyphs[i].index, glyphBBox, pos, bitmapSize, bitmapOffset, shapedGlyphs[i].text };
 		run.glyphs.push_back( glyph );
 
 		// Check for forced line breaks
