@@ -130,19 +130,18 @@ class TextureRenderer {
 
 	// cache struct for rendering
 	typedef struct {
-		ci::gl::Texture3dRef texture;
-		std::uint32_t layer;
-		ci::vec2 texSize;
-		ci::vec2 texOffset;
-		ci::mat3 mtrx;
-		ci::Rectf rect;
-		ci::ColorA color;
-	} RenderGlyphCacheStuff;
+		ci::Rectf bounds;
+		std::vector< std::tuple<ci::gl::BatchRef, ci::gl::Texture3dRef, int> > batches;
+	} RenderLineCache;
 
 	typedef struct {
-		ci::Rectf bounds;
-		std::vector<RenderGlyphCacheStuff> glyphCache;
-	} RenderLineCache;
+		std::vector<vec4> posScales;
+		std::vector<vec3> texCoords;
+		std::vector<vec2> texCoordSizes;
+		std::vector<vec4> colors;
+		ci::gl::Texture3dRef texture;
+		int glyphCount;
+	} BatchCacheData;
 
   public:
 	TextureRenderer();

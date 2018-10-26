@@ -39,12 +39,27 @@ void LineAnimatorApp::setup()
 		.size( ivec3( 2048, 2048, 16) );
 	ci::text::gl::TextureRenderer::setTextureFormat( fmt );
 	
-	mFont = std::make_shared<text::Font>( ci::app::loadAsset( "../../assets/fonts/SourceSansPro/SourceSansPro-Regular.otf" ), 24.f );
-	text::gl::TextureRenderer::loadFont( *mFont );
+	text::Font font1 = text::Font( ci::app::loadAsset( "../../assets/fonts/SourceSansPro/SourceSansPro-Regular.otf" ), 24.f );
+	text::Font font2 = text::Font( ci::app::loadAsset( "../../assets/fonts/SourceSerifPro/SourceSerifPro-Bold.otf" ), 24.f );
+	text::gl::TextureRenderer::loadFont( font1 );
+	text::gl::TextureRenderer::loadFont( font2 );
 
-	mLayout.setFont( *mFont );
+	//mFont = std::make_shared<text::Font>( ci::app::loadAsset( "../../assets/fonts/SourceSansPro/SourceSansPro-Regular.otf" ), 24.f );
+	//text::gl::TextureRenderer::loadFont( *mFont );
+	//text::gl::TextureRenderer::loadFont( text::Font( ci::app::loadAsset( "../../assets/fonts/SourceSerifPro/SourceSerifPro-Bold.otf" ), 24.f ) );
+
+	//mLayout.setFont( *mFont );
 	mLayout.setSize( mFbo->getSize() );
-	mLayout.calculateLayout( "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent lobortis risus sed aliquam commodo. Praesent porttitor rhoncus tempus. Vivamus aliquet ullamcorper neque ac blandit. Proin nec mi vitae ligula blandit ornare sit amet at nibh. Donec vel lacus vitae tellus vehicula laoreet in at turpis. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Nam pulvinar, purus non tempus tincidunt, arcu ex fringilla velit, quis pharetra nulla sapien eget justo. Praesent urna augue, fringilla vitae malesuada a, aliquam sed tellus." );
+	text::AttributedString attrStr;
+	attrStr << "Lorem ipsum dolor " << text::AttributeColor( ci::ColorA( 1.0f, 0.f, 1.f ) ) << text::AttributeFont( font1 );
+	attrStr << "sit amet " << text::AttributeColor( ci::ColorA( 1.f, 1.f, 1.f ) ) << text::AttributeFont( font2 );
+	attrStr << "consectetur adipiscing elit. " << text::AttributeColor( ci::ColorA( 1.0f, 1.f, 1.f ) ) << text::AttributeFontFamily( "Helvetica" );
+	attrStr << "Praesent lobortis risus sed aliquam commodo. " << text::AttributeLineBreak();
+	attrStr << "Praesent porttitor rhoncus tempus." << text::AttributeFontSize( 50.f ) << text::AttributeFontStyle( "Bold" );
+
+	//mLayout.calculateLayout( "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent lobortis risus sed aliquam commodo. Praesent porttitor rhoncus tempus. Vivamus aliquet ullamcorper neque ac blandit. Proin nec mi vitae ligula blandit ornare sit amet at nibh. Donec vel lacus vitae tellus vehicula laoreet in at turpis. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Nam pulvinar, purus non tempus tincidunt, arcu ex fringilla velit, quis pharetra nulla sapien eget justo. Praesent urna augue, fringilla vitae malesuada a, aliquam sed tellus." );
+	mLayout.calculateLayout( attrStr );
+
 
 	for( auto line : mLayout.getLines() )
 	{
