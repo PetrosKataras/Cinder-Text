@@ -46,7 +46,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\include;..\..\..\..\..\include;..\..\..\src;..\..\..\include;..\..\..\include\freetype2</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\include;..\..\..\..\..\include;..\..\..\..\..\src\harfbuzz;..\..\..\..\..\include\freetype;..\..\..\include;..\..\..\src</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WIN32_WINNT=0x0601;_WINDOWS;NOMINMAX;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -59,7 +59,7 @@
       <AdditionalIncludeDirectories>"..\..\..\..\..\include";..\include</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>cinder.lib;OpenGL32.lib;freetype.lib;harfbuzz.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>cinder.lib;OpenGL32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>..\..\..\..\..\lib\msw\$(PlatformTarget);..\..\..\..\..\lib\msw\$(PlatformTarget)\$(Configuration)\$(PlatformToolset)\;..\..\..\lib</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
@@ -70,7 +70,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>..\include;..\..\..\..\..\include;..\..\..\src;..\..\..\include;..\..\..\include\freetype2</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\include;..\..\..\..\..\include;..\..\..\..\..\src\harfbuzz;..\..\..\..\..\include\freetype;..\..\..\include;..\..\..\src</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WIN32_WINNT=0x0601;_WINDOWS;NOMINMAX;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader />
@@ -85,7 +85,7 @@
       <AdditionalIncludeDirectories>"..\..\..\..\..\include";..\include</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>cinder.lib;OpenGL32.lib;freetype.lib;harfbuzz.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>cinder.lib;OpenGL32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>..\..\..\..\..\lib\msw\$(PlatformTarget);..\..\..\..\..\lib\msw\$(PlatformTarget)\$(Configuration)\$(PlatformToolset)\;..\..\..\lib</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <GenerateMapFile>true</GenerateMapFile>
@@ -97,29 +97,30 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup />
-  <ItemGroup />
   <ItemGroup>
-    <ClCompile Include="..\..\..\src\txt\Font.cpp" />
-    <ClCompile Include="..\..\..\src\txt\FontManager.cpp" />
-    <ClCompile Include="..\..\..\src\txt\AttributedString.cpp" />
-    <ClCompile Include="..\..\..\src\txt\gl\TextureRenderer.cpp" />
-    <ClCompile Include="..\..\..\src\txt\Shaper.cpp" />
-    <ClCompile Include="..\..\..\src\txt\SystemFonts.cpp" />
-    <ClCompile Include="..\..\..\src\txt\TextBox.cpp" />
-    <ClCompile Include="..\..\..\src\txt\TextLayout.cpp" />
+    <ClCompile Include="..\..\..\src\cinder\text\AttributedString.cpp" />
+    <ClCompile Include="..\..\..\src\cinder\text\Font.cpp" />
+    <ClCompile Include="..\..\..\src\cinder\text\FontManager.cpp" />
+    <ClCompile Include="..\..\..\src\cinder\text\gl\TextureRenderer.cpp" />
+    <ClCompile Include="..\..\..\src\cinder\text\Shaper.cpp" />
+    <ClCompile Include="..\..\..\src\cinder\text\SystemFonts.cpp" />
+    <ClCompile Include="..\..\..\src\cinder\text\TextBox.cpp" />
+    <ClCompile Include="..\..\..\src\cinder\text\TextLayout.cpp" />
+    <ClCompile Include="..\..\..\src\cinder\text\Types.cpp" />
     <ClCompile Include="..\src\AttributedStringApp.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\src\txt\Font.h" />
-    <ClInclude Include="..\..\..\src\txt\FontManager.h" />
-    <ClInclude Include="..\..\..\src\txt\AttributedString.h" />
-    <ClInclude Include="..\..\..\src\txt\gl\TextureRenderer.h" />
-    <ClInclude Include="..\..\..\src\txt\Renderer.h" />
-    <ClInclude Include="..\..\..\src\txt\Shaper.h" />
-    <ClInclude Include="..\..\..\src\txt\SystemFonts.h" />
-    <ClInclude Include="..\..\..\src\txt\TextBox.h" />
-    <ClInclude Include="..\..\..\src\txt\TextLayout.h" />
-    <ClInclude Include="..\..\..\src\txt\TextRenderer.h" />
+    <ClInclude Include="..\..\..\src\cinder\text\AttributedString.h" />
+    <ClInclude Include="..\..\..\src\cinder\text\Font.h" />
+    <ClInclude Include="..\..\..\src\cinder\text\FontManager.h" />
+    <ClInclude Include="..\..\..\src\cinder\text\gl\TextureRenderer.h" />
+    <ClInclude Include="..\..\..\src\cinder\text\Shaper.h" />
+    <ClInclude Include="..\..\..\src\cinder\text\SystemFonts.h" />
+    <ClInclude Include="..\..\..\src\cinder\text\TextBox.h" />
+    <ClInclude Include="..\..\..\src\cinder\text\TextLayout.h" />
+    <ClInclude Include="..\..\..\src\cinder\text\TextRenderer.h" />
+    <ClInclude Include="..\..\..\src\cinder\text\TextUnits.h" />
+    <ClInclude Include="..\..\..\src\cinder\text\Types.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

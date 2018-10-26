@@ -39,7 +39,7 @@ void AttributedStringApp::setup()
 
 	mLayout.setSize( mTextBox.getSize() );
 	mLayout.calculateLayout( mAttrStr );
-	mRenderer.setLayout( mLayout );
+	//mRenderer.setLayout( mLayout );
 }
 
 void AttributedStringApp::mouseDown( MouseEvent event )
@@ -47,7 +47,7 @@ void AttributedStringApp::mouseDown( MouseEvent event )
 	mTextBox.set( mTextBox.x1, mTextBox.y1, event.getX(), event.getY() );
 	mLayout.setSize( mTextBox.getSize() );
 	mLayout.calculateLayout( mAttrStr );
-	mRenderer.setLayout( mLayout );
+	//mRenderer.setLayout( mLayout );
 }
 
 void AttributedStringApp::update()
@@ -65,8 +65,7 @@ void AttributedStringApp::draw()
 	ci::gl::drawStrokedRect( ci::Rectf( ci::vec2( 0.f ), mTextBox.getSize() ) );
 
 	ci::gl::color( 1, 1, 1 );
-	//mRendererGl.draw( mLayout );
-	mRenderer.draw();
+	mRenderer.render( mLayout );
 }
 
 CINDER_APP( AttributedStringApp, RendererGl, [&]( App::Settings* settings )
