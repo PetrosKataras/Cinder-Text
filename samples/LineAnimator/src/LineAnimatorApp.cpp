@@ -21,7 +21,8 @@ class LineAnimatorApp : public App {
 	text::gl::TextureRenderer mRenderer;
 	text::Layout mLayout;
 	ci::gl::FboRef mFbo;
-	std::vector<ci::text::gl::TextureRenderer::RenderLineCache> lineCache;
+	//std::vector<ci::text::gl::TextureRenderer::RenderLineCache> lineCache;
+	ci::text::gl::TextureRenderer::LayoutCache mLayoutCache;
 };
 
 void LineAnimatorApp::setup()
@@ -60,11 +61,13 @@ void LineAnimatorApp::setup()
 	//mLayout.calculateLayout( "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent lobortis risus sed aliquam commodo. Praesent porttitor rhoncus tempus. Vivamus aliquet ullamcorper neque ac blandit. Proin nec mi vitae ligula blandit ornare sit amet at nibh. Donec vel lacus vitae tellus vehicula laoreet in at turpis. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Nam pulvinar, purus non tempus tincidunt, arcu ex fringilla velit, quis pharetra nulla sapien eget justo. Praesent urna augue, fringilla vitae malesuada a, aliquam sed tellus." );
 	mLayout.calculateLayout( attrStr );
 
-
+/*
 	for( auto line : mLayout.getLines() )
 	{
 		lineCache.push_back( mRenderer.cacheLine( line ) );
 	}
+	*/
+	mLayoutCache = mRenderer.cacheLayout( mLayout );
 }
 
 void LineAnimatorApp::mouseDown( MouseEvent event )
@@ -80,7 +83,7 @@ void LineAnimatorApp::draw()
 	gl::clear( Color( 0, 0, 0 ) );
 	gl::enableAlphaBlending;
 
-	for( int i = 0; i < lineCache.size(); i++ )
+	/*for( int i = 0; i < lineCache.size(); i++ )
 	{
 		ci::gl::ScopedMatrices scpMtrx;
 		auto line = lineCache[i];
@@ -89,7 +92,17 @@ void LineAnimatorApp::draw()
 		gl::ScopedColor scpColor( ColorA( 1.0, 1.0, 1.0, alpha ) );
 		gl::translate( vec2( 0.0,  (1.0 - progress) * 20.0 ) );
 		mRenderer.render( line );
+	}*/
+
+	{
+		ci::gl::ScopedMatrices scpMtrx;
+		float progress = sin( (getElapsedSeconds()) * 5.0f ) * 0.5 + 0.5;
+		float alpha = progress;
+		gl::ScopedColor scpColor( ColorA( 1.0, 1.0, 1.0, alpha ) );
+		gl::translate( vec2( 0.0,  (1.0 - progress) * 20.0 ) );
+		mRenderer.render( mLayoutCache );
 	}
+	
 }
 
 CINDER_APP( LineAnimatorApp, RendererGl( RendererGl::Options().msaa( 16 ) ) )

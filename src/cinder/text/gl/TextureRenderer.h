@@ -132,7 +132,7 @@ class TextureRenderer {
 	typedef struct {
 		ci::Rectf bounds;
 		std::vector< std::tuple<ci::gl::BatchRef, ci::gl::Texture3dRef, int> > batches;
-	} RenderLineCache;
+	} LayoutCache;
 
 	typedef struct {
 		std::vector<vec4> posScales;
@@ -162,9 +162,8 @@ class TextureRenderer {
 	static void cacheGlyphs( const Font& font, const std::vector<uint32_t> &glyphIndices );
 	static void cacheGlyphs( const Font& font, const std::vector<std::pair<uint32_t, uint32_t>> &unicodeRange );
 
-	RenderLineCache cacheLine( const cinder::text::Layout::Line &line );
-
-	ci::gl::TextureRef getTexture();
+	LayoutCache cacheLine( const cinder::text::Layout::Line &line );
+	LayoutCache cacheLayout( const cinder::text::Layout &layout );
 
 	static std::string defaultChars() { return "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890().?!,:;'\"&*=+-/\\@#_[]<>%^llflfiphrids\303\251\303\241\303\250\303\240"; }
 	//static std::pair<uint32_t, uint32_t> defaultUnicodeRange() { return { 0x0040, 0x007F }; }
@@ -177,20 +176,16 @@ class TextureRenderer {
 
 	void render( const std::vector<cinder::text::Layout::Line>& lines );
 	void render( const cinder::text::Layout& layout );
-	void render( const cinder::text::gl::TextureRenderer::RenderLineCache &line );
+	void render( const cinder::text::gl::TextureRenderer::LayoutCache &line );
 
 	std::vector<std::pair<uint32_t, ci::ivec2>> getGlyphMapForLayout( const cinder::text::Layout& layout );
 
   private:
-	// Texture (FBO) caching
-	//ci::vec2 mOffset; // amount to offset texture in FBO
-	//void renderToFbo();
-	//void allocateFbo( int size );
-	
-	//ci::gl::FboRef		mFbo;
 	ci::gl::BatchRef	mBatch;
 
-	
+	void TextureRenderer::cacheRun( std::unordered_map<Font, BatchCacheData> &batchCaches, const Layout::Run& run, ci::Rectf& bounds );
+	std::vector< std::tuple<ci::gl::BatchRef, ci::gl::Texture3dRef, int> > generateBatches(const std::unordered_map<Font, BatchCacheData> &batchCaches );
+
 	static void cacheFont( const Font& font, bool cacheEntireFont = false );
 	
 	static void uncacheFont( const Font& font );
