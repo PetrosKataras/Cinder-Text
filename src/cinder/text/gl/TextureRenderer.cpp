@@ -324,7 +324,6 @@ TextureRenderer::LayoutCache TextureRenderer::cacheLayout( const cinder::text::L
 	}
 
 	auto batches = generateBatches( batchCaches );
-
 	LayoutCache lineCache;
 	lineCache.bounds = bounds;
 	lineCache.batches = batches;
@@ -333,94 +332,19 @@ TextureRenderer::LayoutCache TextureRenderer::cacheLayout( const cinder::text::L
 
 TextureRenderer::LayoutCache TextureRenderer::cacheLine( const cinder::text::Layout::Line &line )
 {
-	std::unordered_map<Font, BatchCacheData>	batchCaches;
-	vec2 br = vec2();
-	vec2 ul = vec2( FLT_MAX );
+	std::unordered_map<Font, BatchCacheData> batchCaches;
+	ci::Rectf bounds = Rectf( vec2(), vec2( FLT_MAX) );
+	
 	for( auto& run : line.runs ) 
 	{
-		for( auto& glyph : run.glyphs ) 
-		{	
-			auto font = run.font;
-			auto color = ci::ColorA( run.color, run.opacity );
-
-			// Make sure we have the glyph
-			if( TextureRenderer::getCacheForFont( run.font ).glyphs.count( glyph.index ) != 0 ) 
-			{
-				
-				vec2 pos =  ci::vec2( glyph.position + glyph.offset);
-				vec2 size =  glyph.size;
-	
-				auto fontCache = getCacheForFont( font );
-				auto glyphCache = fontCache.glyphs[glyph.index];
-				auto tex = fontCache.texArrayCache.texArray->getTexture();				
-				br.x = glm::max( br.x, glyph.bbox.x2 );
-				br.y = glm::max( br.y, glyph.bbox.y2 );
-				ul.x = glm::min( ul.x, glyph.bbox.x1 );
-				ul.y = glm::min( ul.y, glyph.bbox.y1 );
-			
-				// get or init font batch cache
-				BatchCacheData batchCache;
-				if( !batchCaches.count( font ) ) {
-					batchCache = BatchCacheData();
-					batchCaches[font] = BatchCacheData();
-				}
-
-				batchCache = batchCaches[font];
-				batchCache.posScales.push_back( vec4( pos, size ) );
-				batchCache.texCoords.push_back( vec3(	glyphCache.subTexOffset, glyphCache.layer ) );
-				batchCache.texCoordSizes.push_back( vec2( glyphCache.subTexSize ) );
-				batchCache.colors.push_back( ci::ColorA( run.color, run.opacity ) );
-				batchCache.texture = tex;
-				batchCache.glyphCount += 1;
-				batchCaches[font] = batchCache;
-			}
-			else {
-				//ci::app::console() << "Could not find glyph for index: " << glyph.index << std::endl;
-			}
-		}
+		Rectf runBounds = Rectf( vec2(), vec2( FLT_MAX) );
+		cacheRun( batchCaches, run, runBounds );
+		bounds.include( runBounds );
 	}
 
-	std::vector< std::tuple<ci::gl::BatchRef, ci::gl::Texture3dRef, int> > batches;
-	for( auto batchCache : batchCaches ) {
-		
-		BatchCacheData data = batchCache.second;
-
-		ci::gl::VboRef positionBuffer = ci::gl::Vbo::create( GL_ARRAY_BUFFER, data.posScales.size() * sizeof( vec4 ), data.posScales.data(), GL_STATIC_DRAW );
-		geom::BufferLayout posDataLayout;
-		posDataLayout.append( geom::Attrib::CUSTOM_0, 4, 0, 0, 1 );
-
-		ci::gl::VboRef uvBuffer = ci::gl::Vbo::create( GL_ARRAY_BUFFER, data.texCoords.size() * sizeof( vec3 ), data.texCoords.data(), GL_STATIC_DRAW );
-		geom::BufferLayout uvDataLayout;
-		uvDataLayout.append( geom::Attrib::CUSTOM_1, 3, 0, 0, 1 );
-
-		ci::gl::VboRef uvSizeBuffer = ci::gl::Vbo::create( GL_ARRAY_BUFFER, data.texCoordSizes.size() * sizeof( vec2 ), data.texCoordSizes.data(), GL_STATIC_DRAW );
-		geom::BufferLayout uvSizeDataLayout;
-		uvSizeDataLayout.append( geom::Attrib::CUSTOM_2, 2, 0, 0, 1 );
-
-		ci::gl::VboRef colorBuffer = ci::gl::Vbo::create( GL_ARRAY_BUFFER, data.colors.size() * sizeof( vec4 ), data.colors.data(), GL_STATIC_DRAW );
-		geom::BufferLayout colorsDataLayout;
-		colorsDataLayout.append( geom::Attrib::CUSTOM_3, 4, 0, 0, 1 );
-
-		ci::gl::VboMeshRef vboMesh = ci::gl::VboMesh::create( geom::Rect( Rectf(vec2(0.0), vec2(1.0) )) );
-		vboMesh->appendVbo( posDataLayout, positionBuffer );
-		vboMesh->appendVbo( uvSizeDataLayout, uvSizeBuffer );
-		vboMesh->appendVbo( uvDataLayout, uvBuffer );
-		vboMesh->appendVbo( colorsDataLayout, colorBuffer );
-
-		ci::gl::GlslProgRef glyphShader = ci::gl::GlslProg::create( vertVboShader, fragVboShader );
-		glyphShader->uniform( "uTexArray", 0 );
-
-		auto batch = ci::gl::Batch::create(vboMesh, glyphShader, {
-			{ geom::Attrib::CUSTOM_0, "iPosScale" },
-			{ geom::Attrib::CUSTOM_1, "iUv" },
-			{ geom::Attrib::CUSTOM_2, "iUvSize" },
-			{ geom::Attrib::CUSTOM_3, "iColor" }
-		});
-		batches.push_back( { batch, data.texture, data.glyphCount } );
-	}
-
+	auto batches = generateBatches( batchCaches );
 	LayoutCache lineCache;
-	lineCache.bounds = Rectf( ul, br );
+	lineCache.bounds = bounds;
 	lineCache.batches = batches;
 	return lineCache;
 }
