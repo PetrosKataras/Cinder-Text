@@ -200,6 +200,7 @@
     <ClCompile Include="..\..\..\..\Cinder-Text\src\cinder\text\TextBox.cpp" />
     <ClCompile Include="..\..\..\..\Cinder-Text\src\cinder\text\TextLayout.cpp" />
     <ClCompile Include="..\..\..\..\Cinder-Text\src\cinder\text\Types.cpp" />
+    <ClCompile Include="..\..\..\src\cinder\text\gl\SdfRenderer.cpp" />
     <ClCompile Include="..\src\SdfBasicApp.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -214,6 +215,7 @@
     <ClInclude Include="..\..\..\..\Cinder-Text\src\cinder\text\TextRenderer.h" />
     <ClInclude Include="..\..\..\..\Cinder-Text\src\cinder\text\TextUnits.h" />
     <ClInclude Include="..\..\..\..\Cinder-Text\src\cinder\text\Types.h" />
+    <ClInclude Include="..\..\..\src\cinder\text\gl\SdfRenderer.h" />
     <ClInclude Include="..\include\Resources.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

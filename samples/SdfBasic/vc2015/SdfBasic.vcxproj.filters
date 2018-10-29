@@ -60,6 +60,9 @@
     <ClCompile Include="..\..\..\..\Cinder-Text\src\cinder\text\Types.cpp">
       <Filter>Blocks\Cinder-Text</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\src\cinder\text\gl\SdfRenderer.cpp">
+      <Filter>Blocks\Cinder-Text\gl</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\Resources.h">
@@ -97,6 +100,9 @@
     </ClInclude>
     <ClInclude Include="..\..\..\..\Cinder-Text\src\cinder\text\Types.h">
       <Filter>Blocks\Cinder-Text</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\cinder\text\gl\SdfRenderer.h">
+      <Filter>Blocks\Cinder-Text\gl</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
