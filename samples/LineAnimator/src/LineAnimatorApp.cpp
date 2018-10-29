@@ -36,7 +36,7 @@ void LineAnimatorApp::setup()
 	fboFormat.setColorTextureFormat( texFormat );
  	mFbo = ci::gl::Fbo::create( getWindowWidth() * 0.9f, getWindowHeight() * 0.9f, fboFormat );
 
-	ci::text::gl::TextureArray::Format fmt = text::gl::TextureArray::Format()
+	ci::text::gl::TextureArrayFormat fmt = text::gl::TextureArrayFormat()
 		.size( ivec3( 2048, 2048, 16) );
 	ci::text::gl::TextureRenderer::setTextureFormat( fmt );
 	

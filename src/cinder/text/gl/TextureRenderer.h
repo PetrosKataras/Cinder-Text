@@ -10,10 +10,14 @@
 #include "cinder/text/TextRenderer.h"
 #include "cinder/text/Types.h"
 
+//#if defined( CINDER_GL_ES_2 )
+//#define CINDER_USE_TEXTURE2D
+//#endif // ! defined( CINDER_GL_ES_2 )
+
 namespace cinder { namespace text { namespace gl {
 
-using TextureArrayRef = std::shared_ptr<class TextureArray>;
-using TextureArrayPtr = std::unique_ptr<class TextureArray>;
+using TextureArray2dRef = std::shared_ptr<class TextureArray2d>;
+using TextureArrayRef= std::shared_ptr<class TextureArray>;
 
 class TexturePack {
 public:
@@ -45,32 +49,84 @@ protected:
 
 //////////////////////////////////////////////////////////////////
 
+
+struct TextureArrayFormat {
+	TextureArrayFormat(){}
+
+	TextureArrayFormat& size( ci::ivec3 size = vec3( 1024, 1024, 8 ) ) { mSize = size; return *this; }
+	TextureArrayFormat& mipmap( bool enableMipmapping = true ) { mMipmapping = enableMipmapping; return *this; }
+	TextureArrayFormat& maxAnisotropy( float maxAnisotropy ) { mMaxAnisotropy = maxAnisotropy; return *this; }
+	TextureArrayFormat& internalFormat( GLint internalFormat ) { mInternalFormat = internalFormat; return *this; }
+		
+	protected:
+	bool		mMipmapping { false };
+	float		mMaxAnisotropy { -1 };
+	GLint		mInternalFormat { GL_RED };
+	ci::ivec3	mSize { ci::ivec3( 1024, 1024, 8 ) };
+
+	friend class TextureArray;
+	friend class TextureArray3d;
+	friend class TextureRenderer;
+};
+
+
+
+#ifdef CINDER_USE_TEXTURE2D
+
+class TextureArray2d {
+  
+  public:
+	
+	static TextureArray2dRef create( const TextureArrayFormat fmt = TextureArrayFormat() ) { return std::make_shared<TextureArray2d>( fmt ); }
+
+	TextureArray2d() {};
+	TextureArray2d( const TextureArrayFormat fmt );
+
+	struct Region {
+		Region( const ci::Rectf &rect = Rectf::zero(), int layer = -1 ):
+			rect( rect ), layer( layer )
+		{};
+
+		ci::Rectf rect;
+		int		  layer;
+	};
+
+	Region request( const ci::ivec2 &size, const ci::ivec2 &padding = ci::ivec2( 10 ) );
+	Region request( const ci::ivec2 &size, int layerIndex, const ci::ivec2 &padding = ci::ivec2( 10 ) );
+
+	//! Returns the width of the texture in pixels, ignoring clean bounds.
+	GLint	getWidth() const { return mSize.x; };
+	//! Returns the height of the texture in pixels, ignoring clean bounds.
+	GLint	getHeight() const { return mSize.y;};
+	//! Returns the depth of the texture in pixels, ignoring clean bounds.
+	GLint	getDepth() const { return mSize.z; };
+	ci::ivec3 getSize() const {	return mSize; }
+
+	ci::gl::Texture2dRef getTexture( int index ) const { return mTextures[index]; }
+	std::vector<ci::gl::Texture2dRef> getTextures() const { return mTextures; }
+	const std::vector<TexturePack>& getTexturePacks() const { return mTexturePacks; }
+	void update( ci::ChannelRef channel, int layerIdx );
+
+
+protected:
+	ci::ivec3				 mSize;
+	std::vector<ci::gl::Texture2dRef>	 mTextures;
+	std::vector<TexturePack> mTexturePacks;
+	TextureArrayFormat	 mFormat;
+
+	void initTexture();
+};
+
+#else
+
 class TextureArray {
   
   public:
-	struct Format {
-		Format(){}
-
-		Format& size( ci::ivec3 size = vec3( 1024, 1024, 8 ) ) { mSize = size; return *this; }
-		Format& mipmap( bool enableMipmapping = true ) { mMipmapping = enableMipmapping; return *this; }
-		Format& maxAnisotropy( float maxAnisotropy ) { mMaxAnisotropy = maxAnisotropy; return *this; }
-		Format& internalFormat( GLint internalFormat ) { mInternalFormat = internalFormat; return *this; }
-		
-	  protected:
-		bool		mMipmapping { false };
-		float		mMaxAnisotropy { -1 };
-		GLint		mInternalFormat { GL_RED };
-		ci::ivec3	mSize { ci::ivec3( 1024, 1024, 8 ) };
-
-		friend class TextureArray;
-		friend class TextureRenderer;
-	};
-
-  public:
 	
-	static TextureArrayRef create( const TextureArray::Format fmt = TextureArray::Format() ) { return std::make_shared<TextureArray>( fmt ); }
+	static TextureArrayRef create( const TextureArrayFormat fmt = TextureArrayFormat() ) { return std::make_shared<TextureArray>( fmt ); }
 
-	TextureArray( const TextureArray::Format fmt );
+	TextureArray() {};
+	TextureArray( const TextureArrayFormat fmt );
 
 	struct Region {
 		Region( const ci::Rectf &rect = Rectf::zero(), int layer = -1 ):
@@ -101,9 +157,10 @@ protected:
 	ci::ivec3				 mSize;
 	ci::gl::Texture3dRef	 mTexture;
 	std::vector<TexturePack> mTexturePacks;
-	TextureArray::Format	 mFormat;
+	TextureArrayFormat	 mFormat;
 };
 
+#endif // CINDER_USE_TEXTURE2D
 //////////////////////////////////////////////////////////////////
 class TextureRenderer {
   public:
@@ -146,14 +203,8 @@ class TextureRenderer {
   public:
 	TextureRenderer();
 
-	//void draw( const std::string& text, const ci::vec2& size = ci::vec2( 0 ) ) override;
-	//void draw( const std::string& text, const Font& font, const ci::vec2 size = ci::vec2( 0 ) ) override;
-	//void draw() override;
-	//void setLayout( const cinder::text::Layout& layout ) override;
-	//void setOffset( ci::vec2 offset ) { mOffset = offset; }
-
 	static void enableSharedCaches( bool enable = true ) { mSharedCacheEnabled = enable; };
-	static void setTextureFormat( TextureArray::Format fmt ) { mTextureArrayFormat = fmt; };
+	static void setTextureFormat( TextureArrayFormat fmt ) { mTextureArrayFormat = fmt; };
 
 	static void loadFont( const Font& font, bool loadEntireFont = false );
 	static void unloadFont( const Font& font );
@@ -166,7 +217,6 @@ class TextureRenderer {
 	LayoutCache cacheLayout( const cinder::text::Layout &layout );
 
 	static std::string defaultChars() { return "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890().?!,:;'\"&*=+-/\\@#_[]<>%^llflfiphrids\303\251\303\241\303\250\303\240"; }
-	//static std::pair<uint32_t, uint32_t> defaultUnicodeRange() { return { 0x0040, 0x007F }; }
 	// https://en.wikipedia.org/wiki/Latin_script_in_Unicode
 	static std::vector<std::pair<uint32_t, uint32_t>> defaultUnicodeRange() { return { { 0x0000, 0x007F }, { 0x0080, 0x00FF }, { 0xFB00, 0xFB06 } }; }
 
@@ -197,10 +247,19 @@ class TextureRenderer {
 	//! Whether the texture cache is shared for all fonts, otherwise per-font
 	static bool									mSharedCacheEnabled;
 	//! Options for the texture array
-	static TextureArray::Format					mTextureArrayFormat;
+	static TextureArrayFormat					mTextureArrayFormat;
 
-	static TextureArrayRef makeTextureArray();
 	static void uploadChannelToTexture( TexArrayCache &texArrayCache );
+
+
+#ifdef CINDER_USE_TEXTURE2D
+	static TextureArray2dRef makeTextureArray() { return TextureArray2d::create( mTextureArrayFormat ); };
+	std::vector<TextureArray2dRef> mTextures;
+#else
+	static TextureArrayRef makeTextureArray() { return TextureArray::create( mTextureArrayFormat ); };
+	std::vector<TextureArrayRef> mTextures;
+#endif
+
 };
 
 class TexturePackOutOfBoundExc : public ci::Exception {
