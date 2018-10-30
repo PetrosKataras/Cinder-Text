@@ -20,7 +20,11 @@ class TextureAtlasApp : public App {
 
 	cinder::text::Layout mLayout;
 	cinder::text::gl::TextureRenderer mRenderer;
-	ci::gl::Texture3dRef mGlyphTexture;
+#ifdef CINDER_USE_TEXTURE2D
+	std::vector<ci::gl::Texture2dRef> mGlyphTextures;
+#else
+	std::vector<ci::gl::Texture3dRef> mGlyphTextures;
+#endif
 	ci::gl::BatchRef mBatch;
 
 // Shader
@@ -48,6 +52,8 @@ const char* fragShader = R"V0G0N(
 #version 150
 
 uniform sampler2DArray uTexArray;
+uniform sampler2D uTex;
+uniform bool uIsArray;
 uniform uint uLayer;
 
 in vec2 texCoord;
@@ -57,9 +63,15 @@ out vec4 color;
 
 void main( void )
 { 
-	vec3 coord = vec3(texCoord.x, texCoord.y, uLayer);
-	vec4 texColor = texture( uTexArray, coord );
-
+	vec4 texColor;
+	if( uIsArray ) {
+		vec3 coord = vec3(texCoord.x, texCoord.y, uLayer);
+		texColor = texture( uTexArray, coord );   
+	} else {
+		vec2 coord = vec2(texCoord.x, texCoord.y);
+		texColor = texture( uTex, coord );   
+	}
+	
 	color = vec4(1.0, 1.0, 1.0, texColor.r);
 	color *= globalColor;
 	//color = vec4(1.0,0.0,0.0,1.0);
@@ -81,7 +93,7 @@ void TextureAtlasApp::setup()
 	// Enable glyphs to be cached in a shared texture array
 	cinder::text::gl::TextureRenderer::enableSharedCaches( true );
 	cinder::text::gl::TextureArray::Format fmt = cinder::text::gl::TextureArray::Format()
-		.size( vec3( 1024, 1024, 4 ) )
+		.size( vec3( 2048, 1024, 1 ) )
 		.internalFormat( GL_RED )
 		.maxAnisotropy( gl::Texture2d::getMaxAnisotropyMax() )
 		.mipmap( true );
@@ -106,7 +118,7 @@ void TextureAtlasApp::setup()
 	//auto glyphMap = fontCache.glyphs;
 
 	auto glyphMap = mRenderer.getGylphMapForFont( font1 );
-	mGlyphTexture = mRenderer.getTextureForFont( font1 );
+	mGlyphTextures = mRenderer.getTexturesForFont( font1 );
 
 	mRenderer.unloadFont( font1 );
 	mRenderer.unloadFont( font2 );
@@ -115,7 +127,13 @@ void TextureAtlasApp::setup()
 
 	// Rendering glyphs for text
 	ci::gl::GlslProgRef shader = ci::gl::GlslProg::create( vertShader, fragShader );
+#ifdef CINDER_USE_TEXTURE2D
+	shader->uniform( "uTex", 0 );
+	shader->uniform( "uIsArray", false );
+#else
 	shader->uniform( "uTexArray", 0 );
+	shader->uniform( "uIsArray", true );
+#endif
 	mBatch = ci::gl::Batch::create( ci::geom::Rect( Rectf( vec2(0.0), vec2( 1.0f ))), shader );
 }
 
@@ -131,36 +149,42 @@ void TextureAtlasApp::draw()
 {
 	gl::clear( Color( 0, 0, 0 ) );
 
-	if( !mGlyphTexture )
+	if( !mGlyphTextures.size() )
 		return;
 
-	vec2 size = mGlyphTexture->getBounds().getSize();
-	int depth = mGlyphTexture->getDepth();
-	int cols = ceil( sqrt( depth ) );
-	int rows = cols;
+	vec2 size = mGlyphTextures[0]->getBounds().getSize();
+	int depth = mGlyphTextures[0]->getDepth();
+	int blocks = mGlyphTextures.size();
+	//int cols = ceil( sqrt( depth ) );
+	int cols = depth;
+	//int rows = 1;
 
 	// draw all textures in the texture array
-	for( int i = 0; i < depth; i++ ) {
-	
-		float w = getWindowWidth() / cols;
-		float h = w * (size.y / size.x);
-		float x = (i % cols) * w;
-		float y = (floor( float(i) / float(cols) )) * h;
+	for( int block = 0; block < blocks; block++ ) {
+		for( int i = 0; i < depth; i++ ) {
+			
+			auto glyphTexture = mGlyphTextures[block];
+			float w = getWindowWidth() / cols;
+			float h = w * (size.y / size.x);
+			float x = (i % cols) * w;
+			float y = (floor( float(i) / float(cols) )) * h;
+			y += block * h;
 		
-		ci::Area drawingArea = Area( vec2( x, y ), vec2( x, y ) + vec2( w, h ) );
+			ci::Area drawingArea = Area( vec2( x, y ), vec2( x, y ) + vec2( w, h ) );
 
-		{
-			gl::ScopedMatrices scpMtrx;
-			gl::translate( drawingArea.getUL() );
-			//float s =  float(drawingArea.getWidth()) / size.y;
-			gl::scale( vec2( drawingArea.getSize() ) );
+			{
+				gl::ScopedMatrices scpMtrx;
+				gl::translate( drawingArea.getUL() );
+				//float s =  float(drawingArea.getWidth()) / size.y;
+				gl::scale( vec2( drawingArea.getSize() ) );
 
-			mBatch->getGlslProg()->uniform( "uLayer", (uint32_t) i );
-			ci::gl::ScopedTextureBind texBind( mGlyphTexture->getTarget(), mGlyphTexture->getId() );
-			mBatch->draw();
+				mBatch->getGlslProg()->uniform( "uLayer", (uint32_t) i );
+				ci::gl::ScopedTextureBind texBind( glyphTexture->getTarget(), glyphTexture->getId() );
+				mBatch->draw();
+			}
+
+			gl::drawStrokedRect( drawingArea );
 		}
-
-		gl::drawStrokedRect( drawingArea );
 	}
 	
 }

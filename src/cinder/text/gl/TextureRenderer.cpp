@@ -219,7 +219,7 @@ void TextureRenderer::render( const TextureRenderer::LayoutCache &line )
 		auto batch = std::get<0>(batchData);
 		auto tex = std::get<1>(batchData);
 		auto count = std::get<2>(batchData);
-		ci::gl::ScopedTextureBind texBind( tex->getTarget(), tex->getId() );
+		//ci::gl::ScopedTextureBind texBind( tex->getTarget(), tex->getId() );
 		batch->drawInstanced( count );
 	}
 }
@@ -256,7 +256,7 @@ void TextureRenderer::cacheRun( std::unordered_map<Font, BatchCacheData> &batchC
 			batchCache.texCoords.push_back( vec3( glyphCache.subTexOffset, glyphCache.layer ) );
 			batchCache.texCoordSizes.push_back( vec2( glyphCache.subTexSize ) );
 			batchCache.colors.push_back( ci::ColorA( run.color, run.opacity ) );
-			batchCache.texture = tex;
+			//batchCache.texture = tex;
 			batchCache.glyphCount += 1;
 		}
 		else {
@@ -265,9 +265,9 @@ void TextureRenderer::cacheRun( std::unordered_map<Font, BatchCacheData> &batchC
 	}
 }
 
-std::vector< std::tuple<ci::gl::BatchRef, ci::gl::Texture3dRef, int> > TextureRenderer::generateBatches(const std::unordered_map<Font, BatchCacheData> &batchCaches )
+std::vector< std::tuple<ci::gl::BatchRef, int, int> > TextureRenderer::generateBatches(const std::unordered_map<Font, BatchCacheData> &batchCaches )
 {
-	std::vector< std::tuple<ci::gl::BatchRef, ci::gl::Texture3dRef, int> > batches;
+	std::vector< std::tuple<ci::gl::BatchRef, int, int> > batches;
 	for( auto batchCache : batchCaches ) {
 		
 		auto data = batchCache.second;
@@ -303,12 +303,12 @@ std::vector< std::tuple<ci::gl::BatchRef, ci::gl::Texture3dRef, int> > TextureRe
 			{ geom::Attrib::CUSTOM_2, "iUvSize" },
 			{ geom::Attrib::CUSTOM_3, "iColor" }
 		});
-		batches.push_back( { batch, data.texture, data.glyphCount } );
+		batches.push_back( { batch, 0, data.glyphCount } );
 	}
 	return batches;
 }
 
-
+/*
 TextureRenderer::LayoutCache TextureRenderer::cacheLayout( const cinder::text::Layout &layout )
 {
 	// Determine the texture blocks that we'll need (Texture2D or TextureArray)
@@ -352,7 +352,7 @@ TextureRenderer::LayoutCache TextureRenderer::cacheLine( const cinder::text::Lay
 	lineCache.bounds = bounds;
 	lineCache.batches = batches;
 	return lineCache;
-}
+}*/
 
 std::vector<std::pair<uint32_t, ci::ivec2>> TextureRenderer::getGlyphMapForLayout( const cinder::text::Layout& layout )
 {
@@ -404,11 +404,6 @@ TextureRenderer::FontCache& TextureRenderer::getCacheForFont( const Font& font )
 std::map<uint16_t, TextureRenderer::GlyphCache> TextureRenderer::getGylphMapForFont( const Font& font )
 {
 	return getCacheForFont( font ).glyphs;
-}
-
-std::vector<ci::gl::Texture3dRef> TextureRenderer::getTexturesForFont( const Font& font )
-{
-	return getCacheForFont( font ).texArrayCache.texArray->getTextures();
 }
 
 // Cache glyphs to gl texture array(s)
@@ -853,7 +848,13 @@ void TextureArray::update( ci::ChannelRef channel, int layerIdx )
 	GLint dataFormat;
 	GLenum dataType;
 	ci::gl::TextureBase::SurfaceChannelOrderToDataFormatAndType<uint8_t>( surface.getChannelOrder(), &dataFormat, &dataType );
-	TextureBlock->update(  (void*)surface.getData(), dataFormat, dataType, mipLevel, surface.getWidth(), surface.getHeight(), 1, 0, 0, layer );
+
+#ifdef CINDER_USE_TEXTURE2D
+	//TextureBlock->update( surface, mipLevel );
+	TextureBlock->update( (void*)surface.getData(), dataFormat, dataType, mipLevel, surface.getWidth(), surface.getHeight() );
+#else
+	TextureBlock->update( (void*)surface.getData(), dataFormat, dataType, mipLevel, surface.getWidth(), surface.getHeight(), 1, 0, 0, layer );
+#endif
 
 	if( mFormat.mMipmapping )
 	{
@@ -868,13 +869,22 @@ void TextureArray::expand()
 	mTexturePacks.resize( (mTexturePacks.size() + 1) * mSize.z, TexturePack( mSize.x, mSize.y ) );
 
 	bool mipmap = mFormat.mMipmapping;
+	
+
+#ifdef CINDER_USE_TEXTURE2D
+	auto format = ci::gl::Texture2d::Format()
+		.internalFormat( mFormat.mInternalFormat )
+		.maxAnisotropy( mFormat.mMaxAnisotropy )
+		.mipmap( mipmap ).magFilter( mipmap ? GL_LINEAR : GL_NEAREST ).minFilter( mipmap ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST );
+	mTextures.push_back( ci::gl::Texture2d::create( mSize.x, mSize.y, format ) );
+#else
 	auto format = ci::gl::Texture3d::Format()
 		.target( GL_TEXTURE_2D_ARRAY )
 		.internalFormat( mFormat.mInternalFormat )
 		.maxAnisotropy( mFormat.mMaxAnisotropy )
 		.mipmap( mipmap ).magFilter( mipmap ? GL_LINEAR : GL_NEAREST ).minFilter( mipmap ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST );
-
 	mTextures.push_back( ci::gl::Texture3d::create( mSize.x, mSize.y, mSize.z, format ) );
+#endif
 }
 
 } } } // namespace cinder::text::gl

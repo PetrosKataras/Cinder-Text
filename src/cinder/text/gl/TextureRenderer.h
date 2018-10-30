@@ -156,7 +156,7 @@ class TextureRenderer {
 	// cache struct for rendering
 	typedef struct {
 		ci::Rectf bounds;
-		std::vector< std::tuple<ci::gl::BatchRef, ci::gl::Texture3dRef, int> > batches;
+		std::vector< std::tuple<ci::gl::BatchRef, int, int> > batches;
 	} LayoutCache;
 
 	typedef struct {
@@ -164,7 +164,7 @@ class TextureRenderer {
 		std::vector<vec3> texCoords;
 		std::vector<vec2> texCoordSizes;
 		std::vector<vec4> colors;
-		ci::gl::Texture3dRef texture;
+		//ci::gl::Texture3dRef texture;
 		int glyphCount;
 	} BatchCacheData;
 
@@ -190,7 +190,17 @@ class TextureRenderer {
 
 	FontCache& getCacheForFont( const Font& font );
 	std::map<uint16_t, GlyphCache> getGylphMapForFont( const Font &font );
-	std::vector<ci::gl::Texture3dRef> getTexturesForFont( const Font& font );
+#ifdef CINDER_USE_TEXTURE2D
+	std::vector<ci::gl::Texture2dRef> getTexturesForFont(const Font& font)
+	{
+		return getCacheForFont( font ).texArrayCache.texArray->getTextures();
+	}
+#else
+	std::vector<ci::gl::Texture3dRef> getTexturesForFont( const Font& font )
+	{
+		return getCacheForFont( font ).texArrayCache.texArray->getTextures();
+	}
+#endif
 
 	void render( const std::vector<cinder::text::Layout::Line>& lines );
 	void render( const cinder::text::Layout& layout );
@@ -202,7 +212,7 @@ class TextureRenderer {
 	ci::gl::BatchRef	mBatch;
 
 	void TextureRenderer::cacheRun( std::unordered_map<Font, BatchCacheData> &batchCaches, const Layout::Run& run, ci::Rectf& bounds );
-	std::vector< std::tuple<ci::gl::BatchRef, ci::gl::Texture3dRef, int> > generateBatches(const std::unordered_map<Font, BatchCacheData> &batchCaches );
+	std::vector< std::tuple<ci::gl::BatchRef, int, int> > generateBatches(const std::unordered_map<Font, BatchCacheData> &batchCaches );
 
 	static void cacheFont( const Font& font, bool cacheEntireFont = false );
 	
