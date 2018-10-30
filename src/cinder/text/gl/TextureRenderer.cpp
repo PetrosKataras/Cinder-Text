@@ -21,7 +21,7 @@ std::unordered_map<Font, TextureRenderer::FontCache> TextureRenderer::fontCache;
 
 bool							TextureRenderer::mSharedCacheEnabled = false;
 TextureRenderer::TexArrayCache	TextureRenderer::mSharedTexArrayCache;
-TextureArrayFormat				TextureRenderer::mTextureArrayFormat;
+TextureArray::Format			TextureRenderer::mTextureArrayFormat;
 
 
 // Shaders
@@ -193,7 +193,7 @@ void TextureRenderer::render( const std::vector<cinder::text::Layout::Line>& lin
 					auto glyphCache = fontCache.glyphs[glyph.index];
 
 					//auto tex = getCacheForFont( run.font ).glyphs[glyph.index].texArray->getTexture();
-					auto tex = fontCache.texArrayCache.texArray->getTexture();
+					auto tex = fontCache.texArrayCache.texArray->getTextureBlock( glyphCache.block );
 
 					//ci::gl::ScopedBlendAlpha alphaBlend;
 					mBatch->getGlslProg()->uniform( "uLayer", (uint32_t)glyphCache.layer );
@@ -241,7 +241,7 @@ void TextureRenderer::cacheRun( std::unordered_map<Font, BatchCacheData> &batchC
 			vec2 size =  glyph.size;
 	
 			auto glyphCache = fontCache.glyphs[glyph.index];
-			auto tex = fontCache.texArrayCache.texArray->getTexture();				
+			auto tex = fontCache.texArrayCache.texArray->getTextureBlock( glyphCache.block );				
 			bounds.x2 = glm::max( bounds.x2, glyph.bbox.x2 );
 			bounds.y2 = glm::max( bounds.y2, glyph.bbox.y2 );
 			bounds.x1 = glm::min( bounds.x1, glyph.bbox.x1 );
@@ -406,9 +406,9 @@ std::map<uint16_t, TextureRenderer::GlyphCache> TextureRenderer::getGylphMapForF
 	return getCacheForFont( font ).glyphs;
 }
 
-ci::gl::Texture3dRef TextureRenderer::getTextureForFont( const Font& font )
+std::vector<ci::gl::Texture3dRef> TextureRenderer::getTexturesForFont( const Font& font )
 {
-	return getCacheForFont( font ).texArrayCache.texArray->getTexture();
+	return getCacheForFont( font ).texArrayCache.texArray->getTextures();
 }
 
 // Cache glyphs to gl texture array(s)
@@ -530,30 +530,29 @@ void TextureRenderer::cacheGlyphs( const Font& font, const std::vector<uint32_t>
 			ci::ip::fill( layerChannel.get(), ( uint8_t )0 );
 			dirty = false;
 
-			if( layerIndex + 1 >= textureArray->getDepth() ) {
-				texArrayCache->filled = true;
+			if( layerIndex + 1 >= textureArray->getDepth() * textureArray->getBlocks() ) {
+				//texArrayCache->filled = true;
+				textureArray->expand();
 				CI_LOG_E( "Texture Array is filled. Cannot cache any more gyphs. Increase the size or depth or the Texture Array." );
-			} else {
-				layerIndex++;
-				texArrayCache->currentLayerIdx = layerIndex;
-
-				// request a new region
-				region = textureArray->request( glyphSize, layerIndex, ivec2( 2.0f ) );
 			}
+
+			layerIndex++;
+			texArrayCache->currentLayerIdx = layerIndex;
+
+			// request a new region
+			region = textureArray->request( glyphSize, layerIndex, ivec2( 2.0f ) );
+			
 			
 		}
 
 		if( region.layer > -1 )
 		{ 
 			ivec2 offset = region.rect.getUpperLeft();
-			auto layer = region.layer;
-
+	
 			// fill channel
 			ci::ChannelRef channel = ci::Channel::create( glyphSize.x, glyphSize.y, glyphSize.x * sizeof( unsigned char ), sizeof( unsigned char ), bitmapGlyph->bitmap.buffer );
-			if( channel->getData() ) {
-				//ci::ChannelRef flippedChannel = ci::Channel::create( glyphSize.x, glyphSize.y );
-				//ci::ip::fill( flippedChannel.get(), ( uint8_t )0 );
-				//ci::ip::flipVertical( *channel, flippedChannel.get() );
+			if( channel->getData() )
+			{
 				ci::Channel8uRef expandedChannel = ci::Channel8u::create( glyphSize.x + padding.x, glyphSize.y + padding.y );
 				ci::ip::fill( expandedChannel.get(), ( uint8_t )0 );
 				expandedChannel->copyFrom( *channel, ci::Area( 0, 0, glyphSize.x, glyphSize.y ) );
@@ -570,9 +569,17 @@ void TextureRenderer::cacheGlyphs( const Font& font, const std::vector<uint32_t>
 				// update channel
 				layerChannel->copyFrom( *expandedChannel, Area( 0, 0, w, h ), offset );
 			}
+
+			// determine block and layer within the texture array cache
+			int textureDepth = texArrayCache->texArray->getDepth();
+			int block = region.layer / textureDepth;
+			int layer = region.layer % textureDepth;
+
+			CI_LOG_V( block << " | " << layer );
 			
 			//TextureRenderer::fontCache[font].glyphs[glyphIndex].texArray = textureArray;
 			TextureRenderer::fontCache[font].texArrayCache = *texArrayCache;
+			TextureRenderer::fontCache[font].glyphs[glyphIndex].block = block;
 			TextureRenderer::fontCache[font].glyphs[glyphIndex].layer = layer;
 			TextureRenderer::fontCache[font].glyphs[glyphIndex].size = ci::vec2( glyphSize );
 			TextureRenderer::fontCache[font].glyphs[glyphIndex].offset = ci::vec2( bbox.xMin, bbox.yMax );
@@ -782,11 +789,12 @@ void TexturePack::debugDraw() const
 }
 
 //////////////
-#ifdef CINDER_USE_TEXTURE2D
-TextureArray::TextureArray( const TextureArrayFormat fmt )
+
+TextureArray::TextureArray( const TextureArray::Format fmt )
 	: mSize( fmt.mSize ), mFormat( fmt )
 {
-	mTexturePacks.resize( mSize.z, TexturePack( mSize.x, mSize.y ) );
+	expand();
+	/*mTexturePacks.resize( mSize.z, TexturePack( mSize.x, mSize.y ) );
 
 	bool mipmap = mFormat.mMipmapping;
 	auto format = ci::gl::Texture3d::Format()
@@ -795,7 +803,7 @@ TextureArray::TextureArray( const TextureArrayFormat fmt )
 		.maxAnisotropy( mFormat.mMaxAnisotropy )
 		.mipmap( mipmap ).magFilter( mipmap ? GL_LINEAR : GL_NEAREST ).minFilter( mipmap ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST );
 
-	mTexture = ci::gl::Texture3d::create( mSize.x, mSize.y, mSize.z, format );
+	mTextures.push_back( ci::gl::Texture3d::create( mSize.x, mSize.y, mSize.z, format ) );*/
 }
 
 TextureArray::Region TextureArray::request( const ci::ivec2 &size, const ci::ivec2 &padding )
@@ -835,25 +843,29 @@ TextureArray::Region TextureArray::request( const ci::ivec2 &size, int layerInde
 
 void TextureArray::update( ci::ChannelRef channel, int layerIdx )
 {
+	int layer = layerIdx % getDepth();
+	int block = layerIdx / getDepth();
+	auto TextureBlock = mTextures[block];
+
 	// upload channel to texture
 	ci::Surface8u surface( *channel );
 	int mipLevel = 0;
 	GLint dataFormat;
 	GLenum dataType;
 	ci::gl::TextureBase::SurfaceChannelOrderToDataFormatAndType<uint8_t>( surface.getChannelOrder(), &dataFormat, &dataType );
-	mTexture->update(  (void*)surface.getData(), dataFormat, dataType, mipLevel, surface.getWidth(), surface.getHeight(), 1, 0, 0, layerIdx );
+	TextureBlock->update(  (void*)surface.getData(), dataFormat, dataType, mipLevel, surface.getWidth(), surface.getHeight(), 1, 0, 0, layer );
 
 	if( mFormat.mMipmapping )
 	{
-		ci::gl::ScopedTextureBind scopedTexBind( mTexture );
-		glGenerateMipmap( mTexture->getTarget() );		
+		ci::gl::ScopedTextureBind scopedTexBind( TextureBlock );
+		glGenerateMipmap( TextureBlock->getTarget() );		
 	}
 }
-#else
-TextureArray::TextureArray( const TextureArrayFormat fmt )
-	: mSize( fmt.mSize ), mFormat( fmt )
+
+void TextureArray::expand()
 {
-	mTexturePacks.resize( mSize.z, TexturePack( mSize.x, mSize.y ) );
+	// add another group of texture packs
+	mTexturePacks.resize( (mTexturePacks.size() + 1) * mSize.z, TexturePack( mSize.x, mSize.y ) );
 
 	bool mipmap = mFormat.mMipmapping;
 	auto format = ci::gl::Texture3d::Format()
@@ -862,61 +874,7 @@ TextureArray::TextureArray( const TextureArrayFormat fmt )
 		.maxAnisotropy( mFormat.mMaxAnisotropy )
 		.mipmap( mipmap ).magFilter( mipmap ? GL_LINEAR : GL_NEAREST ).minFilter( mipmap ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST );
 
-	mTexture = ci::gl::Texture3d::create( mSize.x, mSize.y, mSize.z, format );
+	mTextures.push_back( ci::gl::Texture3d::create( mSize.x, mSize.y, mSize.z, format ) );
 }
-
-TextureArray::Region TextureArray::request( const ci::ivec2 &size, const ci::ivec2 &padding )
-{
-	int i = 0;
-	bool filledPages = false;
-	while( !filledPages ) {
-		if( i >= mTexturePacks.size() - 1 )
-			filledPages = true;
-
-		try {
-			pair<uint32_t, Rectf> rect = mTexturePacks[i].insert( size + padding * 2, false );
-			return Region( rect.second, i );
-		}
-		catch( const TexturePackOutOfBoundExc &exc ) {
-			i++;
-		}
-	}
-	return Region();
-}
-
-TextureArray::Region TextureArray::request( const ci::ivec2 &size, int layerIndex, const ci::ivec2 &padding )
-{
-	if( size.x == 0 || size.y == 0 )
-		return Region( Rectf::zero(), layerIndex );
-	else if(  size.x > mSize.x || size.y > mSize.y )
-		return Region();
-
-	try {
-		pair<uint32_t, Rectf> rect = mTexturePacks[layerIndex].insert( size + padding * 2, false );
-		return Region( rect.second, layerIndex );
-	}
-	catch( const TexturePackOutOfBoundExc &exc ) {
-		return Region();
-	}
-}
-
-void TextureArray::update( ci::ChannelRef channel, int layerIdx )
-{
-	// upload channel to texture
-	ci::Surface8u surface( *channel );
-	int mipLevel = 0;
-	GLint dataFormat;
-	GLenum dataType;
-	ci::gl::TextureBase::SurfaceChannelOrderToDataFormatAndType<uint8_t>( surface.getChannelOrder(), &dataFormat, &dataType );
-	mTexture->update(  (void*)surface.getData(), dataFormat, dataType, mipLevel, surface.getWidth(), surface.getHeight(), 1, 0, 0, layerIdx );
-
-	if( mFormat.mMipmapping )
-	{
-		ci::gl::ScopedTextureBind scopedTexBind( mTexture );
-		glGenerateMipmap( mTexture->getTarget() );		
-	}
-}
-#endif
-
 
 } } } // namespace cinder::text::gl
