@@ -47,11 +47,11 @@ protected:
 	std::map<uint32_t, ci::Rectf> mFreeRectangles;
 };
 
-//////////////////////////////////////////////////////////////////
 
 class TextureArray {
 
  public:
+	 //! Defines a limited set of options for Textures in TextureArray. Valid for both Texture2d and Texture3d instances.
 	struct Format {
 		Format(){}
 
@@ -70,14 +70,7 @@ class TextureArray {
 		friend class TextureRenderer;
 	};
 
-
-  public:
-	
-	static TextureArrayRef create( const TextureArray::Format fmt = TextureArray::Format() ) { return std::make_shared<TextureArray>( fmt ); }
-
-	TextureArray() {};
-	TextureArray( const TextureArray::Format fmt);
-
+	//! Defines a rectangular area and layer index for a region of a texture where a glyph is located in a texture.
 	struct Region {
 		Region( const ci::Rectf &rect = Rectf::zero(), int layer = -1 ):
 			rect( rect ), layer( layer )
@@ -87,7 +80,16 @@ class TextureArray {
 		int		  layer;
 	};
 
+  public:
+	
+	static TextureArrayRef create( const TextureArray::Format fmt = TextureArray::Format() ) { return std::make_shared<TextureArray>( fmt ); }
+
+	TextureArray() {};
+	TextureArray( const TextureArray::Format fmt);
+
+	//! Request the next valid area of a texture
 	Region request( const ci::ivec2 &size, const ci::ivec2 &padding = ci::ivec2( 10 ) );
+	//! Request the a valid area of a texture on a specific layer
 	Region request( const ci::ivec2 &size, int layerIndex, const ci::ivec2 &padding = ci::ivec2( 10 ) );
 
 	//! Returns the width of the texture in pixels, ignoring clean bounds.
@@ -98,16 +100,20 @@ class TextureArray {
 	GLint		getDepth() const { return mSize.z; };
 	//! Returns texture array dimensions - z is used for TextureArrays
 	ci::ivec3	getSize() const {	return mSize; }
-	//! Returns the number of blocks use 
+	//! Returns the number of blocks/textures used 
 	GLint		getBlockCount() const { return mTextureIndices.size(); };
 
+	//! Returns a vector of all texture packs
 	const std::vector<TexturePack>& getTexturePacks() const { return mTexturePacks; }
+	//! Updates the active texture on the specified layer index to the content of the specified channel
 	void update( ci::ChannelRef channel, int layerIdx );
 	//! Expand the amount of texture blocks that we can write glyphs to 
 	void expand();
 
-	int									getTextureBlockIndex( int block ) const { return mTextureIndices[block]; }
-	std::vector<int>					getTextureIndices() const { return mTextureIndices; }
+	//! Get the texture index defined for the specified block index
+	int					getTextureBlockIndex( int block ) const { return mTextureIndices[block]; }
+	//! Get all all of the texture block indices referred to
+	std::vector<int>	getTextureBlockIndices() const { return mTextureIndices; }
 
 protected:
 	ci::ivec3				 mSize;
@@ -142,7 +148,7 @@ class TextureRenderer {
 		TexArrayCache					texArrayCache;
 	} FontCache;
 
-	// cache struct for rendering
+	// cache structs for rendering
 	
 	typedef struct {
 		ci::gl::BatchRef batch;
@@ -164,35 +170,53 @@ class TextureRenderer {
 		int glyphCount;
 	} BatchCacheData;
 
-
-
   public:
 	TextureRenderer();
 
-	static void enableSharedCaches( bool enable = true ) { mSharedCacheEnabled = enable; };
-	static void setTextureFormat( TextureArray::Format fmt ) { mTextureArrayFormat = fmt; };
-
-	static void loadFont( const Font& font, bool loadEntireFont = false );
-	static void unloadFont( const Font& font );
-
-	static void cacheGlyphs( const Font& font, const std::string string, const std::string language = "en", Script script = Script::LATIN, Direction dir = Direction::LTR );
-	static void cacheGlyphs( const Font& font, const std::vector<uint32_t> &glyphIndices );
-	static void cacheGlyphs( const Font& font, const std::vector<std::pair<uint32_t, uint32_t>> &unicodeRange );
-
-	LayoutCache cacheLine( const cinder::text::Layout::Line &line );
-	LayoutCache cacheLayout( const cinder::text::Layout &layout );
-
+	//! Default characters to cache in string form
 	static std::string defaultChars() { return "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890().?!,:;'\"&*=+-/\\@#_[]<>%^llflfiphrids\303\251\303\241\303\250\303\240"; }
-	// https://en.wikipedia.org/wiki/Latin_script_in_Unicode
+	//! Default characters to cache as a unicode range, which is more inclusive than defaultChars() https://en.wikipedia.org/wiki/Latin_script_in_Unicode
 	static std::vector<std::pair<uint32_t, uint32_t>> defaultUnicodeRange() { return { { 0x0000, 0x007F }, { 0x0080, 0x00FF }, { 0xFB00, 0xFB06 } }; }
 
+	//! Enable all loaded fonts to use the same set of texture arrays
+	static void enableSharedCaches( bool enable = true ) { mSharedCacheEnabled = enable; };
+	//! Sets the texture format that cached font textures will use, including texture cache dimensions
+	static void setTextureFormat( TextureArray::Format fmt ) { mTextureArrayFormat = fmt; };
+
+	//! Staticly load/cache the specified font, optionally loading every glyph of the font
+	static void loadFont( const Font& font, bool loadEntireFont = false );
+	//! Renove the cached font from the cache
+	static void unloadFont( const Font& font );
+	//! Print all cached fonts to the console
+	static void printCachedFonts() {
+		for( auto font : fontCache ) {
+			CI_LOG_V( font.first );
+		}
+	}
+
+	//! Cache the specified glyphs for the specified font, providing the glyphs in string form
+	static void cacheGlyphs( const Font& font, const std::string string, const std::string language = "en", Script script = Script::LATIN, Direction dir = Direction::LTR );
+	//! Cache the specified glyphs for the specified font as a vector of glyph indices
+	static void cacheGlyphs( const Font& font, const std::vector<uint32_t> &glyphIndices );
+	//! Cache the specified glyphs for the specified font as a vector of unicode ranges
+	static void cacheGlyphs( const Font& font, const std::vector<std::pair<uint32_t, uint32_t>> &unicodeRange );
+
+
+	//! Cache the specified layout line. Returns a LayoutCache object, which can then be efficientll rendered later.
+	LayoutCache cacheLine( const cinder::text::Layout::Line &line );
+	//! Cache the specified layout. Returns a LayoutCache object, which can then be efficientll rendered later.
+	LayoutCache cacheLayout( const cinder::text::Layout &layout );
+
+	//! Returns the FontCache object, which can be used to render outside of the TextureRenderer object.
 	FontCache& getCacheForFont( const Font& font );
+	//! Returns a map of Glyph information for the specified font
 	std::map<uint16_t, GlyphCache> getGylphMapForFont( const Font &font );
+	//! Returns the textures used for the specified font
 #ifdef CINDER_TEXTURE_RENDERER_USE_TEXTURE2D
 	std::vector<ci::gl::Texture2dRef> getTexturesForFont(const Font& font)
 	{
 		std::vector<ci::gl::Texture2dRef> textures;
-		for( auto texIndex : getCacheForFont(font).texArrayCache.texArray->getTextureIndices() ) {
+		for( auto texIndex : getCacheForFont(font).texArrayCache.texArray->getTextureBlockIndices() ) {
 			textures.push_back( mTextures[texIndex] );
 		}
 		return textures;
@@ -201,23 +225,22 @@ class TextureRenderer {
 	std::vector<ci::gl::Texture3dRef> getTexturesForFont( const Font& font )
 	{
 		std::vector<ci::gl::Texture3dRef> textures;
-		for( auto texIndex : getCacheForFont(font).texArrayCache.texArray->getTextureIndices() ) {
+		for( auto texIndex : getCacheForFont(font).texArrayCache.texArray->getTextureBlockIndices() ) {
 			textures.push_back( mTextures[texIndex] );
 		}
 		return textures;
 	}
 #endif
 
+	//! Renders a vector of lines from a layout
 	void render( const std::vector<cinder::text::Layout::Line>& lines );
+	//! Renders a text Layout as a whole
 	void render( const cinder::text::Layout& layout );
+	//! Efficiently renders a LayoutCache object, which is preferred for repeated renders.
 	void render( const cinder::text::gl::TextureRenderer::LayoutCache &line );
 
+	//! Get the glyph map vector for a previously configured text Layout
 	std::vector<std::pair<uint32_t, ci::ivec2>> getGlyphMapForLayout( const cinder::text::Layout& layout );
-	static void printCachedFonts() {
-		for( auto font : fontCache ) {
-			CI_LOG_V( font.first );
-		}
-	}
 
   private:
 	ci::gl::BatchRef	mBatch;
@@ -226,9 +249,7 @@ class TextureRenderer {
 	std::vector< GlyphBatch > generateBatches(const std::unordered_map<int, BatchCacheData> &batchCaches );
 
 	static void cacheFont( const Font& font, bool cacheEntireFont = false );
-	
 	static void uncacheFont( const Font& font );
-
 	static std::unordered_map<Font, FontCache>	fontCache;
 	
 	//! The TextureArray cache, when mSharedCacheEnabled is set to true

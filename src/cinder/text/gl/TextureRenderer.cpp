@@ -195,7 +195,8 @@ void TextureRenderer::render( const std::vector<cinder::text::Layout::Line>& lin
 			for( auto& glyph : run.glyphs ) 
 			{	
 				// Make sure we have the glyph
-				if( TextureRenderer::getCacheForFont( run.font ).glyphs.count( glyph.index ) != 0 ) {
+				if( TextureRenderer::getCacheForFont( run.font ).glyphs.count( glyph.index ) != 0 ) 
+				{
 					ci::gl::ScopedMatrices matrices;
 					ci::gl::translate( ci::vec2( glyph.bbox.getUpperLeft() ) );
 					ci::gl::scale( glyph.bbox.getSize().x, glyph.bbox.getSize().y );
@@ -203,14 +204,10 @@ void TextureRenderer::render( const std::vector<cinder::text::Layout::Line>& lin
 					auto fontCache = getCacheForFont( run.font );
 					auto glyphCache = fontCache.glyphs[glyph.index];
 
-					//auto tex = getCacheForFont( run.font ).glyphs[glyph.index].texArray->getTexture();
 					auto texIndex = fontCache.texArrayCache.texArray->getTextureBlockIndex( glyphCache.block );
 					auto tex = mTextures[texIndex];
 
-					//ci::gl::ScopedBlendAlpha alphaBlend;
 					mBatch->getGlslProg()->uniform( "uLayer", (uint32_t)glyphCache.layer );
-
-					//ci::vec2 subTexSize = glyph.bbox.getSize() / ci::vec2( tex->getWidth(), tex->getHeight() );
 					mBatch->getGlslProg()->uniform( "uSubTexSize", glyphCache.subTexSize );
 					mBatch->getGlslProg()->uniform( "uSubTexOffset", glyphCache.subTexOffset );
 
@@ -444,7 +441,7 @@ void TextureRenderer::uncacheFont( const Font& font )
 
 		// remove all references textures from main texture array
 		std::set<int> deadTextures;
-		for( auto texIndex : (*it).second.texArrayCache.texArray->getTextureIndices() ) {
+		for( auto texIndex : (*it).second.texArrayCache.texArray->getTextureBlockIndices() ) {
 			deadTextures.insert( texIndex );
 		}
 
@@ -587,7 +584,7 @@ void TextureRenderer::cacheGlyphs( const Font& font, const std::vector<uint32_t>
 
 			// determine block and layer within the texture array cache
 			int textureDepth = texArrayCache->texArray->getDepth();
-			int block = texArrayCache->texArray->getTextureIndices()[region.layer];
+			int block = texArrayCache->texArray->getTextureBlockIndex(region.layer);
 			int layer = region.layer % textureDepth;
 
 			//TextureRenderer::fontCache[font].glyphs[glyphIndex].texArray = textureArray;
