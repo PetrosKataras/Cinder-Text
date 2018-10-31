@@ -125,42 +125,36 @@ void main( void )
 }
 )V0G0N";
 
-const char* fragVboShader = R"V0G0N(
-#version 330
+string fragVboShader = 
+"#version 330\n"
+#ifdef CINDER_TEXTURE_RENDERER_USE_TEXTURE2D
+"uniform sampler2D uTex;\n"
+#else
+"uniform sampler2DArray uTexArray;\n"
+#endif
+"uniform vec2 uSubTexSize;\n"
+"uniform vec2 uSubTexOffset;\n"
 
-uniform sampler2DArray uTexArray;
-uniform sampler2D uTex;
-uniform bool uIsArray;
-uniform uint uLayer;
-uniform vec2 uSubTexSize;
-uniform vec2 uSubTexOffset;
+"in vec2 texCoord;\n"
+"in vec4 globalColor;\n"
+"in vec3 uv;\n"
+"in vec2 uvSize;\n"
 
-in vec2 texCoord;
-in vec4 globalColor;
-in vec3 uv;
-in vec2 uvSize;
-//in float layer;
+"out vec4 color;\n"
 
-uniform vec4 runColor;
-
-out vec4 color;
-
-void main( void )
-{ 
-	vec4 texColor;
-	if( uIsArray ) {
-		vec3 coord = vec3((texCoord.x * uvSize.x) + uv.x, ((1.0 - texCoord.y) * uvSize.y) + uv.y, uv.z);
-		texColor = texture( uTexArray, coord );   
-	} else {
-		vec2 coord = vec2((texCoord.x * uvSize.x) + uv.x, ((1.0 - texCoord.y) * uvSize.y) + uv.y );
-		texColor = texture( uTex, coord );   
-	}
-	
-	//color = vec4(1.0,0.0,0.0,1.0);
-	color = vec4(1.0, 1.0, 1.0, texColor.r);
-	color = color * globalColor;
-}
-)V0G0N";
+"void main( void )\n"
+"{\n" 
+"	vec4 texColor;\n"
+#ifdef CINDER_TEXTURE_RENDERER_USE_TEXTURE2D
+"	vec2 coord = vec2((texCoord.x * uvSize.x) + uv.x, ((1.0 - texCoord.y) * uvSize.y) + uv.y );\n"
+"	texColor = texture( uTex, coord );\n"
+#else
+"	vec3 coord = vec3((texCoord.x * uvSize.x) + uv.x, ((1.0 - texCoord.y) * uvSize.y) + uv.y, uv.z);\n"
+"	texColor = texture( uTexArray, coord );\n"
+#endif
+"	color = vec4(1.0, 1.0, 1.0, texColor.r);\n"
+"	color = color * globalColor;\n"
+"}\n";
 
 GLint getMaxTextureSize()
 {
@@ -176,10 +170,8 @@ TextureRenderer::TextureRenderer()
 	ci::gl::GlslProgRef shader = ci::gl::GlslProg::create( vertShader, fragShader );
 #ifdef CINDER_TEXTURE_RENDERER_USE_TEXTURE2D
 	shader->uniform( "uTex", 0 );
-	shader->uniform( "uIsArray", false );
 #else
 	shader->uniform( "uTexArray", 0 );
-	shader->uniform( "uIsArray", true );
 #endif
 
 	if( mBatch == nullptr ) {
