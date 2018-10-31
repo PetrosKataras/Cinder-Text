@@ -247,13 +247,12 @@ void TextureRenderer::cacheRun( std::set<int> &textureSet, std::unordered_map<in
 		auto fontCache = getCacheForFont( font );
 		if( fontCache.glyphs.count( glyph.index ) != 0 ) 
 		{
-				
 			vec2 pos =  ci::vec2( glyph.position + glyph.offset);
 			vec2 size =  glyph.size;
 	
 			auto glyphCache = fontCache.glyphs[glyph.index];
-			//int texIndex = fontCache.texArrayCache.texArray->getTextureBlockIndex( glyphCache.block );
-			int texIndex = glyphCache.block;		
+			int texIndex = glyphCache.block;
+
 			textureSet.insert( texIndex );
 			bounds.x2 = glm::max( bounds.x2, glyph.bbox.x2 );
 			bounds.y2 = glm::max( bounds.y2, glyph.bbox.y2 );
@@ -271,11 +270,9 @@ void TextureRenderer::cacheRun( std::set<int> &textureSet, std::unordered_map<in
 			batchCache.colors.push_back( ci::ColorA( run.color, run.opacity ) );
 			batchCache.textureIndex = texIndex;
 			batchCache.glyphCount += 1;
-
-		
 		}
 		else {
-			//ci::app::console() << "Could not find glyph for index: " << glyph.index << std::endl;
+			ci::app::console() << "Could not find glyph for index: " << glyph.index << std::endl;
 		}
 	}
 }
@@ -444,6 +441,18 @@ void TextureRenderer::uncacheFont( const Font& font )
 	auto count = TextureRenderer::fontCache.count( font );
 	if( count ) {
 		std::unordered_map<Font, FontCache>::iterator it = TextureRenderer::fontCache.find( font );
+
+		// remove all references textures from main texture array
+		std::set<int> deadTextures;
+		for( auto texIndex : (*it).second.texArrayCache.texArray->getTextureIndices() ) {
+			deadTextures.insert( texIndex );
+		}
+
+		// invalidate dead textures (do not remove since the index is used as a reference)
+		for( auto t : deadTextures ) {
+			mTextures[t] = nullptr;
+		}
+
 		TextureRenderer::fontCache.erase( it );
 	}
 }
@@ -581,8 +590,6 @@ void TextureRenderer::cacheGlyphs( const Font& font, const std::vector<uint32_t>
 			int block = texArrayCache->texArray->getTextureIndices()[region.layer];
 			int layer = region.layer % textureDepth;
 
-			CI_LOG_V( "block info " << region.layer << " | " << block << " | " << layer );
-			
 			//TextureRenderer::fontCache[font].glyphs[glyphIndex].texArray = textureArray;
 			TextureRenderer::fontCache[font].texArrayCache = *texArrayCache;
 			TextureRenderer::fontCache[font].glyphs[glyphIndex].block = block;
@@ -800,16 +807,6 @@ TextureArray::TextureArray( const TextureArray::Format fmt )
 	: mSize( fmt.mSize ), mFormat( fmt )
 {
 	expand();
-	/*mTexturePacks.resize( mSize.z, TexturePack( mSize.x, mSize.y ) );
-
-	bool mipmap = mFormat.mMipmapping;
-	auto format = ci::gl::Texture3d::Format()
-		.target( GL_TEXTURE_2D_ARRAY )
-		.internalFormat( mFormat.mInternalFormat )
-		.maxAnisotropy( mFormat.mMaxAnisotropy )
-		.mipmap( mipmap ).magFilter( mipmap ? GL_LINEAR : GL_NEAREST ).minFilter( mipmap ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST );
-
-	mTextures.push_back( ci::gl::Texture3d::create( mSize.x, mSize.y, mSize.z, format ) );*/
 }
 
 TextureArray::Region TextureArray::request( const ci::ivec2 &size, const ci::ivec2 &padding )

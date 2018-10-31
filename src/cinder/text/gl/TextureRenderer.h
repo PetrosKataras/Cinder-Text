@@ -5,6 +5,7 @@
 #include "cinder/gl/Texture.h"
 #include "cinder/gl/Batch.h"
 #include "cinder/gl/Fbo.h"
+#include "cinder/Log.h"
 
 #include "cinder/text/TextLayout.h"
 #include "cinder/text/TextRenderer.h"
@@ -212,6 +213,11 @@ class TextureRenderer {
 	void render( const cinder::text::gl::TextureRenderer::LayoutCache &line );
 
 	std::vector<std::pair<uint32_t, ci::ivec2>> getGlyphMapForLayout( const cinder::text::Layout& layout );
+	static void printCachedFonts() {
+		for( auto font : fontCache ) {
+			CI_LOG_V( font.first );
+		}
+	}
 
   private:
 	ci::gl::BatchRef	mBatch;
