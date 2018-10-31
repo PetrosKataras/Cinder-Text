@@ -22,7 +22,7 @@ std::unordered_map<Font, TextureRenderer::FontCache> TextureRenderer::fontCache;
 bool							TextureRenderer::mSharedCacheEnabled = false;
 TextureRenderer::TexArrayCache	TextureRenderer::mSharedTexArrayCache;
 TextureArray::Format			TextureRenderer::mTextureArrayFormat;
-#ifdef CINDER_USE_TEXTURE2D
+#ifdef CINDER_TEXTURE_RENDERER_USE_TEXTURE2D
 std::vector<ci::gl::Texture2dRef>	 TextureRenderer::mTextures;
 #else
 std::vector<ci::gl::Texture3dRef>	 TextureRenderer::mTextures;
@@ -174,7 +174,7 @@ GLint getMaxTextureSize()
 TextureRenderer::TextureRenderer()
 {
 	ci::gl::GlslProgRef shader = ci::gl::GlslProg::create( vertShader, fragShader );
-#ifdef CINDER_USE_TEXTURE2D
+#ifdef CINDER_TEXTURE_RENDERER_USE_TEXTURE2D
 	shader->uniform( "uTex", 0 );
 	shader->uniform( "uIsArray", false );
 #else
@@ -337,57 +337,8 @@ TextureRenderer::LayoutCache TextureRenderer::cacheLayout( const cinder::text::L
 	// Find all textures that we'll need a batch for
 	std::set<int> textureSet;
 	std::unordered_map<int, BatchCacheData > glyphData;
-	/*for( auto& line : layout.getLines() )
-	{
-		for( auto& run : line.runs ) {
-			auto font = run.font;
-			for( auto& glyph : run.glyphs ) 
-			{	
-				// Make sure we have the glyph
-				auto fontCache = getCacheForFont( font );
-				if( fontCache.glyphs.count( glyph.index ) != 0 ) 
-				{
-					auto glyphCache = fontCache.glyphs[glyph.index];
-					int texIndex = fontCache.texArrayCache.texArray->getTextureBlockIndex( glyphCache.block );				
-					textureSet.insert( texIndex );
-
-					// get texture index
-					vec2 pos =  ci::vec2( glyph.position + glyph.offset);
-					vec2 size =  glyph.size;
-	
-					//auto glyphCache = fontCache.glyphs[glyph.index];
-					//auto texIndex = fontCache.texArrayCache.texArray->getTextureBlockIndex( glyphCache.block );
-					//bounds.x2 = glm::max( bounds.x2, glyph.bbox.x2 );
-					//bounds.y2 = glm::max( bounds.y2, glyph.bbox.y2 );
-					//bounds.x1 = glm::min( bounds.x1, glyph.bbox.x1 );
-					//bounds.y1 = glm::min( bounds.y1, glyph.bbox.y1 );
-			
-					// get or init font batch cache
-					BatchCacheData &batchCache = glyphData[texIndex];
-					batchCache.posScales.push_back( vec4( pos, size ) );
-					batchCache.texCoords.push_back( vec3( glyphCache.subTexOffset, glyphCache.layer ) );
-					batchCache.texCoordSizes.push_back( vec2( glyphCache.subTexSize ) );
-					batchCache.colors.push_back( ci::ColorA( run.color, run.opacity ) );
-					batchCache.textureIndex = texIndex;
-					batchCache.glyphCount += 1;
-					
-					
-//					CI_LOG_V(textureSet.find( texIndex ));
-
-				}
-			}
-		}
-	}*/
-
-	// Go through all glyphs again and determine which 
-
-	// Determine the texture blocks that we'll need (Texture2D or TextureArray)
-	// std::set to make list of texturearray
-	//std::set<int> mTextureBlocks;
-	//std::set<int> getTextureBlocks( layout.getLines( ) );
-
-	//std::unordered_map<Font, BatchCacheData> batchCaches;
 	ci::Rectf bounds = Rectf( vec2(), vec2( FLT_MAX) );
+
 	for( auto& line : layout.getLines() )
 	{
 		for( auto& run : line.runs ) 
@@ -534,7 +485,7 @@ void TextureRenderer::cacheGlyphs( const Font& font, const std::vector<uint32_t>
 {
 	bool dirty = false;
 
-	// get Texture Array cache based on whether we are using chared coche or not
+	// get Texture Array cache based on whether we are using shared cache or not
 	TexArrayCache *texArrayCache;
 	if( TextureRenderer::mSharedCacheEnabled ) {
 		texArrayCache = &TextureRenderer::mSharedTexArrayCache;
@@ -596,10 +547,9 @@ void TextureRenderer::cacheGlyphs( const Font& font, const std::vector<uint32_t>
 			ci::ip::fill( layerChannel.get(), ( uint8_t )0 );
 			dirty = false;
 
-			if( layerIndex + 1 >= textureArray->getDepth() * textureArray->getBlocks() ) {
-				//texArrayCache->filled = true;
+			if( layerIndex + 1 >= textureArray->getDepth() * textureArray->getBlockCount() ) {
+				// Expand the texture array if we've run out of room
 				textureArray->expand();
-				CI_LOG_E( "Texture Array is filled. Cannot cache any more gyphs. Increase the size or depth or the Texture Array." );
 			}
 
 			layerIndex++;
@@ -636,9 +586,7 @@ void TextureRenderer::cacheGlyphs( const Font& font, const std::vector<uint32_t>
 
 			// determine block and layer within the texture array cache
 			int textureDepth = texArrayCache->texArray->getDepth();
-			//texArrayCache->currentLayerIdx
 			int block = texArrayCache->texArray->getTextureIndices()[region.layer];
-			//int block = region.layer / textureDepth;
 			int layer = region.layer % textureDepth;
 
 			CI_LOG_V( "block info " << region.layer << " | " << block << " | " << layer );
@@ -921,7 +869,7 @@ void TextureArray::update( ci::ChannelRef channel, int layerIdx )
 	GLenum dataType;
 	ci::gl::TextureBase::SurfaceChannelOrderToDataFormatAndType<uint8_t>( surface.getChannelOrder(), &dataFormat, &dataType );
 
-#ifdef CINDER_USE_TEXTURE2D
+#ifdef CINDER_TEXTURE_RENDERER_USE_TEXTURE2D
 	//TextureBlock->update( surface, mipLevel );
 	textureBlock->update( (void*)surface.getData(), dataFormat, dataType, mipLevel, surface.getWidth(), surface.getHeight() );
 #else
@@ -943,7 +891,7 @@ void TextureArray::expand()
 	bool mipmap = mFormat.mMipmapping;
 	
 
-#ifdef CINDER_USE_TEXTURE2D
+#ifdef CINDER_TEXTURE_RENDERER_USE_TEXTURE2D
 	auto format = ci::gl::Texture2d::Format()
 		.internalFormat( mFormat.mInternalFormat )
 		.maxAnisotropy( mFormat.mMaxAnisotropy )

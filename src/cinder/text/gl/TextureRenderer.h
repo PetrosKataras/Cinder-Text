@@ -11,7 +11,7 @@
 #include "cinder/text/Types.h"
 
 #if defined( CINDER_GL_ES_2 )
-#define CINDER_USE_TEXTURE2D
+#define CINDER_TEXTURE_RENDERER_USE_TEXTURE2D
 #endif // ! defined( CINDER_GL_ES_2 )
 
 namespace cinder { namespace text { namespace gl {
@@ -95,8 +95,10 @@ class TextureArray {
 	GLint		getHeight() const { return mSize.y;};
 	//! Returns the depth of the texture in pixels, ignoring clean bounds.
 	GLint		getDepth() const { return mSize.z; };
+	//! Returns texture array dimensions - z is used for TextureArrays
 	ci::ivec3	getSize() const {	return mSize; }
-	GLint		getBlocks() const { return mTextureIndices.size(); };
+	//! Returns the number of blocks use 
+	GLint		getBlockCount() const { return mTextureIndices.size(); };
 
 	const std::vector<TexturePack>& getTexturePacks() const { return mTexturePacks; }
 	void update( ci::ChannelRef channel, int layerIdx );
@@ -185,7 +187,7 @@ class TextureRenderer {
 
 	FontCache& getCacheForFont( const Font& font );
 	std::map<uint16_t, GlyphCache> getGylphMapForFont( const Font &font );
-#ifdef CINDER_USE_TEXTURE2D
+#ifdef CINDER_TEXTURE_RENDERER_USE_TEXTURE2D
 	std::vector<ci::gl::Texture2dRef> getTexturesForFont(const Font& font)
 	{
 		std::vector<ci::gl::Texture2dRef> textures;
@@ -230,7 +232,7 @@ class TextureRenderer {
 	//! Options for the texture array
 	static TextureArray::Format					mTextureArrayFormat;
 	//! Stores all textures use for font cache
-#ifdef CINDER_USE_TEXTURE2D
+#ifdef CINDER_TEXTURE_RENDERER_USE_TEXTURE2D
 	static std::vector<ci::gl::Texture2dRef>	 mTextures;
 #else
 	static std::vector<ci::gl::Texture3dRef>	 mTextures;
@@ -239,7 +241,6 @@ class TextureRenderer {
 	static void uploadChannelToTexture( TexArrayCache &texArrayCache );
 
 	static TextureArrayRef makeTextureArray() { return TextureArray::create( mTextureArrayFormat ); };
-	//std::vector<TextureArrayRef> mTextures;
 
 	friend class TextureArray;
 };
