@@ -22,6 +22,11 @@ std::unordered_map<Font, TextureRenderer::FontCache> TextureRenderer::fontCache;
 bool							TextureRenderer::mSharedCacheEnabled = false;
 TextureRenderer::TexArrayCache	TextureRenderer::mSharedTexArrayCache;
 TextureArray::Format			TextureRenderer::mTextureArrayFormat;
+#ifdef CINDER_USE_TEXTURE2D
+std::vector<ci::gl::Texture2dRef>	 TextureRenderer::mTextures;
+#else
+std::vector<ci::gl::Texture3dRef>	 TextureRenderer::mTextures;
+#endif
 
 
 // Shaders
@@ -124,6 +129,8 @@ const char* fragVboShader = R"V0G0N(
 #version 330
 
 uniform sampler2DArray uTexArray;
+uniform sampler2D uTex;
+uniform bool uIsArray;
 uniform uint uLayer;
 uniform vec2 uSubTexSize;
 uniform vec2 uSubTexOffset;
@@ -140,8 +147,14 @@ out vec4 color;
 
 void main( void )
 { 
-	vec3 coord = vec3((texCoord.x * uvSize.x) + uv.x, ((1.0 - texCoord.y) * uvSize.y) + uv.y, uv.z);
-	vec4 texColor = texture( uTexArray, coord );
+	vec4 texColor;
+	if( uIsArray ) {
+		vec3 coord = vec3((texCoord.x * uvSize.x) + uv.x, ((1.0 - texCoord.y) * uvSize.y) + uv.y, uv.z);
+		texColor = texture( uTexArray, coord );   
+	} else {
+		vec2 coord = vec2((texCoord.x * uvSize.x) + uv.x, ((1.0 - texCoord.y) * uvSize.y) + uv.y );
+		texColor = texture( uTex, coord );   
+	}
 	
 	//color = vec4(1.0,0.0,0.0,1.0);
 	color = vec4(1.0, 1.0, 1.0, texColor.r);
@@ -161,7 +174,13 @@ GLint getMaxTextureSize()
 TextureRenderer::TextureRenderer()
 {
 	ci::gl::GlslProgRef shader = ci::gl::GlslProg::create( vertShader, fragShader );
+#ifdef CINDER_USE_TEXTURE2D
+	shader->uniform( "uTex", 0 );
+	shader->uniform( "uIsArray", false );
+#else
 	shader->uniform( "uTexArray", 0 );
+	shader->uniform( "uIsArray", true );
+#endif
 
 	if( mBatch == nullptr ) {
 		mBatch = ci::gl::Batch::create( ci::geom::Rect( ci::Rectf( 0.f, 0.f, 1.f, 1.f ) ), shader );
@@ -193,7 +212,8 @@ void TextureRenderer::render( const std::vector<cinder::text::Layout::Line>& lin
 					auto glyphCache = fontCache.glyphs[glyph.index];
 
 					//auto tex = getCacheForFont( run.font ).glyphs[glyph.index].texArray->getTexture();
-					auto tex = fontCache.texArrayCache.texArray->getTextureBlock( glyphCache.block );
+					auto texIndex = fontCache.texArrayCache.texArray->getTextureBlockIndex( glyphCache.block );
+					auto tex = mTextures[texIndex];
 
 					//ci::gl::ScopedBlendAlpha alphaBlend;
 					mBatch->getGlslProg()->uniform( "uLayer", (uint32_t)glyphCache.layer );
@@ -216,16 +236,15 @@ void TextureRenderer::render( const std::vector<cinder::text::Layout::Line>& lin
 void TextureRenderer::render( const TextureRenderer::LayoutCache &line )
 {
 	for( auto batchData : line.batches ){
-		auto batch = std::get<0>(batchData);
-		auto tex = std::get<1>(batchData);
-		auto count = std::get<2>(batchData);
-		//ci::gl::ScopedTextureBind texBind( tex->getTarget(), tex->getId() );
-		batch->drawInstanced( count );
+		auto batch = batchData.batch;
+		auto texture = mTextures[batchData.textureIndex];
+		ci::gl::ScopedTextureBind texBind( texture->getTarget(), texture->getId() );
+		batch->drawInstanced( batchData.count );
 	}
 }
 
 
-void TextureRenderer::cacheRun( std::unordered_map<Font, BatchCacheData> &batchCaches, const Layout::Run& run, ci::Rectf& bounds )
+void TextureRenderer::cacheRun( std::set<int> &textureSet, std::unordered_map<int, BatchCacheData> &batchData, const Layout::Run& run, ci::Rectf& bounds )
 {
 	auto font = run.font;
 	auto color = ci::ColorA( run.color, run.opacity );
@@ -241,23 +260,27 @@ void TextureRenderer::cacheRun( std::unordered_map<Font, BatchCacheData> &batchC
 			vec2 size =  glyph.size;
 	
 			auto glyphCache = fontCache.glyphs[glyph.index];
-			auto tex = fontCache.texArrayCache.texArray->getTextureBlock( glyphCache.block );				
+			//int texIndex = fontCache.texArrayCache.texArray->getTextureBlockIndex( glyphCache.block );
+			int texIndex = glyphCache.block;		
+			textureSet.insert( texIndex );
 			bounds.x2 = glm::max( bounds.x2, glyph.bbox.x2 );
 			bounds.y2 = glm::max( bounds.y2, glyph.bbox.y2 );
 			bounds.x1 = glm::min( bounds.x1, glyph.bbox.x1 );
 			bounds.y1 = glm::min( bounds.y1, glyph.bbox.y1 );
 			
 			// get or init font batch cache
-			if( !batchCaches.count( font ) ) {
-				batchCaches[font] = BatchCacheData();
+			if( !batchData.count( texIndex ) ) {
+				batchData[texIndex] = BatchCacheData();
 			}
-			BatchCacheData &batchCache = batchCaches[font];
+			BatchCacheData &batchCache = batchData[texIndex];
 			batchCache.posScales.push_back( vec4( pos, size ) );
 			batchCache.texCoords.push_back( vec3( glyphCache.subTexOffset, glyphCache.layer ) );
 			batchCache.texCoordSizes.push_back( vec2( glyphCache.subTexSize ) );
 			batchCache.colors.push_back( ci::ColorA( run.color, run.opacity ) );
-			//batchCache.texture = tex;
+			batchCache.textureIndex = texIndex;
 			batchCache.glyphCount += 1;
+
+		
 		}
 		else {
 			//ci::app::console() << "Could not find glyph for index: " << glyph.index << std::endl;
@@ -265,9 +288,9 @@ void TextureRenderer::cacheRun( std::unordered_map<Font, BatchCacheData> &batchC
 	}
 }
 
-std::vector< std::tuple<ci::gl::BatchRef, int, int> > TextureRenderer::generateBatches(const std::unordered_map<Font, BatchCacheData> &batchCaches )
+std::vector< TextureRenderer::GlyphBatch > TextureRenderer::generateBatches(const std::unordered_map<int, BatchCacheData> &batchCaches )
 {
-	std::vector< std::tuple<ci::gl::BatchRef, int, int> > batches;
+	std::vector< GlyphBatch > batches;
 	for( auto batchCache : batchCaches ) {
 		
 		auto data = batchCache.second;
@@ -303,32 +326,79 @@ std::vector< std::tuple<ci::gl::BatchRef, int, int> > TextureRenderer::generateB
 			{ geom::Attrib::CUSTOM_2, "iUvSize" },
 			{ geom::Attrib::CUSTOM_3, "iColor" }
 		});
-		batches.push_back( { batch, 0, data.glyphCount } );
+		batches.push_back( { batch, data.textureIndex, data.glyphCount } );
 	}
 	return batches;
 }
 
-/*
+
 TextureRenderer::LayoutCache TextureRenderer::cacheLayout( const cinder::text::Layout &layout )
 {
+	// Find all textures that we'll need a batch for
+	std::set<int> textureSet;
+	std::unordered_map<int, BatchCacheData > glyphData;
+	/*for( auto& line : layout.getLines() )
+	{
+		for( auto& run : line.runs ) {
+			auto font = run.font;
+			for( auto& glyph : run.glyphs ) 
+			{	
+				// Make sure we have the glyph
+				auto fontCache = getCacheForFont( font );
+				if( fontCache.glyphs.count( glyph.index ) != 0 ) 
+				{
+					auto glyphCache = fontCache.glyphs[glyph.index];
+					int texIndex = fontCache.texArrayCache.texArray->getTextureBlockIndex( glyphCache.block );				
+					textureSet.insert( texIndex );
+
+					// get texture index
+					vec2 pos =  ci::vec2( glyph.position + glyph.offset);
+					vec2 size =  glyph.size;
+	
+					//auto glyphCache = fontCache.glyphs[glyph.index];
+					//auto texIndex = fontCache.texArrayCache.texArray->getTextureBlockIndex( glyphCache.block );
+					//bounds.x2 = glm::max( bounds.x2, glyph.bbox.x2 );
+					//bounds.y2 = glm::max( bounds.y2, glyph.bbox.y2 );
+					//bounds.x1 = glm::min( bounds.x1, glyph.bbox.x1 );
+					//bounds.y1 = glm::min( bounds.y1, glyph.bbox.y1 );
+			
+					// get or init font batch cache
+					BatchCacheData &batchCache = glyphData[texIndex];
+					batchCache.posScales.push_back( vec4( pos, size ) );
+					batchCache.texCoords.push_back( vec3( glyphCache.subTexOffset, glyphCache.layer ) );
+					batchCache.texCoordSizes.push_back( vec2( glyphCache.subTexSize ) );
+					batchCache.colors.push_back( ci::ColorA( run.color, run.opacity ) );
+					batchCache.textureIndex = texIndex;
+					batchCache.glyphCount += 1;
+					
+					
+//					CI_LOG_V(textureSet.find( texIndex ));
+
+				}
+			}
+		}
+	}*/
+
+	// Go through all glyphs again and determine which 
+
 	// Determine the texture blocks that we'll need (Texture2D or TextureArray)
 	// std::set to make list of texturearray
 	//std::set<int> mTextureBlocks;
 	//std::set<int> getTextureBlocks( layout.getLines( ) );
 
-	std::unordered_map<Font, BatchCacheData> batchCaches;
+	//std::unordered_map<Font, BatchCacheData> batchCaches;
 	ci::Rectf bounds = Rectf( vec2(), vec2( FLT_MAX) );
 	for( auto& line : layout.getLines() )
 	{
 		for( auto& run : line.runs ) 
 		{
 			Rectf runBounds = Rectf( vec2(), vec2( FLT_MAX) );
-			cacheRun( batchCaches, run, runBounds );
+			cacheRun( textureSet, glyphData, run, runBounds );
 			bounds.include( runBounds );
 		}
 	}
 
-	auto batches = generateBatches( batchCaches );
+	auto batches = generateBatches( glyphData );
 	LayoutCache lineCache;
 	lineCache.bounds = bounds;
 	lineCache.batches = batches;
@@ -337,22 +407,23 @@ TextureRenderer::LayoutCache TextureRenderer::cacheLayout( const cinder::text::L
 
 TextureRenderer::LayoutCache TextureRenderer::cacheLine( const cinder::text::Layout::Line &line )
 {
-	std::unordered_map<Font, BatchCacheData> batchCaches;
+	std::set<int> textureSet;
+	std::unordered_map<int, BatchCacheData > glyphData;
 	ci::Rectf bounds = Rectf( vec2(), vec2( FLT_MAX) );
 	
 	for( auto& run : line.runs ) 
 	{
 		Rectf runBounds = Rectf( vec2(), vec2( FLT_MAX) );
-		cacheRun( batchCaches, run, runBounds );
+		cacheRun( textureSet, glyphData, run, runBounds );
 		bounds.include( runBounds );
 	}
 
-	auto batches = generateBatches( batchCaches );
+	auto batches = generateBatches( glyphData );
 	LayoutCache lineCache;
 	lineCache.bounds = bounds;
 	lineCache.batches = batches;
 	return lineCache;
-}*/
+}
 
 std::vector<std::pair<uint32_t, ci::ivec2>> TextureRenderer::getGlyphMapForLayout( const cinder::text::Layout& layout )
 {
@@ -536,8 +607,6 @@ void TextureRenderer::cacheGlyphs( const Font& font, const std::vector<uint32_t>
 
 			// request a new region
 			region = textureArray->request( glyphSize, layerIndex, ivec2( 2.0f ) );
-			
-			
 		}
 
 		if( region.layer > -1 )
@@ -567,10 +636,12 @@ void TextureRenderer::cacheGlyphs( const Font& font, const std::vector<uint32_t>
 
 			// determine block and layer within the texture array cache
 			int textureDepth = texArrayCache->texArray->getDepth();
-			int block = region.layer / textureDepth;
+			//texArrayCache->currentLayerIdx
+			int block = texArrayCache->texArray->getTextureIndices()[region.layer];
+			//int block = region.layer / textureDepth;
 			int layer = region.layer % textureDepth;
 
-			CI_LOG_V( block << " | " << layer );
+			CI_LOG_V( "block info " << region.layer << " | " << block << " | " << layer );
 			
 			//TextureRenderer::fontCache[font].glyphs[glyphIndex].texArray = textureArray;
 			TextureRenderer::fontCache[font].texArrayCache = *texArrayCache;
@@ -840,7 +911,8 @@ void TextureArray::update( ci::ChannelRef channel, int layerIdx )
 {
 	int layer = layerIdx % getDepth();
 	int block = layerIdx / getDepth();
-	auto TextureBlock = mTextures[block];
+	auto textureIndex = mTextureIndices[block];
+	auto textureBlock = TextureRenderer::mTextures[textureIndex];
 
 	// upload channel to texture
 	ci::Surface8u surface( *channel );
@@ -851,15 +923,15 @@ void TextureArray::update( ci::ChannelRef channel, int layerIdx )
 
 #ifdef CINDER_USE_TEXTURE2D
 	//TextureBlock->update( surface, mipLevel );
-	TextureBlock->update( (void*)surface.getData(), dataFormat, dataType, mipLevel, surface.getWidth(), surface.getHeight() );
+	textureBlock->update( (void*)surface.getData(), dataFormat, dataType, mipLevel, surface.getWidth(), surface.getHeight() );
 #else
-	TextureBlock->update( (void*)surface.getData(), dataFormat, dataType, mipLevel, surface.getWidth(), surface.getHeight(), 1, 0, 0, layer );
+	textureBlock->update( (void*)surface.getData(), dataFormat, dataType, mipLevel, surface.getWidth(), surface.getHeight(), 1, 0, 0, layer );
 #endif
 
 	if( mFormat.mMipmapping )
 	{
-		ci::gl::ScopedTextureBind scopedTexBind( TextureBlock );
-		glGenerateMipmap( TextureBlock->getTarget() );		
+		ci::gl::ScopedTextureBind scopedTexBind( textureBlock );
+		glGenerateMipmap( textureBlock->getTarget() );		
 	}
 }
 
@@ -876,14 +948,18 @@ void TextureArray::expand()
 		.internalFormat( mFormat.mInternalFormat )
 		.maxAnisotropy( mFormat.mMaxAnisotropy )
 		.mipmap( mipmap ).magFilter( mipmap ? GL_LINEAR : GL_NEAREST ).minFilter( mipmap ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST );
-	mTextures.push_back( ci::gl::Texture2d::create( mSize.x, mSize.y, format ) );
+	auto tex = ci::gl::Texture2d::create( mSize.x, mSize.y, format );
+	TextureRenderer::mTextures.push_back( tex );
+	mTextureIndices.push_back( TextureRenderer::mTextures.size() - 1 );
 #else
 	auto format = ci::gl::Texture3d::Format()
 		.target( GL_TEXTURE_2D_ARRAY )
 		.internalFormat( mFormat.mInternalFormat )
 		.maxAnisotropy( mFormat.mMaxAnisotropy )
 		.mipmap( mipmap ).magFilter( mipmap ? GL_LINEAR : GL_NEAREST ).minFilter( mipmap ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST );
-	mTextures.push_back( ci::gl::Texture3d::create( mSize.x, mSize.y, mSize.z, format ) );
+	auto tex = ci::gl::Texture3d::create( mSize.x, mSize.y, mSize.z, format );
+	TextureRenderer::mTextures.push_back( tex );
+	mTextureIndices.push_back( TextureRenderer::mTextures.size() - 1 );
 #endif
 }
 

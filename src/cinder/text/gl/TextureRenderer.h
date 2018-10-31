@@ -10,13 +10,12 @@
 #include "cinder/text/TextRenderer.h"
 #include "cinder/text/Types.h"
 
-//#if defined( CINDER_GL_ES_2 )
-//#define CINDER_USE_TEXTURE2D
-//#endif // ! defined( CINDER_GL_ES_2 )
+#if defined( CINDER_GL_ES_2 )
+#define CINDER_USE_TEXTURE2D
+#endif // ! defined( CINDER_GL_ES_2 )
 
 namespace cinder { namespace text { namespace gl {
 
-//using TextureArray2dRef = std::shared_ptr<class TextureArray2d>;
 using TextureArrayRef= std::shared_ptr<class TextureArray>;
 
 class TexturePack {
@@ -33,9 +32,9 @@ public:
 	void erase( uint32_t id, bool merge = true );
 
 	const std::map<uint32_t, ci::Rectf>&	getFreeRectangles() const { return mFreeRectangles; }
-	std::map<uint32_t, ci::Rectf>&		getFreeRectangles() { return mFreeRectangles; }
+	std::map<uint32_t, ci::Rectf>&			getFreeRectangles() { return mFreeRectangles; }
 	const std::map<uint32_t, ci::Rectf>&	getUsedRectangles() const { return mUsedRectangles; }
-	std::map<uint32_t, ci::Rectf>&		getUsedRectangles() { return mUsedRectangles; }
+	std::map<uint32_t, ci::Rectf>&			getUsedRectangles() { return mUsedRectangles; }
 
 	void mergeFreeList( size_t maxIterations = 15 );
 
@@ -55,10 +54,10 @@ class TextureArray {
 	struct Format {
 		Format(){}
 
-		Format& size( ci::ivec3 size = vec3( 1024, 1024, 8 ) ) { mSize = size; return *this; }
-		Format& mipmap( bool enableMipmapping = true ) { mMipmapping = enableMipmapping; return *this; }
-		Format& maxAnisotropy( float maxAnisotropy ) { mMaxAnisotropy = maxAnisotropy; return *this; }
-		Format& internalFormat( GLint internalFormat ) { mInternalFormat = internalFormat; return *this; }
+		Format& size( ci::ivec3 size = vec3( 1024, 1024, 8 ) )	{ mSize = size; return *this; }
+		Format& mipmap( bool enableMipmapping = true )			{ mMipmapping = enableMipmapping; return *this; }
+		Format& maxAnisotropy( float maxAnisotropy )			{ mMaxAnisotropy = maxAnisotropy; return *this; }
+		Format& internalFormat( GLint internalFormat )			{ mInternalFormat = internalFormat; return *this; }
 		
 	  protected:
 		bool		mMipmapping { false };
@@ -97,34 +96,21 @@ class TextureArray {
 	//! Returns the depth of the texture in pixels, ignoring clean bounds.
 	GLint		getDepth() const { return mSize.z; };
 	ci::ivec3	getSize() const {	return mSize; }
-	GLint		getBlocks() const { return mTextures.size(); };
+	GLint		getBlocks() const { return mTextureIndices.size(); };
 
 	const std::vector<TexturePack>& getTexturePacks() const { return mTexturePacks; }
 	void update( ci::ChannelRef channel, int layerIdx );
 	//! Expand the amount of texture blocks that we can write glyphs to 
 	void expand();
 
-#ifdef CINDER_USE_TEXTURE2D
-	ci::gl::Texture2dRef				getTextureBlock( int block ) const { return mTextures[block]; }
-	std::vector<ci::gl::Texture2dRef>	getTextures() const { return mTextures; }
-#else
-	ci::gl::Texture3dRef				getTextureBlock( int block ) const { return mTextures[block]; }
-	std::vector<ci::gl::Texture3dRef>	getTextures() const { return mTextures; }
-#endif
-
-	
-
+	int									getTextureBlockIndex( int block ) const { return mTextureIndices[block]; }
+	std::vector<int>					getTextureIndices() const { return mTextureIndices; }
 
 protected:
 	ci::ivec3				 mSize;
 	std::vector<TexturePack> mTexturePacks;
 	TextureArray::Format	 mFormat;
-
-#ifdef CINDER_USE_TEXTURE2D
-	std::vector<ci::gl::Texture2dRef>	 mTextures;
-#else
-	std::vector<ci::gl::Texture3dRef>	 mTextures;
-#endif
+	std::vector<int>		 mTextureIndices;
 };
 
 
@@ -154,9 +140,16 @@ class TextureRenderer {
 	} FontCache;
 
 	// cache struct for rendering
+	
+	typedef struct {
+		ci::gl::BatchRef batch;
+		int textureIndex;
+		int count;
+	} GlyphBatch;
+
 	typedef struct {
 		ci::Rectf bounds;
-		std::vector< std::tuple<ci::gl::BatchRef, int, int> > batches;
+		std::vector< GlyphBatch > batches;
 	} LayoutCache;
 
 	typedef struct {
@@ -164,9 +157,11 @@ class TextureRenderer {
 		std::vector<vec3> texCoords;
 		std::vector<vec2> texCoordSizes;
 		std::vector<vec4> colors;
-		//ci::gl::Texture3dRef texture;
+		int textureIndex;
 		int glyphCount;
 	} BatchCacheData;
+
+
 
   public:
 	TextureRenderer();
@@ -193,12 +188,20 @@ class TextureRenderer {
 #ifdef CINDER_USE_TEXTURE2D
 	std::vector<ci::gl::Texture2dRef> getTexturesForFont(const Font& font)
 	{
-		return getCacheForFont( font ).texArrayCache.texArray->getTextures();
+		std::vector<ci::gl::Texture2dRef> textures;
+		for( auto texIndex : getCacheForFont(font).texArrayCache.texArray->getTextureIndices() ) {
+			textures.push_back( mTextures[texIndex] );
+		}
+		return textures;
 	}
 #else
 	std::vector<ci::gl::Texture3dRef> getTexturesForFont( const Font& font )
 	{
-		return getCacheForFont( font ).texArrayCache.texArray->getTextures();
+		std::vector<ci::gl::Texture3dRef> textures;
+		for( auto texIndex : getCacheForFont(font).texArrayCache.texArray->getTextureIndices() ) {
+			textures.push_back( mTextures[texIndex] );
+		}
+		return textures;
 	}
 #endif
 
@@ -211,8 +214,8 @@ class TextureRenderer {
   private:
 	ci::gl::BatchRef	mBatch;
 
-	void TextureRenderer::cacheRun( std::unordered_map<Font, BatchCacheData> &batchCaches, const Layout::Run& run, ci::Rectf& bounds );
-	std::vector< std::tuple<ci::gl::BatchRef, int, int> > generateBatches(const std::unordered_map<Font, BatchCacheData> &batchCaches );
+	void TextureRenderer::cacheRun( std::set<int> &textureSet, std::unordered_map<int, BatchCacheData> &batchCaches, const Layout::Run& run, ci::Rectf& bounds );
+	std::vector< GlyphBatch > generateBatches(const std::unordered_map<int, BatchCacheData> &batchCaches );
 
 	static void cacheFont( const Font& font, bool cacheEntireFont = false );
 	
@@ -226,12 +229,19 @@ class TextureRenderer {
 	static bool									mSharedCacheEnabled;
 	//! Options for the texture array
 	static TextureArray::Format					mTextureArrayFormat;
+	//! Stores all textures use for font cache
+#ifdef CINDER_USE_TEXTURE2D
+	static std::vector<ci::gl::Texture2dRef>	 mTextures;
+#else
+	static std::vector<ci::gl::Texture3dRef>	 mTextures;
+#endif
 
 	static void uploadChannelToTexture( TexArrayCache &texArrayCache );
 
 	static TextureArrayRef makeTextureArray() { return TextureArray::create( mTextureArrayFormat ); };
-	std::vector<TextureArrayRef> mTextures;
+	//std::vector<TextureArrayRef> mTextures;
 
+	friend class TextureArray;
 };
 
 class TexturePackOutOfBoundExc : public ci::Exception {

@@ -36,8 +36,8 @@ void LineAnimatorApp::setup()
 	fboFormat.setColorTextureFormat( texFormat );
  	mFbo = ci::gl::Fbo::create( getWindowWidth() * 0.9f, getWindowHeight() * 0.9f, fboFormat );
 
-	ci::text::gl::TextureArrayFormat fmt = text::gl::TextureArrayFormat()
-		.size( ivec3( 2048, 2048, 16) );
+	ci::text::gl::TextureArray::Format fmt = text::gl::TextureArray::Format()
+		.size( ivec3( 1024, 1024, 8) );
 	ci::text::gl::TextureRenderer::setTextureFormat( fmt );
 	
 	text::Font font1 = text::Font( ci::app::loadAsset( "../../assets/fonts/SourceSansPro/SourceSansPro-Regular.otf" ), 24.f );
@@ -51,6 +51,8 @@ void LineAnimatorApp::setup()
 
 	//mLayout.setFont( *mFont );
 	mLayout.setSize( mFbo->getSize() );
+	//mLayout.setFont( font1 );
+
 	text::AttributedString attrStr;
 	attrStr << "Lorem ipsum dolor " << text::AttributeColor( ci::ColorA( 1.0f, 0.f, 1.f ) ) << text::AttributeFont( font1 );
 	attrStr << "sit amet " << text::AttributeColor( ci::ColorA( 1.f, 1.f, 1.f ) ) << text::AttributeFont( font2 );
@@ -81,7 +83,7 @@ void LineAnimatorApp::draw()
 {
 	gl::clear( Color( 0, 0, 0 ) );
 	gl::enableAlphaBlending;
-
+	
 	for( int i = 0; i < mLineCache.size(); i++ )
 	{
 		ci::gl::ScopedMatrices scpMtrx;
@@ -93,8 +95,7 @@ void LineAnimatorApp::draw()
 		mRenderer.render( line );
 	}
 
-	/*
-	{
+	/*{
 		ci::gl::ScopedMatrices scpMtrx;
 		float progress = sin( (getElapsedSeconds()) * 5.0f ) * 0.5 + 0.5;
 		float alpha = progress;
