@@ -159,6 +159,7 @@ class TextureRenderer {
 	typedef struct {
 		ci::Rectf bounds;
 		std::vector< GlyphBatch > batches;
+		std::vector< ci::vec3 > positionOffsets;
 	} LayoutCache;
 
 	typedef struct {
@@ -166,6 +167,7 @@ class TextureRenderer {
 		std::vector<vec3> texCoords;
 		std::vector<vec2> texCoordSizes;
 		std::vector<vec4> colors;
+		std::vector<vec4> posOffsets;		// glyph index (within layout) in w slot for now
 		int textureIndex;
 		int glyphCount;
 	} BatchCacheData;
@@ -206,6 +208,7 @@ class TextureRenderer {
 	LayoutCache cacheLine( const cinder::text::Layout::Line &line );
 	//! Cache the specified layout. Returns a LayoutCache object, which can then be efficientll rendered later.
 	LayoutCache cacheLayout( const cinder::text::Layout &layout );
+	void updateCache( LayoutCache &layout );
 
 	//! Returns the FontCache object, which can be used to render outside of the TextureRenderer object.
 	FontCache& getCacheForFont( const Font& font );
@@ -245,7 +248,7 @@ class TextureRenderer {
   private:
 	ci::gl::BatchRef	mBatch;
 
-	void TextureRenderer::cacheRun( std::set<int> &textureSet, std::unordered_map<int, BatchCacheData> &batchCaches, const Layout::Run& run, ci::Rectf& bounds );
+	void TextureRenderer::cacheRun( std::unordered_map<int, BatchCacheData> &batchCaches, const Layout::Run& run, ci::Rectf& bounds );
 	std::vector< GlyphBatch > generateBatches(const std::unordered_map<int, BatchCacheData> &batchCaches );
 
 	static void cacheFont( const Font& font, bool cacheEntireFont = false );

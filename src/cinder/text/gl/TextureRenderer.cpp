@@ -89,6 +89,7 @@ in vec4 iPosScale;
 in vec3 iUv;
 in vec2 iUvSize;
 in vec4 iColor;
+in vec4 iPosOffset;
 
 out highp vec2 texCoord;
 out vec4 globalColor;
@@ -119,7 +120,8 @@ void main( void )
 	globalColor = ciColor * iColor;
 	uv = iUv;
 	uvSize = iUvSize;
-	mat4 transform = translate( vec3( iPosScale.xy, 0.0 )) * scale( vec3(iPosScale.zw, 1.0) );
+	vec3 glyphPos = vec3( iPosScale.xy, 0.0 ) + iPosOffset.xyz;
+	mat4 transform = translate( glyphPos ) * scale( vec3(iPosScale.zw, 1.0) );
 	vec4 position  = transform * vec4( ciPosition.xy, 0.0f, 1.0f );
 	gl_Position	= ciModelViewProjection * position;
 }
@@ -233,7 +235,7 @@ void TextureRenderer::render( const TextureRenderer::LayoutCache &line )
 }
 
 
-void TextureRenderer::cacheRun( std::set<int> &textureSet, std::unordered_map<int, BatchCacheData> &batchData, const Layout::Run& run, ci::Rectf& bounds )
+void TextureRenderer::cacheRun( std::unordered_map<int, BatchCacheData> &batchData, const Layout::Run& run, ci::Rectf& bounds )
 {
 	auto font = run.font;
 	auto color = ci::ColorA( run.color, run.opacity );
@@ -250,7 +252,7 @@ void TextureRenderer::cacheRun( std::set<int> &textureSet, std::unordered_map<in
 			auto glyphCache = fontCache.glyphs[glyph.index];
 			int texIndex = glyphCache.block;
 
-			textureSet.insert( texIndex );
+			//textureSet.insert( texIndex );
 			bounds.x2 = glm::max( bounds.x2, glyph.bbox.x2 );
 			bounds.y2 = glm::max( bounds.y2, glyph.bbox.y2 );
 			bounds.x1 = glm::min( bounds.x1, glyph.bbox.x1 );
@@ -261,10 +263,12 @@ void TextureRenderer::cacheRun( std::set<int> &textureSet, std::unordered_map<in
 				batchData[texIndex] = BatchCacheData();
 			}
 			BatchCacheData &batchCache = batchData[texIndex];
+			//batchCache.indices.push_back( batchCache.glyphCount );
 			batchCache.posScales.push_back( vec4( pos, size ) );
 			batchCache.texCoords.push_back( vec3( glyphCache.subTexOffset, glyphCache.layer ) );
 			batchCache.texCoordSizes.push_back( vec2( glyphCache.subTexSize ) );
 			batchCache.colors.push_back( ci::ColorA( run.color, run.opacity ) );
+			batchCache.posOffsets.push_back( vec4( 0.0, 0.0, 0.0, batchCache.glyphCount ) );
 			batchCache.textureIndex = texIndex;
 			batchCache.glyphCount += 1;
 		}
@@ -297,12 +301,17 @@ std::vector< TextureRenderer::GlyphBatch > TextureRenderer::generateBatches(cons
 		geom::BufferLayout colorsDataLayout;
 		colorsDataLayout.append( geom::Attrib::CUSTOM_3, 4, 0, 0, 1 );
 
+		ci::gl::VboRef posOffsetBuffer = ci::gl::Vbo::create( GL_ARRAY_BUFFER, data.posOffsets.size() * sizeof( vec4 ), data.posOffsets.data(), GL_DYNAMIC_DRAW );
+		geom::BufferLayout posOffseDataLayout;
+		posOffseDataLayout.append( geom::Attrib::CUSTOM_4, 4, 0, 0, 1 );
+
 		ci::gl::VboMeshRef vboMesh = ci::gl::VboMesh::create( geom::Rect( Rectf(vec2(0.0), vec2(1.0) )) );
 		vboMesh->appendVbo( posDataLayout, positionBuffer );
 		vboMesh->appendVbo( uvSizeDataLayout, uvSizeBuffer );
 		vboMesh->appendVbo( uvDataLayout, uvBuffer );
 		vboMesh->appendVbo( colorsDataLayout, colorBuffer );
-
+		vboMesh->appendVbo( posOffseDataLayout, posOffsetBuffer );
+		
 		ci::gl::GlslProgRef glyphShader = ci::gl::GlslProg::create( vertVboShader, fragVboShader );
 		glyphShader->uniform( "uTexArray", 0 );
 
@@ -310,7 +319,8 @@ std::vector< TextureRenderer::GlyphBatch > TextureRenderer::generateBatches(cons
 			{ geom::Attrib::CUSTOM_0, "iPosScale" },
 			{ geom::Attrib::CUSTOM_1, "iUv" },
 			{ geom::Attrib::CUSTOM_2, "iUvSize" },
-			{ geom::Attrib::CUSTOM_3, "iColor" }
+			{ geom::Attrib::CUSTOM_3, "iColor" },
+			{ geom::Attrib::CUSTOM_4, "iPosOffset" }
 		});
 		batches.push_back( { batch, data.textureIndex, data.glyphCount } );
 	}
@@ -320,18 +330,18 @@ std::vector< TextureRenderer::GlyphBatch > TextureRenderer::generateBatches(cons
 
 TextureRenderer::LayoutCache TextureRenderer::cacheLayout( const cinder::text::Layout &layout )
 {
-	// Find all textures that we'll need a batch for
-	std::set<int> textureSet;
 	std::unordered_map<int, BatchCacheData > glyphData;
 	ci::Rectf bounds = Rectf( vec2(), vec2( FLT_MAX) );
 
+	int glyphCount = 0;
 	for( auto& line : layout.getLines() )
 	{
 		for( auto& run : line.runs ) 
 		{
 			Rectf runBounds = Rectf( vec2(), vec2( FLT_MAX) );
-			cacheRun( textureSet, glyphData, run, runBounds );
+			cacheRun( glyphData, run, runBounds );
 			bounds.include( runBounds );
+			glyphCount += run.glyphs.size();
 		}
 	}
 
@@ -339,19 +349,38 @@ TextureRenderer::LayoutCache TextureRenderer::cacheLayout( const cinder::text::L
 	LayoutCache lineCache;
 	lineCache.bounds = bounds;
 	lineCache.batches = batches;
+	lineCache.positionOffsets.resize( glyphCount, vec3() );
 	return lineCache;
+}
+
+void TextureRenderer::updateCache( LayoutCache &layout )
+{
+	for( auto layoutBatch : layout.batches ) {
+		auto batch = layoutBatch.batch;
+		auto vboMesh = batch->getVboMesh();
+		auto posOffsetAttrib = vboMesh->mapAttrib4f( geom::Attrib::CUSTOM_4, false );
+		for( int i = 0; i < layoutBatch.count; ++i ) {
+			vec4 &pos = *posOffsetAttrib;
+			int positionIndex = round(pos.w);
+			vec3 newPos = layout.positionOffsets[positionIndex];
+			posOffsetAttrib->x = newPos.x;
+			posOffsetAttrib->y = newPos.y;
+			posOffsetAttrib->z = newPos.z;
+			++posOffsetAttrib;
+		}
+		posOffsetAttrib.unmap();
+	}
 }
 
 TextureRenderer::LayoutCache TextureRenderer::cacheLine( const cinder::text::Layout::Line &line )
 {
-	std::set<int> textureSet;
 	std::unordered_map<int, BatchCacheData > glyphData;
 	ci::Rectf bounds = Rectf( vec2(), vec2( FLT_MAX) );
 	
 	for( auto& run : line.runs ) 
 	{
 		Rectf runBounds = Rectf( vec2(), vec2( FLT_MAX) );
-		cacheRun( textureSet, glyphData, run, runBounds );
+		cacheRun( glyphData, run, runBounds );
 		bounds.include( runBounds );
 	}
 
@@ -876,7 +905,6 @@ void TextureArray::expand()
 
 	bool mipmap = mFormat.mMipmapping;
 	
-
 #ifdef CINDER_TEXTURE_RENDERER_USE_TEXTURE2D
 	auto format = ci::gl::Texture2d::Format()
 		.internalFormat( mFormat.mInternalFormat )

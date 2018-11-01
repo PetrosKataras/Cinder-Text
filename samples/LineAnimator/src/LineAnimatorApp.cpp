@@ -64,16 +64,16 @@ void LineAnimatorApp::setup()
 	attrStr << "Praesent lobortis risus sed aliquam commodo. " << text::AttributeLineBreak();
 	attrStr << "Praesent porttitor rhoncus tempus." << text::AttributeFontSize( 50.f ) << text::AttributeFontStyle( "Bold" );
 
-	mLayout.calculateLayout( "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent lobortis risus sed aliquam commodo. Praesent porttitor rhoncus tempus. Vivamus aliquet ullamcorper neque ac blandit. Proin nec mi vitae ligula blandit ornare sit amet at nibh. Donec vel lacus vitae tellus vehicula laoreet in at turpis. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Nam pulvinar, purus non tempus tincidunt, arcu ex fringilla velit, quis pharetra nulla sapien eget justo. Praesent urna augue, fringilla vitae malesuada a, aliquam sed tellus." );
-	//mLayout.calculateLayout( attrStr );
+	//mLayout.calculateLayout( "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent lobortis risus sed aliquam commodo. Praesent porttitor rhoncus tempus. Vivamus aliquet ullamcorper neque ac blandit. Proin nec mi vitae ligula blandit ornare sit amet at nibh. Donec vel lacus vitae tellus vehicula laoreet in at turpis. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Nam pulvinar, purus non tempus tincidunt, arcu ex fringilla velit, quis pharetra nulla sapien eget justo. Praesent urna augue, fringilla vitae malesuada a, aliquam sed tellus." );
+	mLayout.calculateLayout( attrStr );
 
 	for( auto line : mLayout.getLines() )
 	{
-		mLineCache.push_back( mRenderer.cacheLine( line ) );
+		//mLineCache.push_back( mRenderer.cacheLine( line ) );
 	}
 
 	text::gl::TextureRenderer::printCachedFonts();
-	//mLayoutCache = mRenderer.cacheLayout( mLayout );
+	mLayoutCache = mRenderer.cacheLayout( mLayout );
 }
 
 void LineAnimatorApp::mouseDown( MouseEvent event )
@@ -100,14 +100,31 @@ void LineAnimatorApp::draw()
 		mRenderer.render( line );
 	}
 
-	/*{
+	
+
+
+	{
+		//for( auto layoutBatch : layoutBatches ) {
+			auto &glyphPositionBuffer = mLayoutCache.positionOffsets;
+			int glyphCount = glyphPositionBuffer.size();
+			//float delta = 1.0f / float( glyphCount );
+			for(int i = 0; i < glyphCount; ++i ) {
+				float progress = sin( (getElapsedSeconds() + float(i) * 0.1) * 5.0f ) * 0.5 + 0.5;
+				vec3 &pos = glyphPositionBuffer[i];
+				pos.y = progress * 20.0f;
+			}
+			mRenderer.updateCache( mLayoutCache );
+		//}
+	}
+
+	{
 		ci::gl::ScopedMatrices scpMtrx;
 		float progress = sin( (getElapsedSeconds()) * 5.0f ) * 0.5 + 0.5;
 		float alpha = progress;
-		gl::ScopedColor scpColor( ColorA( 1.0, 1.0, 1.0, alpha ) );
-		gl::translate( vec2( 0.0,  (1.0 - progress) * 20.0 ) );
+		//gl::ScopedColor scpColor( ColorA( 1.0, 1.0, 1.0, alpha ) );
+		//gl::translate( vec2( 0.0,  (1.0 - progress) * 20.0 ) );
 		mRenderer.render( mLayoutCache );
-	}*/
+	}
 	
 }
 
