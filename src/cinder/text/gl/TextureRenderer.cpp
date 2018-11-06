@@ -80,16 +80,19 @@ const char* vertVboShader = R"V0G0N(
 #version 330
 
 uniform mat4	ciModelViewProjection;
+uniform float	ciElapsedSeconds;
 
 in vec4		ciPosition;
 in vec2		ciTexCoord0;
 in vec4		ciColor;
 
-in vec4 iPosScale;
+in vec4 iColor;
+in vec4 iPosSize;
 in vec3 iUv;
 in vec2 iUvSize;
-in vec4 iColor;
 in vec4 iPosOffset;
+in vec2 iScaleOffset;
+in vec4 iColorOffset;
 
 out highp vec2 texCoord;
 out vec4 globalColor;
@@ -117,16 +120,23 @@ mat4 scale( in vec3 scl )
 void main( void )
 {
 	texCoord = ciTexCoord0;
-	//globalColor = ciColor * iColor;
-	globalColor = iColor;
+	globalColor = ciColor * iColor * iColorOffset;
+	
 	uv = iUv;
 	uvSize = iUvSize;
-	vec3 glyphPos = vec3( iPosScale.xy, 0.0 ) + iPosOffset.xyz;
-	mat4 transform = translate( glyphPos ) * scale( vec3(iPosScale.zw, 1.0) );
-	vec4 position  = transform * vec4( ciPosition.xy, 0.0f, 1.0f );
-	//gl_Position	= ciModelViewProjection * position;
 
-	gl_Position	= ciModelViewProjection * vec4( ciPosition.xy, 0.0f, 1.0f );
+	vec3 glyphPos = vec3( iPosSize.xy + (iPosSize.zw * 0.5), 0.0 ) + iPosOffset.xyz;	// glyph position + center + offset
+	vec3 glyphScale = vec3(iPosSize.zw * iScaleOffset.xy, 1.0);
+	//glyphScale *= vec3(sin(iPosOffset.w * 0.5 + ciElapsedSeconds * 3.0) * 0.5 + 0.75 );	// test animation
+	
+	// define transformation matrix
+	mat4 transform = mat4(1.0);
+	transform *= translate( glyphPos ); // move to original position
+	transform *= scale( glyphScale );
+	
+	// apply matrix to vertices
+	vec4 position = transform * vec4( ciPosition.xy - vec2(0.5), 0.0f, 1.0f );		// transform around normalized vertices [-0.5, 0.5]
+	gl_Position	= ciModelViewProjection * position;
 }
 )V0G0N";
 
@@ -158,7 +168,7 @@ string fragVboShader =
 "	texColor = texture( uTexArray, coord );\n"
 #endif
 "	color = vec4(1.0, 1.0, 1.0, texColor.r);\n"
-"	color = color * globalColor;\n"
+"	color = globalColor * color;\n"
 "	//color = vec4(coord.x, coord.y, 0.0, 1.0);\n"
 "}\n";
 
@@ -247,6 +257,8 @@ void TextureRenderer::render( const TextureRenderer::LayoutCache &cache )
 		int start = batch.ranges[i].first;
 		int end = batch.ranges[i].second;
 		int count = end - start;
+		ci::gl::ScopedColor scpColor( ci::Color(0.0, 0.0, 1.0));
+	
 		vboMesh->drawImpl( start * VERT_COUNT, count * VERT_COUNT );
 	}
 }
@@ -286,12 +298,12 @@ void TextureRenderer::cacheRun( std::unordered_map<int, BatchCacheData> &batchDa
 			std::vector<vec3> verts;
 			vec3 glyphPos = vec3( pos, 0.0f );
 			vec3 glyphSize = vec3( size, 0.0f );
-			verts.push_back( vec3( rectVerts[0][0], rectVerts[0][1], 0.0 ) * glyphSize + glyphPos );
-			verts.push_back( vec3( rectVerts[1][0], rectVerts[1][1], 0.0 ) * glyphSize + glyphPos );
-			verts.push_back( vec3( rectVerts[2][0], rectVerts[2][1], 0.0 ) * glyphSize + glyphPos );
-			verts.push_back( vec3( rectVerts[2][0], rectVerts[2][1], 0.0 ) * glyphSize + glyphPos );
-			verts.push_back( vec3( rectVerts[3][0], rectVerts[3][1], 0.0 ) * glyphSize + glyphPos );
-			verts.push_back( vec3( rectVerts[0][0], rectVerts[0][1], 0.0 ) * glyphSize + glyphPos );
+			verts.push_back( vec3( rectVerts[0][0], rectVerts[0][1], 0.0 ) );
+			verts.push_back( vec3( rectVerts[1][0], rectVerts[1][1], 0.0 ) );
+			verts.push_back( vec3( rectVerts[2][0], rectVerts[2][1], 0.0 ) );
+			verts.push_back( vec3( rectVerts[2][0], rectVerts[2][1], 0.0 ) );
+			verts.push_back( vec3( rectVerts[3][0], rectVerts[3][1], 0.0 ) );
+			verts.push_back( vec3( rectVerts[0][0], rectVerts[0][1], 0.0 ) );
 
 			std::vector<vec2> texCoord;
 			texCoord.push_back( vec2( rectUvs[0][0], rectUvs[0][1] ) );
@@ -306,12 +318,18 @@ void TextureRenderer::cacheRun( std::unordered_map<int, BatchCacheData> &batchDa
 			//batchCache.positions.push_back( vec3( pos, 0.0 ) );
 			batchCache.vertPositions.insert( batchCache.vertPositions.end(), verts.begin(), verts.end() );
 			batchCache.vertTexCoords.insert( batchCache.vertTexCoords.end(), texCoord.begin(), texCoord.end() );
+			
 
-			batchCache.posScales.push_back( vec4( pos, size ) );
+			//batchCache.origins.push_back( vec3( glyph.bbox.x1, lineY, lineY - pos + (size * 0.5f) ) );
+			//batchCache.centers.push_back( vec2( pos + (size * 0.5f) ) );
+			batchCache.colors.push_back( color );
+			batchCache.posSize.push_back( vec4( pos, size ) );
 			batchCache.texCoords.push_back( vec3( glyphCache.subTexOffset, glyphCache.layer ) );
 			batchCache.texCoordSizes.push_back( vec2( glyphCache.subTexSize ) );
-			batchCache.colors.push_back( ci::ColorA( run.color, run.opacity ) );
+
 			batchCache.posOffsets.push_back( vec4( 0.0, 0.0, 0.0, batchCache.glyphCount ) );
+			batchCache.colorOffsets.push_back( ci::ColorA::white() );
+			batchCache.scaleOffsets.push_back( vec2( 1.0f ) );
 			batchCache.textureIndex = texIndex;
 			batchCache.glyphCount += 1;
 		}
@@ -325,11 +343,13 @@ TextureRenderer::GlyphBatch TextureRenderer::generateBatch(const std::unordered_
 {
 	std::vector<vec3> vPositions;
 	std::vector<vec2> vTexCoords;
-	std::vector<vec4> posScales;
+	std::vector<vec4> colors;	
+	std::vector<vec4> posSizes;	
 	std::vector<vec3> texCoords;
 	std::vector<vec2> texCoordSizes;
-	std::vector<vec4> colors;
 	std::vector<vec4> posOffsets;		// glyph index (within layout) in w slot for now
+	std::vector<vec2> scaleOffsets;
+	std::vector<vec4> colorOffsets;
 	std::vector<int> texIndices; 
 	std::vector<std::pair<int, int>> ranges;
 	int glyphCount = 0;
@@ -347,16 +367,20 @@ TextureRenderer::GlyphBatch TextureRenderer::generateBatch(const std::unordered_
 		for( int i = 0; i < data.glyphCount; ++i ){
 			//int offset = 0;
 			for( int j = 0; j < VERT_COUNT; j++ ){
-				posScales.push_back( data.posScales[i] );
+				//centers.push_back( data.centers[i] );
+				colors.push_back( data.colors[i] );
+				posSizes.push_back( data.posSize[i] );
 				texCoords.push_back( data.texCoords[i] );
 				texCoordSizes.push_back( data.texCoordSizes[i] );
-				colors.push_back( data.colors[i] );
+				posOffsets.push_back( data.posOffsets[i] );
+				scaleOffsets.push_back( data.scaleOffsets[i] );
+				colorOffsets.push_back( data.colorOffsets[i] );
 			}
 		}
 
 		texIndices.push_back( data.textureIndex );
 		ranges.push_back( {start, glyphCount} );
-		posOffsets.resize( glyphCount * VERT_COUNT );
+		//posOffsets.resize( glyphCount * VERT_COUNT );
 	}
 
 	ci::gl::VboRef positionBuffer = ci::gl::Vbo::create( GL_ARRAY_BUFFER, vPositions.size() * sizeof(vec3), vPositions.data(), GL_STATIC_DRAW );
@@ -367,25 +391,42 @@ TextureRenderer::GlyphBatch TextureRenderer::generateBatch(const std::unordered_
 	geom::BufferLayout vTexCoordLayout;
 	vTexCoordLayout.append( geom::Attrib::TEX_COORD_0, geom::FLOAT, 2, sizeof(vec2), 0 );
 
-	ci::gl::VboRef positionScaleBuffer = ci::gl::Vbo::create( GL_ARRAY_BUFFER, posScales.size() * sizeof( vec4 ), posScales.data(), GL_STATIC_DRAW );
-	geom::BufferLayout posDataLayout;
-	posDataLayout.append( geom::Attrib::CUSTOM_0, 4, 0, 0, 0 );
+	/*ci::gl::VboRef vColorBuffer = ci::gl::Vbo::create( GL_ARRAY_BUFFER, vColors.size() * sizeof( vec4 ), vColors.data(), GL_STATIC_DRAW );
+	geom::BufferLayout vColorsDataLayout;
+	vColorsDataLayout.append( geom::Attrib::COLOR, geom::FLOAT, 4, sizeof(vec4), 0 );
+	*/
+	//ci::gl::VboRef centerBuffer = ci::gl::Vbo::create( GL_ARRAY_BUFFER, centers.size() * sizeof( vec4 ), centers.data(), GL_STATIC_DRAW );
+	//geom::BufferLayout centerDataLayout;
+	//centerDataLayout.append( geom::Attrib::CUSTOM_0, 2, 0, 0, 0 );
+
+	ci::gl::VboRef colorBuffer = ci::gl::Vbo::create( GL_ARRAY_BUFFER, colors.size() * sizeof( vec4 ), colors.data(), GL_STATIC_DRAW );
+	geom::BufferLayout colorDataLayout;
+	colorDataLayout.append( geom::Attrib::CUSTOM_0, 4, 0, 0, 0 );
+
+	ci::gl::VboRef posSizeBuffer = ci::gl::Vbo::create( GL_ARRAY_BUFFER, posSizes.size() * sizeof( vec4 ), posSizes.data(), GL_STATIC_DRAW );
+	geom::BufferLayout posSizeDataLayout;
+	posSizeDataLayout.append( geom::Attrib::CUSTOM_1, 4, 0, 0, 0 );
 
 	ci::gl::VboRef uvBuffer = ci::gl::Vbo::create( GL_ARRAY_BUFFER, texCoords.size() * sizeof( vec3 ), texCoords.data(), GL_STATIC_DRAW );
 	geom::BufferLayout uvDataLayout;
-	uvDataLayout.append( geom::Attrib::CUSTOM_1, 3, 0, 0, 0 );
+	uvDataLayout.append( geom::Attrib::CUSTOM_2, 3, 0, 0, 0 );
 
 	ci::gl::VboRef uvSizeBuffer = ci::gl::Vbo::create( GL_ARRAY_BUFFER, texCoordSizes.size() * sizeof( vec2 ), texCoordSizes.data(), GL_STATIC_DRAW );
 	geom::BufferLayout uvSizeDataLayout;
-	uvSizeDataLayout.append( geom::Attrib::CUSTOM_2, 2, 0, 0, 0 );
+	uvSizeDataLayout.append( geom::Attrib::CUSTOM_3, 2, 0, 0, 0 );
 
-	ci::gl::VboRef colorBuffer = ci::gl::Vbo::create( GL_ARRAY_BUFFER, colors.size() * sizeof( vec4 ), colors.data(), GL_STATIC_DRAW );
-	geom::BufferLayout colorsDataLayout;
-	colorsDataLayout.append( geom::Attrib::CUSTOM_3, 4, 0, 0, 0 );
-
+	// dynamic (if enabled)
 	ci::gl::VboRef posOffsetBuffer = ci::gl::Vbo::create( GL_ARRAY_BUFFER, posOffsets.size() * sizeof( vec4 ), posOffsets.data(), GL_DYNAMIC_DRAW );
-	geom::BufferLayout posOffseDataLayout;
-	posOffseDataLayout.append( geom::Attrib::CUSTOM_4, 4, 0, 0, 0 );
+	geom::BufferLayout posOffsetDataLayout;
+	posOffsetDataLayout.append( geom::Attrib::CUSTOM_4, 4, 0, 0, 0 );
+
+	ci::gl::VboRef scaleOffsetBuffer = ci::gl::Vbo::create( GL_ARRAY_BUFFER, scaleOffsets.size() * sizeof( vec2 ), scaleOffsets.data(), GL_DYNAMIC_DRAW );
+	geom::BufferLayout scaleOffsetDataLayout;
+	scaleOffsetDataLayout.append( geom::Attrib::CUSTOM_5, 2, 0, 0, 0 );
+
+	ci::gl::VboRef colorOffsetBuffer = ci::gl::Vbo::create( GL_ARRAY_BUFFER, colorOffsets.size() * sizeof( vec4 ), colorOffsets.data(), GL_DYNAMIC_DRAW );
+	geom::BufferLayout colorOffsetDataLayout;
+	colorOffsetDataLayout.append( geom::Attrib::CUSTOM_6, 4, 0, 0, 0 );
 	
 	ci::gl::GlslProgRef glyphShader = ci::gl::GlslProg::create( vertVboShader, fragVboShader );
 	glyphShader->uniform( "uTexArray", 0 );
@@ -405,62 +446,67 @@ TextureRenderer::GlyphBatch TextureRenderer::generateBatch(const std::unordered_
 	// define vao
 	auto attributes = ci::gl::Vao::create();
 	
-		ci::gl::ScopedVao vao( attributes );
-		
-		{
-			ci::gl::ScopedBuffer buffer( positionScaleBuffer );
-			ci::gl::enableVertexAttribArray( 0 );
-			ci::gl::vertexAttribPointer( 0, 4, GL_FLOAT, GL_FALSE, 0, (const GLvoid*) 0 );
-		}
-		{
-			ci::gl::ScopedBuffer buffer( uvSizeBuffer );
-			ci::gl::enableVertexAttribArray( 1 );
-			ci::gl::vertexAttribPointer( 1, 3, GL_FLOAT, GL_FALSE, 0, (const GLvoid*) 0 );
-		}
-		{
-			ci::gl::ScopedBuffer buffer( uvBuffer );
-			ci::gl::enableVertexAttribArray( 2 );
-			ci::gl::vertexAttribPointer( 2, 2, GL_FLOAT, GL_FALSE, 0, (const GLvoid*) 0 );
-		}
-		{
-			ci::gl::ScopedBuffer buffer( colorBuffer );
-			ci::gl::enableVertexAttribArray( 3 );
-			ci::gl::vertexAttribPointer( 3, 4, GL_FLOAT, GL_FALSE, 0, (const GLvoid*) 0 );
-		}
-		{
-			ci::gl::ScopedBuffer buffer( posOffsetBuffer );
-			ci::gl::enableVertexAttribArray( 4 );
-			ci::gl::vertexAttribPointer( 4, 4, GL_FLOAT, GL_FALSE, 0, (const GLvoid*) 0 );
-		}
+	ci::gl::ScopedVao vao( attributes );
+	{
+		ci::gl::ScopedBuffer buffer( colorBuffer );
+		ci::gl::enableVertexAttribArray( geom::Attrib::CUSTOM_0 );
+		ci::gl::vertexAttribPointer( geom::Attrib::CUSTOM_0, 4, GL_FLOAT, GL_FALSE, 0, (const GLvoid*) 0 );
+	}
+	{
+		ci::gl::ScopedBuffer buffer( posSizeBuffer );
+		ci::gl::enableVertexAttribArray( geom::Attrib::CUSTOM_1 );
+		ci::gl::vertexAttribPointer( geom::Attrib::CUSTOM_1, 4, GL_FLOAT, GL_FALSE, 0, (const GLvoid*) 0 );
+	}
+	{
+		ci::gl::ScopedBuffer buffer( uvSizeBuffer );
+		ci::gl::enableVertexAttribArray( geom::Attrib::CUSTOM_2 );
+		ci::gl::vertexAttribPointer( geom::Attrib::CUSTOM_2, 3, GL_FLOAT, GL_FALSE, 0, (const GLvoid*) 0 );
+	}
+	{
+		ci::gl::ScopedBuffer buffer( uvBuffer );
+		ci::gl::enableVertexAttribArray( geom::Attrib::CUSTOM_3 );
+		ci::gl::vertexAttribPointer( geom::Attrib::CUSTOM_3, 2, GL_FLOAT, GL_FALSE, 0, (const GLvoid*) 0 );
+	}
+	{
+		ci::gl::ScopedBuffer buffer( posOffsetBuffer );
+		ci::gl::enableVertexAttribArray( geom::Attrib::CUSTOM_4 );
+		ci::gl::vertexAttribPointer( geom::Attrib::CUSTOM_4, 4, GL_FLOAT, GL_FALSE, 0, (const GLvoid*) 0 );
+	}
+	{
+		ci::gl::ScopedBuffer buffer( scaleOffsetBuffer );
+		ci::gl::enableVertexAttribArray( geom::Attrib::CUSTOM_5 );
+		ci::gl::vertexAttribPointer( geom::Attrib::CUSTOM_5, 2, GL_FLOAT, GL_FALSE, 0, (const GLvoid*) 0 );
+	}
+	{
+		ci::gl::ScopedBuffer buffer( colorOffsetBuffer );
+		ci::gl::enableVertexAttribArray( geom::Attrib::CUSTOM_6 );
+		ci::gl::vertexAttribPointer( geom::Attrib::CUSTOM_6, 4, GL_FLOAT, GL_FALSE, 0, (const GLvoid*) 0 );
+	}
 
 		
-		ci::gl::VboMeshRef vboMesh = ci::gl::VboMesh::create( vPositions.size(), GL_TRIANGLES, { { positionLayout, positionBuffer }, { vTexCoordLayout, vTexCoordBuffer } } );
-		//vboMesh->appendVbo( positionLayout, positionBuffer );
-		vboMesh->appendVbo( posDataLayout, positionScaleBuffer );
-		vboMesh->appendVbo( uvSizeDataLayout, uvSizeBuffer );
-		vboMesh->appendVbo( uvDataLayout, uvBuffer );
-		vboMesh->appendVbo( colorsDataLayout, colorBuffer );
-		vboMesh->appendVbo( posOffseDataLayout, posOffsetBuffer );
-		
-		//mVao = Vao::create();
-		//
-		//auto ctx = ci::gl::context();
-		//ctx->pushBufferBinding( GL_ARRAY_BUFFER );
-		//ctx->pushVao( attributes );
-		vboMesh->buildVao( glyphShader, {
-			{ geom::Attrib::CUSTOM_0, "iPosScale" },
-			{ geom::Attrib::CUSTOM_1, "iUv" },
-			{ geom::Attrib::CUSTOM_2, "iUvSize" },
-			{ geom::Attrib::CUSTOM_3, "iColor" },
-			{ geom::Attrib::CUSTOM_4, "iPosOffset" }
-		} );
-		//ctx->popVao();
-		//ctx->popBufferBinding( GL_ARRAY_BUFFER );
-	
-	//ctx->popVao();
-	//ctx->popBufferBinding( GL_ARRAY_BUFFER );
+	ci::gl::VboMeshRef vboMesh = ci::gl::VboMesh::create( vPositions.size(), GL_TRIANGLES, {
+		{ positionLayout, positionBuffer }, 
+		{ vTexCoordLayout, vTexCoordBuffer }
+	} );
 
-	//return {batch, texIndices, ranges, glyphCount};
+	vboMesh->appendVbo( colorDataLayout, colorBuffer );
+	vboMesh->appendVbo( posSizeDataLayout, posSizeBuffer );
+	vboMesh->appendVbo( uvSizeDataLayout, uvSizeBuffer );
+	vboMesh->appendVbo( uvDataLayout, uvBuffer );
+	vboMesh->appendVbo( posOffsetDataLayout, posOffsetBuffer );
+	vboMesh->appendVbo( scaleOffsetDataLayout, scaleOffsetBuffer );
+	vboMesh->appendVbo( colorOffsetDataLayout, colorOffsetBuffer );
+
+	vboMesh->buildVao( glyphShader, {
+		{ geom::Attrib::CUSTOM_0, "iColor" },
+		{ geom::Attrib::CUSTOM_1, "iPosSize" },
+		{ geom::Attrib::CUSTOM_2, "iUv" },
+		{ geom::Attrib::CUSTOM_3, "iUvSize" },
+		{ geom::Attrib::CUSTOM_4, "iPosOffset" },
+		{ geom::Attrib::CUSTOM_5, "iScaleOffset" },
+		{ geom::Attrib::CUSTOM_6, "iColorOffset" }
+	} );
+
 	return {attributes, vboMesh, glyphShader, texIndices, ranges, glyphCount};
 }
 

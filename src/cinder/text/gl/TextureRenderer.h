@@ -167,13 +167,17 @@ class TextureRenderer {
 	} LayoutCache;
 
 	typedef struct {
-		std::vector<vec3> vertPositions;
-		std::vector<vec2> vertTexCoords;
-		std::vector<vec4> posScales;
+		std::vector<vec3> vertPositions;		// vertex position (normalized)
+		std::vector<vec2> vertTexCoords;		// vertex texture coordination (normalized)
+		std::vector<vec4> colors;				// glyph color (from run)
+
+		std::vector<vec4> posSize;
 		std::vector<vec3> texCoords;
 		std::vector<vec2> texCoordSizes;
-		std::vector<vec4> colors;
+
 		std::vector<vec4> posOffsets;		// glyph index (within layout) in w slot for now
+		std::vector<vec2> scaleOffsets;
+		std::vector<vec4> colorOffsets;
 		int textureIndex;
 		int glyphCount;
 	} BatchCacheData;
