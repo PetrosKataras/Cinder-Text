@@ -339,7 +339,7 @@ void TextureRenderer::cacheRun( std::unordered_map<int, BatchCacheData> &batchDa
 	}
 }
 
-TextureRenderer::GlyphBatch TextureRenderer::generateBatch(const std::unordered_map<int, BatchCacheData> &batchCaches )
+TextureRenderer::GlyphBatch TextureRenderer::generateBatch(const std::unordered_map<int, BatchCacheData> &batchCaches, bool enableDynamicOffset, bool enableDynamicScale, bool enableDynamicColor )
 {
 	std::vector<vec3> vPositions;
 	std::vector<vec2> vTexCoords;
@@ -416,15 +416,15 @@ TextureRenderer::GlyphBatch TextureRenderer::generateBatch(const std::unordered_
 	uvSizeDataLayout.append( geom::Attrib::CUSTOM_3, 2, 0, 0, 0 );
 
 	// dynamic (if enabled)
-	ci::gl::VboRef posOffsetBuffer = ci::gl::Vbo::create( GL_ARRAY_BUFFER, posOffsets.size() * sizeof( vec4 ), posOffsets.data(), GL_DYNAMIC_DRAW );
+	ci::gl::VboRef posOffsetBuffer = ci::gl::Vbo::create( GL_ARRAY_BUFFER, posOffsets.size() * sizeof( vec4 ), posOffsets.data(), enableDynamicOffset ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW );
 	geom::BufferLayout posOffsetDataLayout;
 	posOffsetDataLayout.append( geom::Attrib::CUSTOM_4, 4, 0, 0, 0 );
 
-	ci::gl::VboRef scaleOffsetBuffer = ci::gl::Vbo::create( GL_ARRAY_BUFFER, scaleOffsets.size() * sizeof( vec2 ), scaleOffsets.data(), GL_DYNAMIC_DRAW );
+	ci::gl::VboRef scaleOffsetBuffer = ci::gl::Vbo::create( GL_ARRAY_BUFFER, scaleOffsets.size() * sizeof( vec2 ), scaleOffsets.data(), enableDynamicScale ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW );
 	geom::BufferLayout scaleOffsetDataLayout;
 	scaleOffsetDataLayout.append( geom::Attrib::CUSTOM_5, 2, 0, 0, 0 );
 
-	ci::gl::VboRef colorOffsetBuffer = ci::gl::Vbo::create( GL_ARRAY_BUFFER, colorOffsets.size() * sizeof( vec4 ), colorOffsets.data(), GL_DYNAMIC_DRAW );
+	ci::gl::VboRef colorOffsetBuffer = ci::gl::Vbo::create( GL_ARRAY_BUFFER, colorOffsets.size() * sizeof( vec4 ), colorOffsets.data(), enableDynamicColor ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW );
 	geom::BufferLayout colorOffsetDataLayout;
 	colorOffsetDataLayout.append( geom::Attrib::CUSTOM_6, 4, 0, 0, 0 );
 	
@@ -511,7 +511,7 @@ TextureRenderer::GlyphBatch TextureRenderer::generateBatch(const std::unordered_
 }
 
 
-TextureRenderer::LayoutCache TextureRenderer::cacheLayout( const cinder::text::Layout &layout )
+TextureRenderer::LayoutCache TextureRenderer::cacheLayout( const cinder::text::Layout &layout, bool enableDynamicOffset, bool enableDynamicScale, bool enableDynamicColor )
 {
 	std::unordered_map<int, BatchCacheData > glyphData;
 	ci::Rectf bounds = Rectf( vec2(), vec2( FLT_MAX) );

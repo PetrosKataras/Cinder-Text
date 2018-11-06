@@ -161,12 +161,6 @@ class TextureRenderer {
 	} GlyphBatch;
 
 	typedef struct {
-		ci::Rectf bounds;
-		GlyphBatch batch;
-		std::vector< ci::vec3 > positionOffsets;
-	} LayoutCache;
-
-	typedef struct {
 		std::vector<vec3> vertPositions;		// vertex position (normalized)
 		std::vector<vec2> vertTexCoords;		// vertex texture coordination (normalized)
 		std::vector<vec4> colors;				// glyph color (from run)
@@ -181,6 +175,44 @@ class TextureRenderer {
 		int textureIndex;
 		int glyphCount;
 	} BatchCacheData;
+
+	typedef struct {
+		ci::Rectf bounds;
+		GlyphBatch batch;
+		std::vector< ci::vec3 > positionOffsets;
+
+		bool dynamicOffset;
+		bool dynamicScale;
+		bool dynamicColor;
+
+		ci::gl::VboMesh::MappedAttrib<vec4> mapDynamicOffset() {
+			return batch.vboMesh->mapAttrib4f( geom::CUSTOM_4 );
+		}
+		ci::gl::VboMesh::MappedAttrib<vec2> mapDynamicScale() {
+			return batch.vboMesh->mapAttrib2f( geom::CUSTOM_5 );
+		}
+		ci::gl::VboMesh::MappedAttrib<vec4> mapDynamicColor() {
+			return batch.vboMesh->mapAttrib4f( geom::CUSTOM_6 );
+		}
+
+		void applyOffsetAttr( ci::gl::VboMesh::MappedAttrib<vec4> &attrib, const ci::vec4 pos )
+		{
+			for( int i = 0; i < 6; ++i ){ *attrib++ = pos; }
+		}
+		void applyScaleAttr( ci::gl::VboMesh::MappedAttrib<vec2> &attrib, const ci::vec2 scale )
+		{
+			for( int i = 0; i < 6; ++i ){ *attrib++ = scale; }
+		}
+		void applyColorAttr( ci::gl::VboMesh::MappedAttrib<vec4> &attrib, const ci::ColorA color )
+		{
+			for( int i = 0; i < 6; ++i ){ *attrib++ = color; }
+		}
+
+		void unmapDynamicOffset( ci::gl::VboMesh::MappedAttrib<vec4> &attrib ) { attrib.unmap(); }
+		void unmapDynamicScale( ci::gl::VboMesh::MappedAttrib<vec2> &attrib ) { attrib.unmap(); }
+		void unmapDynamicColor( ci::gl::VboMesh::MappedAttrib<vec4> &attrib ) { attrib.unmap(); }
+
+	} LayoutCache;
 
   public:
 	TextureRenderer();
@@ -217,7 +249,7 @@ class TextureRenderer {
 	//! Cache the specified layout line. Returns a LayoutCache object, which can then be efficientll rendered later.
 	LayoutCache cacheLine( const cinder::text::Layout::Line &line );
 	//! Cache the specified layout. Returns a LayoutCache object, which can then be efficientll rendered later.
-	LayoutCache cacheLayout( const cinder::text::Layout &layout );
+	LayoutCache cacheLayout( const cinder::text::Layout &layout, bool enableDynamicOffset = false, bool enableDynamicScale = false, bool enableDynamicColor = false );
 	void updateCache( LayoutCache &layout );
 
 	//! Returns the FontCache object, which can be used to render outside of the TextureRenderer object.
@@ -260,7 +292,7 @@ class TextureRenderer {
 
 	void TextureRenderer::cacheRun( std::unordered_map<int, BatchCacheData> &batchCaches, const Layout::Run& run, ci::Rectf& bounds );
 	//std::vector< GlyphBatch > generateBatches(const std::unordered_map<int, BatchCacheData> &batchCaches );
-	GlyphBatch generateBatch(const std::unordered_map<int, BatchCacheData> &batchCaches );
+	GlyphBatch generateBatch(const std::unordered_map<int, BatchCacheData> &batchCaches, bool enableDynamicOffset = false, bool enableDynamicScale = false, bool enableDynamicColor = false );
 
 	static void cacheFont( const Font& font, bool cacheEntireFont = false );
 	static void uncacheFont( const Font& font );

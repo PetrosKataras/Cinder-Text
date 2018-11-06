@@ -5,6 +5,7 @@
 #include "cinder/text/FontManager.h"
 #include "cinder/text/gl/TextureRenderer.h"
 #include "cinder/text/TextLayout.h"
+#include "cinder/Easing.h"
 
 using namespace ci;
 using namespace ci::app;
@@ -73,7 +74,7 @@ void LineAnimatorApp::setup()
 	}
 
 	text::gl::TextureRenderer::printCachedFonts();
-	mLayoutCache = mRenderer.cacheLayout( mLayout );
+	mLayoutCache = mRenderer.cacheLayout( mLayout, true, true, true );
 }
 
 void LineAnimatorApp::mouseDown( MouseEvent event )
@@ -82,6 +83,48 @@ void LineAnimatorApp::mouseDown( MouseEvent event )
 
 void LineAnimatorApp::update()
 {
+	float duration = 1.5f;
+	float delta = 1.0f / mLayoutCache.batch.count;
+	float progress = fmod( getElapsedSeconds(), duration + 2.0 ) / duration;
+
+	// scale
+	{
+		auto ptr = mLayoutCache.mapDynamicScale();
+		for( auto i = 0; i < mLayoutCache.batch.count; i++ ){
+			
+			float scale = (progress) - delta * float(i);
+			scale = clamp( scale, 0.0f, 1.0f );
+			scale = easeOutElastic( scale, 1.5, 0.4 );
+			mLayoutCache.applyScaleAttr( ptr, vec2( scale ) );
+		}
+		mLayoutCache.unmapDynamicScale( ptr );
+	}
+
+	
+	// color
+	{
+		auto ptr = mLayoutCache.mapDynamicColor();
+		
+		for( auto i = 0; i < mLayoutCache.batch.count; i++ ){
+			float alpha = progress - delta * float(i);
+			alpha = clamp( alpha, 0.0f, 1.0f );
+			
+			//ColorA color = ci::ColorA( CM_HSV, fmod( float(getElapsedSeconds() * 0.5f) + float(i) * 0.01f, 1.0f ), 1.0f, 1.0f, alpha );
+			ColorA color = ci::ColorA( 1.0f, 1.0f, 1.0f, alpha );
+			mLayoutCache.applyColorAttr( ptr, color );
+		}
+		mLayoutCache.unmapDynamicColor( ptr );
+	}
+
+	/*
+	// offset
+	auto ptr = mLayoutCache.mapDynamicOffset();
+	for( auto i = 0; i < mLayoutCache.batch.count; i++ ){
+		float x =  0.0;
+		float y = sin( getElapsedSeconds() * 2.0 + float(i) * 0.1f ) * 30.0f;
+		mLayoutCache.applyOffsetAttr( ptr, vec4( x, y, 0.0, 1.0 ) );
+	}
+	mLayoutCache.unmapDynamicOffset( ptr );*/
 }
 
 void LineAnimatorApp::draw()
@@ -119,6 +162,7 @@ void LineAnimatorApp::draw()
 
 	{
 		ci::gl::ScopedMatrices scpMtrx;
+		gl::translate( vec2( getWindowSize() ) * 0.1f );
 		gl::scale( getWindowSize() / mFbo->getSize() );
 		float progress = sin( (getElapsedSeconds()) * 5.0f ) * 0.5 + 0.5;
 		float alpha = progress;
