@@ -151,18 +151,24 @@ class TextureRenderer {
 	// cache structs for rendering
 	
 	typedef struct {
-		ci::gl::BatchRef batch;
-		int textureIndex;
+//		ci::gl::BatchRef batch;
+		ci::gl::VaoRef vao;
+		ci::gl::VboMeshRef vboMesh;
+		ci::gl::GlslProgRef shader;
+		std::vector<int> texIndices;
+		std::vector<std::pair<int, int>> ranges;
 		int count;
 	} GlyphBatch;
 
 	typedef struct {
 		ci::Rectf bounds;
-		std::vector< GlyphBatch > batches;
+		GlyphBatch batch;
 		std::vector< ci::vec3 > positionOffsets;
 	} LayoutCache;
 
 	typedef struct {
+		std::vector<vec3> vertPositions;
+		std::vector<vec2> vertTexCoords;
 		std::vector<vec4> posScales;
 		std::vector<vec3> texCoords;
 		std::vector<vec2> texCoordSizes;
@@ -249,7 +255,8 @@ class TextureRenderer {
 	ci::gl::BatchRef	mBatch;
 
 	void TextureRenderer::cacheRun( std::unordered_map<int, BatchCacheData> &batchCaches, const Layout::Run& run, ci::Rectf& bounds );
-	std::vector< GlyphBatch > generateBatches(const std::unordered_map<int, BatchCacheData> &batchCaches );
+	//std::vector< GlyphBatch > generateBatches(const std::unordered_map<int, BatchCacheData> &batchCaches );
+	GlyphBatch generateBatch(const std::unordered_map<int, BatchCacheData> &batchCaches );
 
 	static void cacheFont( const Font& font, bool cacheEntireFont = false );
 	static void uncacheFont( const Font& font );

@@ -47,7 +47,7 @@ void LineAnimatorApp::setup()
 	text::gl::TextureRenderer::loadFont( font2 );
 
 	//text::gl::TextureRenderer::unloadFont( font1 );
-	text::gl::TextureRenderer::unloadFont( font2 );
+	//text::gl::TextureRenderer::unloadFont( font2 );
 
 	//mFont = std::make_shared<text::Font>( ci::app::loadAsset( "../../assets/fonts/SourceSansPro/SourceSansPro-Regular.otf" ), 24.f );
 	//text::gl::TextureRenderer::loadFont( *mFont );
@@ -103,7 +103,7 @@ void LineAnimatorApp::draw()
 	
 
 
-	{
+	/*{
 		//for( auto layoutBatch : layoutBatches ) {
 			auto &glyphPositionBuffer = mLayoutCache.positionOffsets;
 			int glyphCount = glyphPositionBuffer.size();
@@ -115,13 +115,14 @@ void LineAnimatorApp::draw()
 			}
 			mRenderer.updateCache( mLayoutCache );
 		//}
-	}
+	}*/
 
 	{
 		ci::gl::ScopedMatrices scpMtrx;
+		gl::scale( getWindowSize() / mFbo->getSize() );
 		float progress = sin( (getElapsedSeconds()) * 5.0f ) * 0.5 + 0.5;
 		float alpha = progress;
-		//gl::ScopedColor scpColor( ColorA( 1.0, 1.0, 1.0, alpha ) );
+		gl::ScopedColor scpColor( ColorA( 1.0, 1.0, 1.0, 1.0 ) );
 		//gl::translate( vec2( 0.0,  (1.0 - progress) * 20.0 ) );
 		mRenderer.render( mLayoutCache );
 	}
