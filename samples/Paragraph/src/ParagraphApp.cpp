@@ -92,7 +92,7 @@ void CinderProjectApp::setup()
  	mFbo = ci::gl::Fbo::create( mTextBoxSize.x, mTextBoxSize.y, fboFormat );
 
 	ci::text::gl::TextureArray::Format fmt = text::gl::TextureArray::Format()
-		.size( ivec3( 2048, 2048, 16) );
+		.size( ivec3( 1024, 1024, 4) );
 	ci::text::gl::TextureRenderer::setTextureFormat( fmt );
 	
 	mFont = std::make_shared<text::Font>( ci::app::loadAsset( fontName ), mFontSize );

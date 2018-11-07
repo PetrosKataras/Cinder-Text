@@ -68,7 +68,6 @@ void LineAnimatorApp::setup()
 	mLayout.calculateLayout( "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent lobortis risus sed aliquam commodo. Praesent porttitor rhoncus tempus." );
 	//mLayout.calculateLayout( attrStr );
 
-
 	for( auto line : mLayout.getLines() )
 	{
 		//mLineCache.push_back( mRenderer.cacheLine( line ) );
