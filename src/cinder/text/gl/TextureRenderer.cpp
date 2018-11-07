@@ -22,6 +22,11 @@ std::unordered_map<Font, TextureRenderer::FontCache> TextureRenderer::fontCache;
 bool							TextureRenderer::mSharedCacheEnabled = false;
 TextureRenderer::TexArrayCache	TextureRenderer::mSharedTexArrayCache;
 TextureArray::Format			TextureRenderer::mTextureArrayFormat;
+#ifdef CINDER_TEXTURE_RENDERER_USE_TEXTURE2D
+std::vector<ci::gl::Texture2dRef>	 TextureRenderer::mTextures;
+#else
+std::vector<ci::gl::Texture3dRef>	 TextureRenderer::mTextures;
+#endif
 
 
 // Shaders
@@ -75,15 +80,19 @@ const char* vertVboShader = R"V0G0N(
 #version 330
 
 uniform mat4	ciModelViewProjection;
+uniform float	ciElapsedSeconds;
 
 in vec4		ciPosition;
 in vec2		ciTexCoord0;
 in vec4		ciColor;
 
-in vec4 iPosScale;
+in vec4 iColor;
+in vec4 iPosSize;
 in vec3 iUv;
 in vec2 iUvSize;
-in vec4 iColor;
+in vec4 iPosOffset;
+in vec2 iScaleOffset;
+in vec4 iColorOffset;
 
 out highp vec2 texCoord;
 out vec4 globalColor;
@@ -111,43 +120,61 @@ mat4 scale( in vec3 scl )
 void main( void )
 {
 	texCoord = ciTexCoord0;
-	globalColor = ciColor * iColor;
+	globalColor = ciColor * iColor * iColorOffset;
+	
 	uv = iUv;
 	uvSize = iUvSize;
-	mat4 transform = translate( vec3( iPosScale.xy, 0.0 )) * scale( vec3(iPosScale.zw, 1.0) );
-	vec4 position  = transform * vec4( ciPosition.xy, 0.0f, 1.0f );
+
+	vec3 glyphPos = vec3( iPosSize.xy + (iPosSize.zw * 0.5), 0.0 ) + iPosOffset.xyz;	// glyph position + center + offset
+	vec3 glyphScale = vec3(iPosSize.zw * iScaleOffset.xy, 1.0);
+	//glyphScale *= vec3(sin(iPosOffset.w * 0.5 + ciElapsedSeconds * 3.0) * 0.5 + 0.75 );	// test animation
+	
+	// define transformation matrix
+	mat4 transform = mat4(1.0);
+	transform *= translate( glyphPos ); // move to original position
+	transform *= scale( glyphScale );
+	
+	// apply matrix to vertices
+	vec4 position = transform * vec4( ciPosition.xy - vec2(0.5), 0.0f, 1.0f );		// transform around normalized vertices [-0.5, 0.5]
 	gl_Position	= ciModelViewProjection * position;
 }
 )V0G0N";
 
-const char* fragVboShader = R"V0G0N(
-#version 330
+string fragVboShader = 
+"#version 330\n"
+#ifdef CINDER_TEXTURE_RENDERER_USE_TEXTURE2D
+"uniform sampler2D uTex;\n"
+#else
+"uniform sampler2DArray uTexArray;\n"
+#endif
+"uniform vec2 uSubTexSize;\n"
+"uniform vec2 uSubTexOffset;\n"
 
-uniform sampler2DArray uTexArray;
-uniform uint uLayer;
-uniform vec2 uSubTexSize;
-uniform vec2 uSubTexOffset;
+"in vec2 texCoord;\n"
+"in vec4 globalColor;\n"
+"in vec3 uv;\n"
+"in vec2 uvSize;\n"
 
-in vec2 texCoord;
-in vec4 globalColor;
-in vec3 uv;
-in vec2 uvSize;
-//in float layer;
+"out vec4 color;\n"
 
-uniform vec4 runColor;
+"void main( void )\n"
+"{\n" 
+"	vec4 texColor;\n"
+#ifdef CINDER_TEXTURE_RENDERER_USE_TEXTURE2D
+"	vec2 coord = vec2((texCoord.x * uvSize.x) + uv.x, ((1.0 - texCoord.y) * uvSize.y) + uv.y );\n"
+"	texColor = texture( uTex, coord );\n"
+#else
+"	vec3 coord = vec3((texCoord.x * uvSize.x) + uv.x, ((1.0 - texCoord.y) * uvSize.y) + uv.y, uv.z);\n"
+"	texColor = texture( uTexArray, coord );\n"
+#endif
+"	color = vec4(1.0, 1.0, 1.0, texColor.r);\n"
+"	color = globalColor * color;\n"
+"	//color = vec4(coord.x, coord.y, 0.0, 1.0);\n"
+"}\n";
 
-out vec4 color;
-
-void main( void )
-{ 
-	vec3 coord = vec3((texCoord.x * uvSize.x) + uv.x, ((1.0 - texCoord.y) * uvSize.y) + uv.y, uv.z);
-	vec4 texColor = texture( uTexArray, coord );
-	
-	//color = vec4(1.0,0.0,0.0,1.0);
-	color = vec4(1.0, 1.0, 1.0, texColor.r);
-	color = color * globalColor;
-}
-)V0G0N";
+const std::array<vec2, 4> rectVerts = { vec2( 0.0f, 0.0f ), vec2( 0.0f, 1.0f ), vec2( 1.0f, 1.0f ), vec2( 1.0f, 0.0f ) };
+const std::array<vec2, 4> rectUvs	= { vec2( 0.0f, 1.0f ), vec2( 0.0f, 0.0f ), vec2( 1.0f, 0.0f ), vec2( 1.0f, 1.0f ) };
+#define VERT_COUNT 6
 
 GLint getMaxTextureSize()
 {
@@ -161,7 +188,11 @@ GLint getMaxTextureSize()
 TextureRenderer::TextureRenderer()
 {
 	ci::gl::GlslProgRef shader = ci::gl::GlslProg::create( vertShader, fragShader );
+#ifdef CINDER_TEXTURE_RENDERER_USE_TEXTURE2D
+	shader->uniform( "uTex", 0 );
+#else
 	shader->uniform( "uTexArray", 0 );
+#endif
 
 	if( mBatch == nullptr ) {
 		mBatch = ci::gl::Batch::create( ci::geom::Rect( ci::Rectf( 0.f, 0.f, 1.f, 1.f ) ), shader );
@@ -184,7 +215,8 @@ void TextureRenderer::render( const std::vector<cinder::text::Layout::Line>& lin
 			for( auto& glyph : run.glyphs ) 
 			{	
 				// Make sure we have the glyph
-				if( TextureRenderer::getCacheForFont( run.font ).glyphs.count( glyph.index ) != 0 ) {
+				if( TextureRenderer::getCacheForFont( run.font ).glyphs.count( glyph.index ) != 0 ) 
+				{
 					ci::gl::ScopedMatrices matrices;
 					ci::gl::translate( ci::vec2( glyph.bbox.getUpperLeft() ) );
 					ci::gl::scale( glyph.bbox.getSize().x, glyph.bbox.getSize().y );
@@ -192,13 +224,10 @@ void TextureRenderer::render( const std::vector<cinder::text::Layout::Line>& lin
 					auto fontCache = getCacheForFont( run.font );
 					auto glyphCache = fontCache.glyphs[glyph.index];
 
-					//auto tex = getCacheForFont( run.font ).glyphs[glyph.index].texArray->getTexture();
-					auto tex = fontCache.texArrayCache.texArray->getTexture();
+					//auto texIndex = fontCache.texArrayCache.texArray->getTextureBlockIndex( glyphCache.block );
+					auto tex = mTextures[glyphCache.block];
 
-					//ci::gl::ScopedBlendAlpha alphaBlend;
 					mBatch->getGlslProg()->uniform( "uLayer", (uint32_t)glyphCache.layer );
-
-					//ci::vec2 subTexSize = glyph.bbox.getSize() / ci::vec2( tex->getWidth(), tex->getHeight() );
 					mBatch->getGlslProg()->uniform( "uSubTexSize", glyphCache.subTexSize );
 					mBatch->getGlslProg()->uniform( "uSubTexOffset", glyphCache.subTexOffset );
 
@@ -213,108 +242,342 @@ void TextureRenderer::render( const std::vector<cinder::text::Layout::Line>& lin
 	}
 }
 
-void TextureRenderer::render( const TextureRenderer::RenderLineCache &line )
+void TextureRenderer::render( const TextureRenderer::LayoutCache &cache )
 {
-	for( auto batchData : line.batches ){
-		auto batch = std::get<0>(batchData);
-		auto tex = std::get<1>(batchData);
-		auto count = std::get<2>(batchData);
-		ci::gl::ScopedTextureBind texBind( tex->getTarget(), tex->getId() );
-		batch->drawInstanced( count );
+	auto batch = cache.batch;
+	ci::gl::ScopedVao vao( batch.vao );
+	ci::gl::ScopedGlslProg scpGlsl( batch.shader );
+	ci::gl::setDefaultShaderVars();
+	auto vboMesh = batch.vboMesh;
+	
+	for( auto i = 0; i < batch.texIndices.size(); i++ )
+	{
+		auto texture = mTextures[batch.texIndices[i]];
+		ci::gl::ScopedTextureBind texBind( texture->getTarget(), texture->getId() );
+		int start = batch.ranges[i].first;
+		int end = batch.ranges[i].second;
+		int count = end - start;
+		ci::gl::ScopedColor scpColor( ci::Color(0.0, 0.0, 1.0));
+	
+		vboMesh->drawImpl( start * VERT_COUNT, count * VERT_COUNT );
 	}
 }
 
-TextureRenderer::RenderLineCache TextureRenderer::cacheLine( const cinder::text::Layout::Line &line )
+
+void TextureRenderer::cacheRun( std::unordered_map<int, BatchCacheData> &batchData, const Layout::Run& run, ci::Rectf& bounds )
 {
-	std::unordered_map<Font, BatchCacheData>	batchCaches;
-	vec2 br = vec2();
-	vec2 ul = vec2( FLT_MAX );
-	for( auto& run : line.runs ) 
-	{
-		for( auto& glyph : run.glyphs ) 
-		{	
-			auto font = run.font;
-			auto color = ci::ColorA( run.color, run.opacity );
+	auto font = run.font;
+	auto color = ci::ColorA( run.color, run.opacity );
 
-			// Make sure we have the glyph
-			if( TextureRenderer::getCacheForFont( run.font ).glyphs.count( glyph.index ) != 0 ) 
-			{
-				
-				vec2 pos =  ci::vec2( glyph.position + glyph.offset);
-				vec2 size =  glyph.size;
+	for( auto& glyph : run.glyphs ) 
+	{	
+		// Make sure we have the glyph
+		auto fontCache = getCacheForFont( font );
+		if( fontCache.glyphs.count( glyph.index ) != 0 ) 
+		{
+			vec2 pos =  ci::vec2( glyph.position + glyph.offset);
+			vec2 size =  glyph.size;
 	
-				auto fontCache = getCacheForFont( font );
-				auto glyphCache = fontCache.glyphs[glyph.index];
-				auto tex = fontCache.texArrayCache.texArray->getTexture();				
-				br.x = glm::max( br.x, glyph.bbox.x2 );
-				br.y = glm::max( br.y, glyph.bbox.y2 );
-				ul.x = glm::min( ul.x, glyph.bbox.x1 );
-				ul.y = glm::min( ul.y, glyph.bbox.y1 );
-			
-				// get or init font batch cache
-				BatchCacheData batchCache;
-				if( !batchCaches.count( font ) ) {
-					batchCache = BatchCacheData();
-					batchCaches[font] = BatchCacheData();
-				}
+			auto glyphCache = fontCache.glyphs[glyph.index];
+			int texIndex = glyphCache.block;
 
-				batchCache = batchCaches[font];
-				batchCache.posScales.push_back( vec4( pos, size ) );
-				batchCache.texCoords.push_back( vec3(	glyphCache.subTexOffset, glyphCache.layer ) );
-				batchCache.texCoordSizes.push_back( vec2( glyphCache.subTexSize ) );
-				batchCache.colors.push_back( ci::ColorA( run.color, run.opacity ) );
-				batchCache.texture = tex;
-				batchCache.glyphCount += 1;
-				batchCaches[font] = batchCache;
+			//textureSet.insert( texIndex );
+			bounds.x2 = glm::max( bounds.x2, glyph.bbox.x2 );
+			bounds.y2 = glm::max( bounds.y2, glyph.bbox.y2 );
+			bounds.x1 = glm::min( bounds.x1, glyph.bbox.x1 );
+			bounds.y1 = glm::min( bounds.y1, glyph.bbox.y1 );
+			
+			// get or init font batch cache
+			if( !batchData.count( texIndex ) ) {
+				batchData[texIndex] = BatchCacheData();
 			}
-			else {
-				//ci::app::console() << "Could not find glyph for index: " << glyph.index << std::endl;
+
+			//const std::array<vec2, 4> rectVerts = { vec2( 0.0f, 0.0f ), vec2( 0.0f, 1.0f ), vec2( 1.0f, 1.0f ), vec2( 1.0f, 0.0f ) };
+			//const std::array<vec2, 4> rectUvs	= { vec2( 0.0f, 0.0f ), vec2( 0.0f, 1.0f ), vec2( 1.0f, 1.0f ), vec2( 1.0f, 0.0f ) };
+
+			std::vector<vec3> verts;
+			vec3 glyphPos = vec3( pos, 0.0f );
+			vec3 glyphSize = vec3( size, 0.0f );
+			verts.push_back( vec3( rectVerts[0][0], rectVerts[0][1], 0.0 ) );
+			verts.push_back( vec3( rectVerts[1][0], rectVerts[1][1], 0.0 ) );
+			verts.push_back( vec3( rectVerts[2][0], rectVerts[2][1], 0.0 ) );
+			verts.push_back( vec3( rectVerts[2][0], rectVerts[2][1], 0.0 ) );
+			verts.push_back( vec3( rectVerts[3][0], rectVerts[3][1], 0.0 ) );
+			verts.push_back( vec3( rectVerts[0][0], rectVerts[0][1], 0.0 ) );
+
+			std::vector<vec2> texCoord;
+			texCoord.push_back( vec2( rectUvs[0][0], rectUvs[0][1] ) );
+			texCoord.push_back( vec2( rectUvs[1][0], rectUvs[1][1] ) );
+			texCoord.push_back( vec2( rectUvs[2][0], rectUvs[2][1] ) );
+			texCoord.push_back( vec2( rectUvs[2][0], rectUvs[2][1] ) );
+			texCoord.push_back( vec2( rectUvs[3][0], rectUvs[3][1] ) );
+			texCoord.push_back( vec2( rectUvs[0][0], rectUvs[0][1] ) );
+
+			BatchCacheData &batchCache = batchData[texIndex];
+			//batchCache.indices.push_back( batchCache.glyphCount );
+			//batchCache.positions.push_back( vec3( pos, 0.0 ) );
+			batchCache.vertPositions.insert( batchCache.vertPositions.end(), verts.begin(), verts.end() );
+			batchCache.vertTexCoords.insert( batchCache.vertTexCoords.end(), texCoord.begin(), texCoord.end() );
+			
+
+			//batchCache.origins.push_back( vec3( glyph.bbox.x1, lineY, lineY - pos + (size * 0.5f) ) );
+			//batchCache.centers.push_back( vec2( pos + (size * 0.5f) ) );
+			batchCache.colors.push_back( color );
+			batchCache.posSize.push_back( vec4( pos, size ) );
+			batchCache.texCoords.push_back( vec3( glyphCache.subTexOffset, glyphCache.layer ) );
+			batchCache.texCoordSizes.push_back( vec2( glyphCache.subTexSize ) );
+
+			batchCache.posOffsets.push_back( vec4( 0.0, 0.0, 0.0, batchCache.glyphCount ) );
+			batchCache.colorOffsets.push_back( ci::ColorA::white() );
+			batchCache.scaleOffsets.push_back( vec2( 1.0f ) );
+			batchCache.textureIndex = texIndex;
+			batchCache.glyphCount += 1;
+		}
+		else {
+			//ci::app::console() << "Could not find glyph for index: " << glyph.index << std::endl;
+		}
+	}
+}
+
+TextureRenderer::GlyphBatch TextureRenderer::generateBatch(const std::unordered_map<int, BatchCacheData> &batchCaches, bool enableDynamicOffset, bool enableDynamicScale, bool enableDynamicColor )
+{
+	std::vector<vec3> vPositions;
+	std::vector<vec2> vTexCoords;
+	std::vector<vec4> colors;	
+	std::vector<vec4> posSizes;	
+	std::vector<vec3> texCoords;
+	std::vector<vec2> texCoordSizes;
+	std::vector<vec4> posOffsets;		// glyph index (within layout) in w slot for now
+	std::vector<vec2> scaleOffsets;
+	std::vector<vec4> colorOffsets;
+	std::vector<int> texIndices; 
+	std::vector<std::pair<int, int>> ranges;
+	int glyphCount = 0;
+
+	for( auto batchCache : batchCaches ) {
+		
+		auto data = batchCache.second;
+		int start = glyphCount;
+		glyphCount += data.glyphCount;
+		
+		vPositions.insert( vPositions.end(), data.vertPositions.begin(), data.vertPositions.end() );
+		vTexCoords.insert( vTexCoords.end(), data.vertTexCoords.begin(), data.vertTexCoords.end() );
+
+		// 1 for each of the 6 vertices per rect
+		for( int i = 0; i < data.glyphCount; ++i ){
+			//int offset = 0;
+			for( int j = 0; j < VERT_COUNT; j++ ){
+				//centers.push_back( data.centers[i] );
+				colors.push_back( data.colors[i] );
+				posSizes.push_back( data.posSize[i] );
+				texCoords.push_back( data.texCoords[i] );
+				texCoordSizes.push_back( data.texCoordSizes[i] );
+				posOffsets.push_back( data.posOffsets[i] );
+				scaleOffsets.push_back( data.scaleOffsets[i] );
+				colorOffsets.push_back( data.colorOffsets[i] );
 			}
+		}
+
+		texIndices.push_back( data.textureIndex );
+		ranges.push_back( {start, glyphCount} );
+		//posOffsets.resize( glyphCount * VERT_COUNT );
+	}
+
+	ci::gl::VboRef positionBuffer = ci::gl::Vbo::create( GL_ARRAY_BUFFER, vPositions.size() * sizeof(vec3), vPositions.data(), GL_STATIC_DRAW );
+	geom::BufferLayout positionLayout;
+	positionLayout.append( geom::Attrib::POSITION, geom::FLOAT, 3, sizeof(vec3), 0 );
+
+	ci::gl::VboRef vTexCoordBuffer = ci::gl::Vbo::create( GL_ARRAY_BUFFER, vTexCoords.size() * sizeof(vec2), vTexCoords.data(), GL_STATIC_DRAW );
+	geom::BufferLayout vTexCoordLayout;
+	vTexCoordLayout.append( geom::Attrib::TEX_COORD_0, geom::FLOAT, 2, sizeof(vec2), 0 );
+
+	/*ci::gl::VboRef vColorBuffer = ci::gl::Vbo::create( GL_ARRAY_BUFFER, vColors.size() * sizeof( vec4 ), vColors.data(), GL_STATIC_DRAW );
+	geom::BufferLayout vColorsDataLayout;
+	vColorsDataLayout.append( geom::Attrib::COLOR, geom::FLOAT, 4, sizeof(vec4), 0 );
+	*/
+	//ci::gl::VboRef centerBuffer = ci::gl::Vbo::create( GL_ARRAY_BUFFER, centers.size() * sizeof( vec4 ), centers.data(), GL_STATIC_DRAW );
+	//geom::BufferLayout centerDataLayout;
+	//centerDataLayout.append( geom::Attrib::CUSTOM_0, 2, 0, 0, 0 );
+
+	ci::gl::VboRef colorBuffer = ci::gl::Vbo::create( GL_ARRAY_BUFFER, colors.size() * sizeof( vec4 ), colors.data(), GL_STATIC_DRAW );
+	geom::BufferLayout colorDataLayout;
+	colorDataLayout.append( geom::Attrib::CUSTOM_0, 4, 0, 0, 0 );
+
+	ci::gl::VboRef posSizeBuffer = ci::gl::Vbo::create( GL_ARRAY_BUFFER, posSizes.size() * sizeof( vec4 ), posSizes.data(), GL_STATIC_DRAW );
+	geom::BufferLayout posSizeDataLayout;
+	posSizeDataLayout.append( geom::Attrib::CUSTOM_1, 4, 0, 0, 0 );
+
+	ci::gl::VboRef uvBuffer = ci::gl::Vbo::create( GL_ARRAY_BUFFER, texCoords.size() * sizeof( vec3 ), texCoords.data(), GL_STATIC_DRAW );
+	geom::BufferLayout uvDataLayout;
+	uvDataLayout.append( geom::Attrib::CUSTOM_2, 3, 0, 0, 0 );
+
+	ci::gl::VboRef uvSizeBuffer = ci::gl::Vbo::create( GL_ARRAY_BUFFER, texCoordSizes.size() * sizeof( vec2 ), texCoordSizes.data(), GL_STATIC_DRAW );
+	geom::BufferLayout uvSizeDataLayout;
+	uvSizeDataLayout.append( geom::Attrib::CUSTOM_3, 2, 0, 0, 0 );
+
+	// dynamic (if enabled)
+	ci::gl::VboRef posOffsetBuffer = ci::gl::Vbo::create( GL_ARRAY_BUFFER, posOffsets.size() * sizeof( vec4 ), posOffsets.data(), enableDynamicOffset ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW );
+	geom::BufferLayout posOffsetDataLayout;
+	posOffsetDataLayout.append( geom::Attrib::CUSTOM_4, 4, 0, 0, 0 );
+
+	ci::gl::VboRef scaleOffsetBuffer = ci::gl::Vbo::create( GL_ARRAY_BUFFER, scaleOffsets.size() * sizeof( vec2 ), scaleOffsets.data(), enableDynamicScale ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW );
+	geom::BufferLayout scaleOffsetDataLayout;
+	scaleOffsetDataLayout.append( geom::Attrib::CUSTOM_5, 2, 0, 0, 0 );
+
+	ci::gl::VboRef colorOffsetBuffer = ci::gl::Vbo::create( GL_ARRAY_BUFFER, colorOffsets.size() * sizeof( vec4 ), colorOffsets.data(), enableDynamicColor ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW );
+	geom::BufferLayout colorOffsetDataLayout;
+	colorOffsetDataLayout.append( geom::Attrib::CUSTOM_6, 4, 0, 0, 0 );
+	
+	ci::gl::GlslProgRef glyphShader = ci::gl::GlslProg::create( vertVboShader, fragVboShader );
+	glyphShader->uniform( "uTexArray", 0 );
+
+	/*vector<ci::gl::VboMesh::Layout> bufferLayout = {
+		ci::gl::VboMesh::Layout().usage( GL_STATIC_DRAW ).attrib( geom::Attrib::POSITION, 4 )
+	};*/
+
+	//ci::gl::VboMeshRef vboMesh = ci::gl::VboMesh::create( geom::Rect( Rectf(vec2(0.0), vec2(1.0) ) ), bufferLayout );
+	
+
+	//geom::BufferLayout posLayout;
+	//posLayout.append( geom::Attrib::POSITION, geom::FLOAT, 3, sizeof(vec3), 0 );
+	//mPositions = gl::Vbo::create( GL_ARRAY_BUFFER, pos.size() * sizeof(vec4), pos.data(), GL_STATIC_DRAW );
+	//mVboMesh = gl::VboMesh::create( pos.size(), GL_TRIANGLES, {{posLayout, mPositions}} );
+
+	// define vao
+	auto attributes = ci::gl::Vao::create();
+	
+	ci::gl::ScopedVao vao( attributes );
+	{
+		ci::gl::ScopedBuffer buffer( colorBuffer );
+		ci::gl::enableVertexAttribArray( geom::Attrib::CUSTOM_0 );
+		ci::gl::vertexAttribPointer( geom::Attrib::CUSTOM_0, 4, GL_FLOAT, GL_FALSE, 0, (const GLvoid*) 0 );
+	}
+	{
+		ci::gl::ScopedBuffer buffer( posSizeBuffer );
+		ci::gl::enableVertexAttribArray( geom::Attrib::CUSTOM_1 );
+		ci::gl::vertexAttribPointer( geom::Attrib::CUSTOM_1, 4, GL_FLOAT, GL_FALSE, 0, (const GLvoid*) 0 );
+	}
+	{
+		ci::gl::ScopedBuffer buffer( uvSizeBuffer );
+		ci::gl::enableVertexAttribArray( geom::Attrib::CUSTOM_2 );
+		ci::gl::vertexAttribPointer( geom::Attrib::CUSTOM_2, 3, GL_FLOAT, GL_FALSE, 0, (const GLvoid*) 0 );
+	}
+	{
+		ci::gl::ScopedBuffer buffer( uvBuffer );
+		ci::gl::enableVertexAttribArray( geom::Attrib::CUSTOM_3 );
+		ci::gl::vertexAttribPointer( geom::Attrib::CUSTOM_3, 2, GL_FLOAT, GL_FALSE, 0, (const GLvoid*) 0 );
+	}
+	{
+		ci::gl::ScopedBuffer buffer( posOffsetBuffer );
+		ci::gl::enableVertexAttribArray( geom::Attrib::CUSTOM_4 );
+		ci::gl::vertexAttribPointer( geom::Attrib::CUSTOM_4, 4, GL_FLOAT, GL_FALSE, 0, (const GLvoid*) 0 );
+	}
+	{
+		ci::gl::ScopedBuffer buffer( scaleOffsetBuffer );
+		ci::gl::enableVertexAttribArray( geom::Attrib::CUSTOM_5 );
+		ci::gl::vertexAttribPointer( geom::Attrib::CUSTOM_5, 2, GL_FLOAT, GL_FALSE, 0, (const GLvoid*) 0 );
+	}
+	{
+		ci::gl::ScopedBuffer buffer( colorOffsetBuffer );
+		ci::gl::enableVertexAttribArray( geom::Attrib::CUSTOM_6 );
+		ci::gl::vertexAttribPointer( geom::Attrib::CUSTOM_6, 4, GL_FLOAT, GL_FALSE, 0, (const GLvoid*) 0 );
+	}
+
+		
+	ci::gl::VboMeshRef vboMesh = ci::gl::VboMesh::create( vPositions.size(), GL_TRIANGLES, {
+		{ positionLayout, positionBuffer }, 
+		{ vTexCoordLayout, vTexCoordBuffer }
+	} );
+
+	vboMesh->appendVbo( colorDataLayout, colorBuffer );
+	vboMesh->appendVbo( posSizeDataLayout, posSizeBuffer );
+	vboMesh->appendVbo( uvSizeDataLayout, uvSizeBuffer );
+	vboMesh->appendVbo( uvDataLayout, uvBuffer );
+	vboMesh->appendVbo( posOffsetDataLayout, posOffsetBuffer );
+	vboMesh->appendVbo( scaleOffsetDataLayout, scaleOffsetBuffer );
+	vboMesh->appendVbo( colorOffsetDataLayout, colorOffsetBuffer );
+
+	vboMesh->buildVao( glyphShader, {
+		{ geom::Attrib::CUSTOM_0, "iColor" },
+		{ geom::Attrib::CUSTOM_1, "iPosSize" },
+		{ geom::Attrib::CUSTOM_2, "iUv" },
+		{ geom::Attrib::CUSTOM_3, "iUvSize" },
+		{ geom::Attrib::CUSTOM_4, "iPosOffset" },
+		{ geom::Attrib::CUSTOM_5, "iScaleOffset" },
+		{ geom::Attrib::CUSTOM_6, "iColorOffset" }
+	} );
+
+	return {attributes, vboMesh, glyphShader, texIndices, ranges, glyphCount};
+}
+
+
+TextureRenderer::LayoutCache TextureRenderer::cacheLayout( const cinder::text::Layout &layout, bool enableDynamicOffset, bool enableDynamicScale, bool enableDynamicColor )
+{
+	std::unordered_map<int, BatchCacheData > glyphData;
+	ci::Rectf bounds = Rectf( vec2(), vec2( FLT_MAX) );
+
+	int glyphCount = 0;
+	for( auto& line : layout.getLines() )
+	{
+		for( auto& run : line.runs ) 
+		{
+			Rectf runBounds = Rectf( vec2(), vec2( FLT_MAX) );
+			cacheRun( glyphData, run, runBounds );
+			bounds.include( runBounds );
+			glyphCount += run.glyphs.size();
 		}
 	}
 
-	std::vector< std::tuple<ci::gl::BatchRef, ci::gl::Texture3dRef, int> > batches;
-	for( auto batchCache : batchCaches ) {
-		
-		BatchCacheData data = batchCache.second;
-
-		ci::gl::VboRef positionBuffer = ci::gl::Vbo::create( GL_ARRAY_BUFFER, data.posScales.size() * sizeof( vec4 ), data.posScales.data(), GL_STATIC_DRAW );
-		geom::BufferLayout posDataLayout;
-		posDataLayout.append( geom::Attrib::CUSTOM_0, 4, 0, 0, 1 );
-
-		ci::gl::VboRef uvBuffer = ci::gl::Vbo::create( GL_ARRAY_BUFFER, data.texCoords.size() * sizeof( vec3 ), data.texCoords.data(), GL_STATIC_DRAW );
-		geom::BufferLayout uvDataLayout;
-		uvDataLayout.append( geom::Attrib::CUSTOM_1, 3, 0, 0, 1 );
-
-		ci::gl::VboRef uvSizeBuffer = ci::gl::Vbo::create( GL_ARRAY_BUFFER, data.texCoordSizes.size() * sizeof( vec2 ), data.texCoordSizes.data(), GL_STATIC_DRAW );
-		geom::BufferLayout uvSizeDataLayout;
-		uvSizeDataLayout.append( geom::Attrib::CUSTOM_2, 2, 0, 0, 1 );
-
-		ci::gl::VboRef colorBuffer = ci::gl::Vbo::create( GL_ARRAY_BUFFER, data.colors.size() * sizeof( vec4 ), data.colors.data(), GL_STATIC_DRAW );
-		geom::BufferLayout colorsDataLayout;
-		colorsDataLayout.append( geom::Attrib::CUSTOM_3, 4, 0, 0, 1 );
-
-		ci::gl::VboMeshRef vboMesh = ci::gl::VboMesh::create( geom::Rect( Rectf(vec2(0.0), vec2(1.0) )) );
-		vboMesh->appendVbo( posDataLayout, positionBuffer );
-		vboMesh->appendVbo( uvSizeDataLayout, uvSizeBuffer );
-		vboMesh->appendVbo( uvDataLayout, uvBuffer );
-		vboMesh->appendVbo( colorsDataLayout, colorBuffer );
-
-		ci::gl::GlslProgRef glyphShader = ci::gl::GlslProg::create( vertVboShader, fragVboShader );
+	auto batch = generateBatch( glyphData );
+	
+	ci::gl::GlslProgRef glyphShader = ci::gl::GlslProg::create( vertVboShader, fragVboShader );
 		glyphShader->uniform( "uTexArray", 0 );
 
-		auto batch = ci::gl::Batch::create(vboMesh, glyphShader, {
-			{ geom::Attrib::CUSTOM_0, "iPosScale" },
-			{ geom::Attrib::CUSTOM_1, "iUv" },
-			{ geom::Attrib::CUSTOM_2, "iUvSize" },
-			{ geom::Attrib::CUSTOM_3, "iColor" }
-		});
-		batches.push_back( { batch, data.texture, data.glyphCount } );
+	LayoutCache lineCache;
+	lineCache.bounds = bounds;
+	lineCache.batch = batch;
+	//lineCache.vao = batch.vao;
+	//lineCache.vbomesh = batch.vboMesh;
+	//lineCache.shader = glyphShader;
+	lineCache.positionOffsets.resize( glyphCount, vec3() );
+	return lineCache;
+}
+
+void TextureRenderer::updateCache( LayoutCache &layout )
+{
+/*	//for( auto layoutBatch : layout.batches ) {
+		auto batch = layout.batch.batch;
+		auto vboMesh = batch->getVboMesh();
+		auto posOffsetAttrib = vboMesh->mapAttrib4f( geom::Attrib::CUSTOM_4, false );
+		for( int i = 0; i <  layout.batch.count; ++i ) {
+			vec4 &pos = *posOffsetAttrib;
+			int positionIndex = round(pos.w);
+			vec3 newPos = layout.positionOffsets[positionIndex];
+			posOffsetAttrib->x = newPos.x;
+			posOffsetAttrib->y = newPos.y;
+			posOffsetAttrib->z = newPos.z;
+			++posOffsetAttrib;
+		}
+		posOffsetAttrib.unmap();
+	//}*/
+}
+
+TextureRenderer::LayoutCache TextureRenderer::cacheLine( const cinder::text::Layout::Line &line )
+{
+	std::unordered_map<int, BatchCacheData > glyphData;
+	ci::Rectf bounds = Rectf( vec2(), vec2( FLT_MAX) );
+	
+	for( auto& run : line.runs ) 
+	{
+		Rectf runBounds = Rectf( vec2(), vec2( FLT_MAX) );
+		cacheRun( glyphData, run, runBounds );
+		bounds.include( runBounds );
 	}
 
-	RenderLineCache lineCache;
-	lineCache.bounds = Rectf( ul, br );
-	lineCache.batches = batches;
+	auto batch = generateBatch( glyphData );
+	LayoutCache lineCache;
+	lineCache.bounds = bounds;
+	lineCache.batch = batch;
 	return lineCache;
 }
 
@@ -370,11 +633,6 @@ std::map<uint16_t, TextureRenderer::GlyphCache> TextureRenderer::getGylphMapForF
 	return getCacheForFont( font ).glyphs;
 }
 
-ci::gl::Texture3dRef TextureRenderer::getTextureForFont( const Font& font )
-{
-	return getCacheForFont( font ).texArrayCache.texArray->getTexture();
-}
-
 // Cache glyphs to gl texture array(s)
 void TextureRenderer::cacheFont( const Font& font,  bool cacheEntireFont )
 {
@@ -399,14 +657,20 @@ void TextureRenderer::uncacheFont( const Font& font )
 	auto count = TextureRenderer::fontCache.count( font );
 	if( count ) {
 		std::unordered_map<Font, FontCache>::iterator it = TextureRenderer::fontCache.find( font );
+
+		// remove all references textures from main texture array
+		std::set<int> deadTextures;
+		for( auto texIndex : (*it).second.texArrayCache.texArray->getTextureBlockIndices() ) {
+			deadTextures.insert( texIndex );
+		}
+
+		// invalidate dead textures (do not remove since the index is used as a reference)
+		for( auto t : deadTextures ) {
+			mTextures[t] = nullptr;
+		}
+
 		TextureRenderer::fontCache.erase( it );
 	}
-}
-
-TextureArrayRef TextureRenderer::makeTextureArray()
-{
-	auto texArray = TextureArray::create( mTextureArrayFormat );
-	return texArray;
 }
 
 void TextureRenderer::cacheGlyphs( const Font& font, const std::string string, const std::string language, Script script, Direction dir )
@@ -437,8 +701,8 @@ void TextureRenderer::cacheGlyphs( const Font& font, const std::vector<std::pair
 void TextureRenderer::cacheGlyphs( const Font& font, const std::vector<uint32_t> &glyphIndices )
 {
 	bool dirty = false;
-	
-	// get Texture ARray cache based on whether we are using chared coche or not
+
+	// get Texture Array cache based on whether we are using shared cache or not
 	TexArrayCache *texArrayCache;
 	if( TextureRenderer::mSharedCacheEnabled ) {
 		texArrayCache = &TextureRenderer::mSharedTexArrayCache;
@@ -500,30 +764,26 @@ void TextureRenderer::cacheGlyphs( const Font& font, const std::vector<uint32_t>
 			ci::ip::fill( layerChannel.get(), ( uint8_t )0 );
 			dirty = false;
 
-			if( layerIndex + 1 >= textureArray->getDepth() ) {
-				texArrayCache->filled = true;
-				CI_LOG_E( "Texture Array is filled. Cannot cache any more gyphs. Increase the size or depth or the Texture Array." );
-			} else {
-				layerIndex++;
-				texArrayCache->currentLayerIdx = layerIndex;
-
-				// request a new region
-				region = textureArray->request( glyphSize, layerIndex, ivec2( 2.0f ) );
+			if( layerIndex + 1 >= textureArray->getDepth() * textureArray->getBlockCount() ) {
+				// Expand the texture array if we've run out of room
+				textureArray->expand();
 			}
-			
+
+			layerIndex++;
+			texArrayCache->currentLayerIdx = layerIndex;
+
+			// request a new region
+			region = textureArray->request( glyphSize, layerIndex, ivec2( 2.0f ) );
 		}
 
 		if( region.layer > -1 )
 		{ 
 			ivec2 offset = region.rect.getUpperLeft();
-			auto layer = region.layer;
-
+	
 			// fill channel
 			ci::ChannelRef channel = ci::Channel::create( glyphSize.x, glyphSize.y, glyphSize.x * sizeof( unsigned char ), sizeof( unsigned char ), bitmapGlyph->bitmap.buffer );
-			if( channel->getData() ) {
-				//ci::ChannelRef flippedChannel = ci::Channel::create( glyphSize.x, glyphSize.y );
-				//ci::ip::fill( flippedChannel.get(), ( uint8_t )0 );
-				//ci::ip::flipVertical( *channel, flippedChannel.get() );
+			if( channel->getData() )
+			{
 				ci::Channel8uRef expandedChannel = ci::Channel8u::create( glyphSize.x + padding.x, glyphSize.y + padding.y );
 				ci::ip::fill( expandedChannel.get(), ( uint8_t )0 );
 				expandedChannel->copyFrom( *channel, ci::Area( 0, 0, glyphSize.x, glyphSize.y ) );
@@ -540,14 +800,21 @@ void TextureRenderer::cacheGlyphs( const Font& font, const std::vector<uint32_t>
 				// update channel
 				layerChannel->copyFrom( *expandedChannel, Area( 0, 0, w, h ), offset );
 			}
-			
+
+			// determine block and layer within the texture array cache
+			int textureDepth = texArrayCache->texArray->getDepth();
+			int block = texArrayCache->texArray->getTextureBlockIndex(region.layer);
+			int layer = region.layer % textureDepth;
+
 			//TextureRenderer::fontCache[font].glyphs[glyphIndex].texArray = textureArray;
 			TextureRenderer::fontCache[font].texArrayCache = *texArrayCache;
+			TextureRenderer::fontCache[font].glyphs[glyphIndex].block = block;
 			TextureRenderer::fontCache[font].glyphs[glyphIndex].layer = layer;
 			TextureRenderer::fontCache[font].glyphs[glyphIndex].size = ci::vec2( glyphSize );
 			TextureRenderer::fontCache[font].glyphs[glyphIndex].offset = ci::vec2( bbox.xMin, bbox.yMax );
 			TextureRenderer::fontCache[font].glyphs[glyphIndex].subTexOffset = ci::vec2( offset ) / ci::vec2( textureArray->getSize() );
 			TextureRenderer::fontCache[font].glyphs[glyphIndex].subTexSize = ci::vec2( glyphSize ) / ci::vec2( textureArray->getSize() );
+			//TextureRenderer::fontCache[font].glyphs[glyphIndex].subTexSize = ci::vec2( 0.1 );
 		} 
 		else 
 		{
@@ -756,16 +1023,7 @@ void TexturePack::debugDraw() const
 TextureArray::TextureArray( const TextureArray::Format fmt )
 	: mSize( fmt.mSize ), mFormat( fmt )
 {
-	mTexturePacks.resize( mSize.z, TexturePack( mSize.x, mSize.y ) );
-
-	bool mipmap = fmt.mMipmapping;
-	auto format = ci::gl::Texture3d::Format()
-		.target( GL_TEXTURE_2D_ARRAY )
-		.internalFormat( fmt.mInternalFormat )
-		.maxAnisotropy( fmt.mMaxAnisotropy )
-		.mipmap( mipmap ).magFilter( mipmap ? GL_LINEAR : GL_NEAREST ).minFilter( mipmap ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST );
-
-	mTexture = ci::gl::Texture3d::create( mSize.x, mSize.y, mSize.z, format );
+	expand();
 }
 
 TextureArray::Region TextureArray::request( const ci::ivec2 &size, const ci::ivec2 &padding )
@@ -805,20 +1063,57 @@ TextureArray::Region TextureArray::request( const ci::ivec2 &size, int layerInde
 
 void TextureArray::update( ci::ChannelRef channel, int layerIdx )
 {
+	int layer = layerIdx % getDepth();
+	int block = layerIdx / getDepth();
+	auto textureIndex = mTextureIndices[block];
+	auto textureBlock = TextureRenderer::mTextures[textureIndex];
+
 	// upload channel to texture
 	ci::Surface8u surface( *channel );
 	int mipLevel = 0;
 	GLint dataFormat;
 	GLenum dataType;
 	ci::gl::TextureBase::SurfaceChannelOrderToDataFormatAndType<uint8_t>( surface.getChannelOrder(), &dataFormat, &dataType );
-	mTexture->update(  (void*)surface.getData(), dataFormat, dataType, mipLevel, surface.getWidth(), surface.getHeight(), 1, 0, 0, layerIdx );
+
+#ifdef CINDER_TEXTURE_RENDERER_USE_TEXTURE2D
+	//TextureBlock->update( surface, mipLevel );
+	textureBlock->update( (void*)surface.getData(), dataFormat, dataType, mipLevel, surface.getWidth(), surface.getHeight() );
+#else
+	textureBlock->update( (void*)surface.getData(), dataFormat, dataType, mipLevel, surface.getWidth(), surface.getHeight(), 1, 0, 0, layer );
+#endif
 
 	if( mFormat.mMipmapping )
 	{
-		ci::gl::ScopedTextureBind scopedTexBind( mTexture );
-		glGenerateMipmap( mTexture->getTarget() );		
+		ci::gl::ScopedTextureBind scopedTexBind( textureBlock );
+		glGenerateMipmap( textureBlock->getTarget() );		
 	}
 }
 
+void TextureArray::expand()
+{
+	// add another group of texture packs
+	mTexturePacks.resize( (mTexturePacks.size() + 1) * mSize.z, TexturePack( mSize.x, mSize.y ) );
+
+	bool mipmap = mFormat.mMipmapping;
+	
+#ifdef CINDER_TEXTURE_RENDERER_USE_TEXTURE2D
+	auto format = ci::gl::Texture2d::Format()
+		.internalFormat( mFormat.mInternalFormat )
+		.maxAnisotropy( mFormat.mMaxAnisotropy )
+		.mipmap( mipmap ).magFilter( mipmap ? GL_LINEAR : GL_NEAREST ).minFilter( mipmap ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST );
+	auto tex = ci::gl::Texture2d::create( mSize.x, mSize.y, format );
+	TextureRenderer::mTextures.push_back( tex );
+	mTextureIndices.push_back( TextureRenderer::mTextures.size() - 1 );
+#else
+	auto format = ci::gl::Texture3d::Format()
+		.target( GL_TEXTURE_2D_ARRAY )
+		.internalFormat( mFormat.mInternalFormat )
+		.maxAnisotropy( mFormat.mMaxAnisotropy )
+		.mipmap( mipmap ).magFilter( mipmap ? GL_LINEAR : GL_NEAREST ).minFilter( mipmap ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST );
+	auto tex = ci::gl::Texture3d::create( mSize.x, mSize.y, mSize.z, format );
+	TextureRenderer::mTextures.push_back( tex );
+	mTextureIndices.push_back( TextureRenderer::mTextures.size() - 1 );
+#endif
+}
 
 } } } // namespace cinder::text::gl
