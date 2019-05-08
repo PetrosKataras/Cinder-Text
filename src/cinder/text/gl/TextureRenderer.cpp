@@ -679,7 +679,8 @@ void TextureRenderer::cacheGlyphs( const Font& font, const std::string string, c
 	Shaper shaper( font );
 	
 	std::vector<uint32_t> glyphIndices;
-	std::vector<Shaper::Glyph> shapedGlyphs = shaper.getShapedText( Shaper::Text( { string, language, script, dir } ) );
+	auto shaperText = Shaper::Text( { string, language, script, dir } );
+	std::vector<Shaper::Glyph> shapedGlyphs = shaper.getShapedText( shaperText );
 	for( auto glyph : shapedGlyphs ) {
 		glyphIndices.push_back( glyph.index );
 	}

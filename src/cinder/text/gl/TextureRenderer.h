@@ -290,7 +290,7 @@ class TextureRenderer {
   private:
 	ci::gl::BatchRef	mBatch;
 
-	void TextureRenderer::cacheRun( std::unordered_map<int, BatchCacheData> &batchCaches, const Layout::Run& run, ci::Rectf& bounds );
+	void cacheRun( std::unordered_map<int, BatchCacheData> &batchCaches, const Layout::Run& run, ci::Rectf& bounds );
 	//std::vector< GlyphBatch > generateBatches(const std::unordered_map<int, BatchCacheData> &batchCaches );
 	GlyphBatch generateBatch(const std::unordered_map<int, BatchCacheData> &batchCaches, bool enableDynamicOffset = false, bool enableDynamicScale = false, bool enableDynamicColor = false );
 
