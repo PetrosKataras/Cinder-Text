@@ -181,6 +181,23 @@ ci::BufferRef SystemFonts::getFontBuffer( std::string family, std::string style 
 	else
 		return ci::BufferRef();
 }
-#endif // defined( CINDER_COCOA )
+#elif defined( CINDER_LINUX )
+SystemFonts::SystemFonts()
+{
+	mDefaultFamily = "ArialMT";
+	mDefaultStyle = "Regular";
+	mDefaultSize = 12;
+	
+}
+
+void SystemFonts::listFaces()
+{
+}
+
+ci::BufferRef SystemFonts::getFontBuffer( std::string family, std::string style )
+{
+	return ci::BufferRef();
+}
+#endif // defined( CINDER_LINUX )
 
 } } // namespace cinder::text
