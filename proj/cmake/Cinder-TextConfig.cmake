@@ -49,7 +49,7 @@ if( NOT TARGET Cinder-Text )
 	
 	list( APPEND TEXT_LIBRARIES
 			"${CMAKE_CURRENT_BINARY_DIR}/3rd_party/src/harfbuzz-build/libharfbuzz.a"
-			"${CMAKE_CURRENT_BINARY_DIR}/3rd_party/src/freetype2b-build/libfreetyped.a"
+			"${CMAKE_CURRENT_BINARY_DIR}/3rd_party/src/freetype2b-build/libfreetype.a"
 	)
 	list( APPEND TEXT_INCLUDES
 			"${CMAKE_CURRENT_BINARY_DIR}/3rd_party/src/harfbuzz/src"
